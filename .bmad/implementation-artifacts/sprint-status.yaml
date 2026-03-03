@@ -59,8 +59,8 @@ development_status:
   3-2-prometheus-metrics-instrumentation: done
   epic-3-retrospective: optional
 
-  epic-4: backlog
-  4-1-test-infrastructure-and-configuration: backlog
+  epic-4: in-progress
+  4-1-test-infrastructure-and-configuration: review
   4-2-endpoint-and-service-test-coverage: backlog
   epic-4-retrospective: optional
 
