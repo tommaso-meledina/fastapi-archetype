@@ -1,8 +1,8 @@
 # Epic List
 
 ## Epic 1: Running Application with CRUD API
-A developer can clone the project, configure it, run it, and interact with a fully working REST API backed by MariaDB — with structured error responses, centralized constants, auto-generated API docs at `/docs`, and a clear project structure that serves as a copy-and-adapt template.
-**FRs covered:** FR1–FR12, FR26–FR28
+A developer can clone the project, run it immediately (SQLite in-memory by default), and interact with a fully working REST API — with structured error responses, centralized constants, auto-generated API docs at `/docs`, and a clear project structure that serves as a copy-and-adapt template. MariaDB is supported via a configuration toggle.
+**FRs covered:** FR1–FR12, FR5a, FR26–FR28
 **NFRs addressed:** NFR1–NFR5, NFR8–NFR10
 
 ## Epic 2: Cross-Cutting Function Logging (AOP)

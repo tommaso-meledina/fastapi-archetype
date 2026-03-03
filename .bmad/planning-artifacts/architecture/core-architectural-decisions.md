@@ -26,12 +26,13 @@
 |---|---|---|---|
 | ORM | SQLModel | 0.0.37 | PRD-specified; single model definition for ORM + Pydantic validation |
 | Database (prod) | MariaDB | — | PRD-specified |
+| Database (dev default) | SQLite in-memory | — | Zero-setup local development; `DB_DRIVER=sqlite` (default) |
 | Database (test) | SQLite in-memory | — | PRD-specified; self-contained test execution |
 | MariaDB driver | PyMySQL | 1.1.2 | Pure Python; zero system dependencies; simplest Docker story; performance irrelevant for reference implementation |
 | Session management | FastAPI `Depends()` with generator | — | Idiomatic FastAPI; enables clean test database swap via dependency override |
 | Schema management | SQLModel `create_all` | — | Single-table MVP; no migration complexity warranted |
 
-**Cascading implication:** The `Depends()` + generator pattern means the dual-database abstraction is handled entirely through dependency injection — production provides a MariaDB engine, tests override with SQLite. No conditional logic in application code.
+**Cascading implication:** The `Depends()` + generator pattern means database abstraction is handled through dependency injection and a configurable `DB_DRIVER` setting. `DB_DRIVER=sqlite` (default) uses SQLite in-memory with `StaticPool` for zero-setup local development; `DB_DRIVER=mysql+pymysql` connects to MariaDB for production. Tests override with SQLite via dependency injection. No dialect-specific code in application logic.
 
 ## Authentication & Security
 
@@ -63,11 +64,12 @@ Deferred to Phase 3 per PRD. No authentication, authorization, or security middl
 2. Configuration management (pydantic-settings) — all components depend on this
 3. Database layer (SQLModel + PyMySQL + session management)
 4. REST endpoints (`/dummies` routes + error handling)
-5. AOP logging (decorators on services layer)
-6. Observability (OTEL + Prometheus middleware)
-7. Testing infrastructure (pytest + SQLite override)
-8. Dockerfile (multi-stage build)
-9. Linting & formatting (Ruff configuration)
+5. Configurable database driver (SQLite default for zero-setup dev)
+6. AOP logging (decorators on services layer)
+7. Observability (OTEL + Prometheus middleware)
+8. Testing infrastructure (pytest + SQLite override)
+9. Dockerfile (multi-stage build)
+10. Linting & formatting (Ruff configuration)
 
 **Cross-Component Dependencies:**
 - Configuration → everything (all components read config at startup)

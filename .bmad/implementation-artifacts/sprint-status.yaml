@@ -46,6 +46,7 @@ development_status:
   1-3-centralized-constants-and-error-handling: done
   1-4-database-layer-and-dummy-model: done
   1-5-rest-api-endpoints-and-service-layer: done
+  1-6-configurable-database-driver-with-sqlite-default: done
   epic-1-retrospective: optional
 
   epic-2: backlog

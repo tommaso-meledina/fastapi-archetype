@@ -10,6 +10,7 @@
 ## Data Persistence
 
 - FR5: The application connects to a MariaDB database for persistent storage
+- FR5a: The application supports a configurable database driver (`DB_DRIVER`) that defaults to SQLite in-memory, allowing the application to start and serve requests without external database infrastructure
 - FR6: The application maps a Dummy model to a DUMMY table using SQLModel, with a single model definition serving both ORM and API validation
 - FR7: The application validates all input data against the Dummy model schema before persisting
 

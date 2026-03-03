@@ -1,6 +1,6 @@
 # Epic 1: Running Application with CRUD API
 
-A developer can clone the project, configure it, run it, and interact with a fully working REST API backed by MariaDB — with structured error responses, centralized constants, auto-generated API docs at `/docs`, and a clear project structure that serves as a copy-and-adapt template.
+A developer can clone the project, run it immediately (SQLite in-memory by default), and interact with a fully working REST API — with structured error responses, centralized constants, auto-generated API docs at `/docs`, and a clear project structure that serves as a copy-and-adapt template. MariaDB is supported via a configuration toggle.
 
 ## Story 1.1: Project Initialization and Package Structure
 
@@ -153,3 +153,32 @@ So that **I can exercise a complete request-response cycle and use the `/dummies
 **Given** the application startup sequence
 **When** the app initializes
 **Then** configuration validates first, then database engine is created, then middleware is registered, then routes are included — following the defined startup order
+
+## Story 1.6: Configurable Database Driver with SQLite Default
+
+As a **software engineer**,
+I want **the application to default to SQLite in-memory when no database driver is configured**,
+So that **I can clone the project, run it immediately without standing up MariaDB, and still exercise the full request-response cycle**.
+
+**Acceptance Criteria:**
+
+**Given** `core/config.py` defines a `db_driver` setting
+**When** `DB_DRIVER` is not set in the environment or `.env`
+**Then** it defaults to `"sqlite"` and the application starts using an in-memory SQLite database
+
+**Given** `DB_DRIVER=mysql+pymysql` is set
+**When** the application starts
+**Then** it connects to MariaDB using the `db_host`, `db_port`, `db_user`, `db_password`, and `db_name` settings
+
+**Given** the application is running with the SQLite driver
+**When** I send requests to `GET /dummies` and `POST /dummies`
+**Then** the endpoints work correctly and data persists for the lifetime of the process
+
+**Given** `core/database.py` creates the engine
+**When** the driver is `sqlite`
+**Then** `StaticPool` is used so all requests share the same in-memory database
+**And** `check_same_thread=False` is set for SQLite compatibility
+
+**Given** `.env.example` exists
+**When** I inspect its contents
+**Then** the `DB_DRIVER` options are documented with their meanings
