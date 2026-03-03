@@ -54,7 +54,7 @@ development_status:
   2-2-application-logging-configuration: done
   epic-2-retrospective: optional
 
-  epic-3: in-progress
+  epic-3: done
   3-1-opentelemetry-trace-instrumentation: done
   3-2-prometheus-metrics-instrumentation: done
   epic-3-retrospective: optional
