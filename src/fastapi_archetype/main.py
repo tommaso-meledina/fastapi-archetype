@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import sys
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
@@ -23,6 +25,12 @@ if TYPE_CHECKING:
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     settings = AppSettings()
+    logging.basicConfig(
+        level=settings.log_level,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        stream=sys.stdout,
+        force=True,
+    )
     engine = get_engine(settings)
     SQLModel.metadata.create_all(engine)
     yield

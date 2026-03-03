@@ -1,6 +1,9 @@
 from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+VALID_LOG_LEVELS = frozenset({"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"})
 
 
 class AppSettings(BaseSettings):
@@ -12,6 +15,17 @@ class AppSettings(BaseSettings):
 
     app_name: str = "fastapi-archetype"
     debug: bool = False
+    log_level: str = "INFO"
+
+    @field_validator("log_level")
+    @classmethod
+    def _normalize_log_level(cls, value: str) -> str:
+        upper = value.upper()
+        if upper not in VALID_LOG_LEVELS:
+            allowed = ", ".join(sorted(VALID_LOG_LEVELS))
+            msg = f"Invalid log level '{value}'. Must be one of: {allowed}"
+            raise ValueError(msg)
+        return upper
 
     db_driver: Literal["sqlite", "mysql+pymysql"] = "sqlite"
     db_host: str = "localhost"

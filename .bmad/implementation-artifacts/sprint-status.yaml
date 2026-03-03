@@ -51,6 +51,7 @@ development_status:
 
   epic-2: done
   2-1-aop-function-io-logging-decorator: done
+  2-2-application-logging-configuration: done
   epic-2-retrospective: optional
 
   epic-3: backlog
