@@ -18,6 +18,7 @@ from fastapi_archetype.core.errors import (
     validation_exception_handler,
 )
 from fastapi_archetype.observability.otel import setup_otel
+from fastapi_archetype.observability.prometheus import setup_prometheus
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -48,3 +49,5 @@ app = FastAPI(
 app.add_exception_handler(AppException, app_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
 app.include_router(dummy_router)
+
+setup_prometheus(app)

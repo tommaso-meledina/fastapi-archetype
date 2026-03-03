@@ -13,6 +13,7 @@ dependencies = [
     "opentelemetry-exporter-otlp>=1.39.1",
     "opentelemetry-instrumentation-fastapi>=0.60b1",
     "opentelemetry-sdk>=1.39.1",
+    "prometheus-fastapi-instrumentator>=7.1.0",
     "pydantic-settings>=2.13.1",
     "pymysql>=1.1.2",
     "sqlmodel>=0.0.37",
