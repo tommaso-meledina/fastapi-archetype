@@ -43,6 +43,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 app = FastAPI(
     title="fastapi-archetype",
     description="A reference FastAPI application demonstrating enterprise patterns.",
+    root_path=AppSettings().root_path,
     lifespan=lifespan,
 )
 

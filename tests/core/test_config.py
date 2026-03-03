@@ -36,6 +36,18 @@ def test_invalid_log_level_raises(monkeypatch: pytest.MonkeyPatch) -> None:
         AppSettings()
 
 
+def test_root_path_defaults_to_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ROOT_PATH", raising=False)
+    settings = AppSettings()
+    assert settings.root_path == ""
+
+
+def test_root_path_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ROOT_PATH", "/api/v1")
+    settings = AppSettings()
+    assert settings.root_path == "/api/v1"
+
+
 def test_database_url_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DB_DRIVER", "sqlite")
     settings = AppSettings()
