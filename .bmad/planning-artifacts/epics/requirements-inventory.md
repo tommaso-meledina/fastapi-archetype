@@ -19,6 +19,7 @@ FR14: The application's integration tests run against an in-memory SQLite databa
 FR15: The application's test suite covers all endpoints with both valid and invalid input scenarios
 FR16: The application's test suite achieves >90% code coverage; code that is particularly difficult to test (e.g., strictly non-functional components) may be excluded from coverage measurement through standard exclusion mechanisms
 FR17: The application provides a decorator-based AOP mechanism that logs function input arguments and return values
+FR17a: The application configures the Python logging subsystem at startup, directing all log output to stdout with a configurable log level (defaulting to INFO)
 FR18: The AOP logging decorator can be applied to all functions within a designated package without modifying each function individually
 FR19: The AOP logging mechanism uses plain Python decorators, falling back to `wrapt` only if plain decorators prove insufficient
 FR20: The application emits OpenTelemetry traces for incoming requests
@@ -108,6 +109,7 @@ NFR10: All configuration values have sensible defaults or clear documentation of
 | FR15 | Epic 4 | Full endpoint test coverage |
 | FR16 | Epic 4 | >90% code coverage |
 | FR17 | Epic 2 | Decorator-based AOP logging |
+| FR17a | Epic 2 | Logging subsystem configuration (stdout, configurable level) |
 | FR18 | Epic 2 | Package-level decorator application |
 | FR19 | Epic 2 | Plain Python decorators (wrapt fallback) |
 | FR20 | Epic 3 | OTEL traces for requests |

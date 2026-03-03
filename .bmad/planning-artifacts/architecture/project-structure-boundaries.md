@@ -108,7 +108,9 @@ Cross-cutting (parallel to request flow):
 | FR8–FR9 (Config management) | `core/config.py` | `.env`, `.env.example` |
 | FR10–FR12 (API docs) | `main.py` | Implicit via FastAPI |
 | FR13–FR16 (Testing) | `tests/conftest.py` | All `test_*.py` files |
-| FR17–FR19 (AOP logging) | `aop/logging_decorator.py` | `services/dummy_service.py` (target) |
+| FR17 (AOP logging) | `aop/logging_decorator.py` | `services/dummy_service.py` (target) |
+| FR17a (Logging config) | `main.py` (lifespan) | `core/config.py` (`log_level` setting) |
+| FR18–FR19 (AOP application) | `aop/logging_decorator.py` | `services/__init__.py` |
 | FR20–FR21 (OTEL) | `observability/otel.py` | `main.py` (middleware registration) |
 | FR22–FR23 (Prometheus) | `observability/prometheus.py` | `main.py` (middleware registration) |
 | FR24–FR25 (Docker) | `Dockerfile` | `.env.example` |

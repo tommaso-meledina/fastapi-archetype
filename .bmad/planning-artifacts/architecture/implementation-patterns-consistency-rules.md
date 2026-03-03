@@ -71,6 +71,7 @@ Consistent structure for all application errors:
 
 | Area | Convention | Rationale |
 |---|---|---|
+| Logging configuration | `logging.basicConfig` in `main.py` lifespan; level from `LOG_LEVEL` setting (default `INFO`) | Single configuration point at startup; level-driven visibility control |
 | Logger creation | `logging.getLogger(__name__)` per module | Python standard; enables per-module log control; traceable to source |
 | Log destination | stdout, unbuffered | Container best practice; OTEL collector and Docker handle routing |
 | AOP function I/O | `DEBUG` level | Avoids noise in production; available when needed |
@@ -90,6 +91,7 @@ Consistent structure for all application errors:
 | Order | Step | Rationale |
 |---|---|---|
 | 1 | Configuration validation (pydantic-settings) | Fail-fast: config errors surface before any I/O |
+| 1a | Logging subsystem configuration | Depends on validated config (`LOG_LEVEL`); must be active before any component logs |
 | 2 | Database engine creation | Depends on validated config |
 | 3 | Middleware registration (OTEL, Prometheus) | Depends on config; must wrap routes |
 | 4 | Route inclusion | Last; all infrastructure ready |

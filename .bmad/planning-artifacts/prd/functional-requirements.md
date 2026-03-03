@@ -35,6 +35,7 @@
 ## Cross-Cutting Concerns (AOP)
 
 - FR17: The application provides a decorator-based AOP mechanism that logs function input arguments and return values
+- FR17a: The application configures the Python logging subsystem at startup, directing all log output to stdout with a configurable log level (defaulting to INFO)
 - FR18: The AOP logging decorator can be applied to all functions within a designated package without modifying each function individually
 - FR19: The AOP logging mechanism uses plain Python decorators, falling back to `wrapt` only if plain decorators prove insufficient
 

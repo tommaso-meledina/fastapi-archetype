@@ -23,6 +23,7 @@
     - [Story 1.5: REST API Endpoints and Service Layer](./epic-1-running-application-with-crud-api.md#story-15-rest-api-endpoints-and-service-layer)
   - [Epic 2: Cross-Cutting Function Logging (AOP)](./epic-2-cross-cutting-function-logging-aop.md)
     - [Story 2.1: AOP Function I/O Logging Decorator](./epic-2-cross-cutting-function-logging-aop.md#story-21-aop-function-io-logging-decorator)
+    - [Story 2.2: Application Logging Configuration](./epic-2-cross-cutting-function-logging-aop.md#story-22-application-logging-configuration)
   - [Epic 3: Observability — Distributed Tracing and Metrics](./epic-3-observability-distributed-tracing-and-metrics.md)
     - [Story 3.1: OpenTelemetry Trace Instrumentation](./epic-3-observability-distributed-tracing-and-metrics.md#story-31-opentelemetry-trace-instrumentation)
     - [Story 3.2: Prometheus Metrics Instrumentation](./epic-3-observability-distributed-tracing-and-metrics.md#story-32-prometheus-metrics-instrumentation)

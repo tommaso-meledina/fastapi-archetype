@@ -6,8 +6,8 @@ A developer can clone the project, run it immediately (SQLite in-memory by defau
 **NFRs addressed:** NFR1–NFR5, NFR8–NFR10
 
 ## Epic 2: Cross-Cutting Function Logging (AOP)
-A developer can see that all service-layer functions are automatically logged (inputs and return values) via a decorator mechanism applied at the package level — no per-function modification needed.
-**FRs covered:** FR17–FR19
+A developer can see that all service-layer functions are automatically logged (inputs and return values) via a decorator mechanism applied at the package level — no per-function modification needed. The Python logging subsystem is configured at startup so that all log output reaches stdout with a configurable level.
+**FRs covered:** FR17–FR19, FR17a
 
 ## Epic 3: Observability — Distributed Tracing and Metrics
 A developer can see OpenTelemetry traces emitted for every request and Prometheus metrics exposed at `/metrics` — full observability with zero additional setup.

@@ -46,6 +46,7 @@ Deferred to Phase 3 per PRD. No authentication, authorization, or security middl
 | Documentation | FastAPI built-in OpenAPI 3.x, Swagger at `/docs`, ReDoc at `/redoc` | — | PRD-specified; zero-configuration |
 | Error handling | Enum-based error registry + custom `AppException` + global exception handler | — | Satisfies FR27 (single central location); type-safe; IDE-friendly; consistent response format |
 | Configuration | pydantic-settings `BaseSettings` | 2.13.1 | Native Pydantic integration; auto `.env` loading; typed validation; fail-fast at startup (FR8–FR9) |
+| Logging configuration | `logging.basicConfig` with `LOG_LEVEL` setting | — | Stdlib only; single configuration point in lifespan; stdout destination; level defaults to INFO (FR17a) |
 
 ## Infrastructure & Deployment
 
@@ -66,6 +67,7 @@ Deferred to Phase 3 per PRD. No authentication, authorization, or security middl
 4. REST endpoints (`/dummies` routes + error handling)
 5. Configurable database driver (SQLite default for zero-setup dev)
 6. AOP logging (decorators on services layer)
+6a. Logging subsystem configuration (stdout handler, configurable level)
 7. Observability (OTEL + Prometheus middleware)
 8. Testing infrastructure (pytest + SQLite override)
 9. Dockerfile (multi-stage build)
