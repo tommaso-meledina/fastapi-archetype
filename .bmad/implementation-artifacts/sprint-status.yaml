@@ -64,6 +64,6 @@ development_status:
   4-2-endpoint-and-service-test-coverage: done
   epic-4-retrospective: optional
 
-  epic-5: backlog
-  5-1-multi-stage-dockerfile: backlog
+  epic-5: done
+  5-1-multi-stage-dockerfile: done
   epic-5-retrospective: optional
