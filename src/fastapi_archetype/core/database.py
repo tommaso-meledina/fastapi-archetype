@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, create_engine
 
 from fastapi_archetype.core.config import AppSettings
@@ -19,7 +20,11 @@ def get_engine(settings: AppSettings | None = None) -> Engine:
     if _engine is None:
         if settings is None:
             settings = AppSettings()
-        _engine = create_engine(settings.database_url, echo=settings.debug)
+        kwargs: dict = {"echo": settings.debug}
+        if settings.db_driver == "sqlite":
+            kwargs["connect_args"] = {"check_same_thread": False}
+            kwargs["poolclass"] = StaticPool
+        _engine = create_engine(settings.database_url, **kwargs)
     return _engine
 
 

@@ -12,11 +12,13 @@ Install dependencies:
 uv sync
 ```
 
-Run the application:
+Run the application (uses SQLite in-memory by default — no database setup needed):
 
 ```bash
 uv run uvicorn fastapi_archetype.main:app --reload
 ```
+
+To use MariaDB instead, set `DB_DRIVER=mysql+pymysql` in a `.env` file (see `.env.example`).
 
 Lint and format:
 
