@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import logging
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 from fastapi_archetype.aop.logging_decorator import apply_logging, log_io
 
+if TYPE_CHECKING:
+    import pytest
 
-def test_log_io_logs_inputs(caplog: logging.LogCaptureFixture) -> None:
+
+def test_log_io_logs_inputs(caplog: pytest.LogCaptureFixture) -> None:
     @log_io
     def add(a: int, b: int) -> int:
         return a + b
@@ -20,7 +24,7 @@ def test_log_io_logs_inputs(caplog: logging.LogCaptureFixture) -> None:
     assert "b=2" in caplog.text
 
 
-def test_log_io_logs_return_value(caplog: logging.LogCaptureFixture) -> None:
+def test_log_io_logs_return_value(caplog: pytest.LogCaptureFixture) -> None:
     @log_io
     def greet(name: str) -> str:
         return f"Hello {name}"

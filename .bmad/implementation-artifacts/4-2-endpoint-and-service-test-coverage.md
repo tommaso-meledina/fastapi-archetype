@@ -1,6 +1,6 @@
 # Story 4.2: Endpoint and Service Test Coverage
 
-Status: review
+Status: done
 
 ## Story
 

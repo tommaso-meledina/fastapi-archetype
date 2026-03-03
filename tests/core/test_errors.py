@@ -67,3 +67,20 @@ def test_validation_error_via_http(client: TestClient) -> None:
     assert data["errorCode"] == "VALIDATION_ERROR"
     assert data["message"] == "Request validation failed"
     assert "detail" in data
+
+
+def test_app_exception_handler_returns_json() -> None:
+    import asyncio
+    import json
+    from unittest.mock import MagicMock
+
+    from fastapi_archetype.core.errors import app_exception_handler
+
+    exc = AppException(ErrorCode.NOT_FOUND, detail="id=42")
+    request = MagicMock()
+    response = asyncio.run(app_exception_handler(request, exc))
+    assert response.status_code == 404
+    body = json.loads(response.body)
+    assert body["errorCode"] == "NOT_FOUND"
+    assert body["message"] == "Resource not found"
+    assert body["detail"] == "id=42"
