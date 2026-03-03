@@ -112,6 +112,7 @@ Cross-cutting (parallel to request flow):
 | FR17a (Logging config) | `main.py` (lifespan) | `core/config.py` (`log_level` setting) |
 | FR18–FR19 (AOP application) | `aop/logging_decorator.py` | `services/__init__.py` |
 | FR20–FR21 (OTEL) | `observability/otel.py` | `main.py` (middleware registration) |
-| FR22–FR23 (Prometheus) | `observability/prometheus.py` | `main.py` (middleware registration) |
+| FR22–FR23 (Prometheus auto-instrumentation) | `observability/prometheus.py` | `main.py` (middleware registration) |
+| FR23a (Custom Prometheus metric) | `observability/prometheus.py` | Phase 3 — custom metric alongside auto-instrumented HTTP metrics |
 | FR24–FR25 (Docker) | `Dockerfile` | `.env.example` |
 | FR26–FR28 (Constants/codes) | `core/constants.py`, `core/errors.py` | — |

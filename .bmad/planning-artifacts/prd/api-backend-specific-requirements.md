@@ -45,4 +45,5 @@ Structured error responses with:
 - **Rate limiting:** deferred to Phase 3
 - **API versioning:** deferred to Phase 3
 - **Authentication:** deferred to Phase 3
+- **Custom Prometheus metric example:** deferred to Phase 3 (FR23a)
 - **SDK generation:** not applicable

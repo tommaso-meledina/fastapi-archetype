@@ -38,6 +38,7 @@
 - Authentication
 - Rate limiting
 - API versioning
+- Custom Prometheus metric example (FR23a)
 
 ## Risk Mitigation Strategy
 

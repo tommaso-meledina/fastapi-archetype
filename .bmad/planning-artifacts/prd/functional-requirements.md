@@ -45,6 +45,7 @@
 - FR21: The application exports traces to an OTEL collector when one is configured
 - FR22: The application exposes Prometheus metrics at a `/metrics` endpoint
 - FR23: The application automatically instruments HTTP request metrics (count, latency, status) for Prometheus scraping
+- FR23a: The application demonstrates a custom Prometheus metric (e.g., a business counter) alongside the auto-instrumented HTTP metrics, serving as a replicable pattern for adding application-specific metrics
 
 ## Containerization
 

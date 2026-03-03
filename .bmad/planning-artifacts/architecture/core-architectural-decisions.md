@@ -18,6 +18,7 @@
 - Authentication & authorization → Phase 3
 - Rate limiting → Phase 3
 - API versioning → Phase 3
+- Custom Prometheus metric example (FR23a) → Phase 3
 - Database migrations (Alembic) → not in MVP scope; single-table schema managed via SQLModel `create_all`
 
 ## Data Architecture
