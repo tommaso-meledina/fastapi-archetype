@@ -48,9 +48,9 @@ def log_io(func: Callable[..., Any]) -> Callable[..., Any]:
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         qualname = func.__qualname__
         formatted = _format_call_args(func, args, kwargs)
-        logger.debug("%s(%s)", qualname, formatted)
+        logger.debug("%s invoked with args (%s)", qualname, formatted)
         result = func(*args, **kwargs)
-        logger.debug("%s → %s", qualname, _format_arg(result))
+        logger.debug("%s returned %s", qualname, _format_arg(result))
         return result
 
     return wrapper
