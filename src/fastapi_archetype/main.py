@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from sqlmodel import SQLModel
 
+from fastapi_archetype.api.dummy_routes import router as dummy_router
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.database import get_engine
 from fastapi_archetype.core.errors import (
@@ -35,3 +36,4 @@ app = FastAPI(
 
 app.add_exception_handler(AppException, app_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
+app.include_router(dummy_router)

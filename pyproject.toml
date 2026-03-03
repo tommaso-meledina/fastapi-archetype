@@ -42,5 +42,8 @@ select = [
     "TCH",   # flake8-type-checking
 ]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "Depends"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["fastapi_archetype"]
