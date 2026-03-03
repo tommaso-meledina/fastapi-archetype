@@ -27,6 +27,10 @@ class AppSettings(BaseSettings):
             raise ValueError(msg)
         return upper
 
+    otel_export_enabled: bool = False
+    otel_exporter_endpoint: str = "http://localhost:4317"
+    otel_service_name: str = "fastapi-archetype"
+
     db_driver: Literal["sqlite", "mysql+pymysql"] = "sqlite"
     db_host: str = "localhost"
     db_port: int = 3306

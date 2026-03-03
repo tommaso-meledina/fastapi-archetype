@@ -17,13 +17,14 @@ from fastapi_archetype.core.errors import (
     app_exception_handler,
     validation_exception_handler,
 )
+from fastapi_archetype.observability.otel import setup_otel
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     settings = AppSettings()
     logging.basicConfig(
         level=settings.log_level,
@@ -31,9 +32,11 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
         stream=sys.stdout,
         force=True,
     )
+    tracer_provider = setup_otel(app, settings)
     engine = get_engine(settings)
     SQLModel.metadata.create_all(engine)
     yield
+    tracer_provider.shutdown()
 
 
 app = FastAPI(
