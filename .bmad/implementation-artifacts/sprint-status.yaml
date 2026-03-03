@@ -61,7 +61,7 @@ development_status:
 
   epic-4: in-progress
   4-1-test-infrastructure-and-configuration: done
-  4-2-endpoint-and-service-test-coverage: backlog
+  4-2-endpoint-and-service-test-coverage: review
   epic-4-retrospective: optional
 
   epic-5: backlog
