@@ -49,8 +49,8 @@ development_status:
   1-6-configurable-database-driver-with-sqlite-default: done
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-aop-function-io-logging-decorator: backlog
+  epic-2: done
+  2-1-aop-function-io-logging-decorator: done
   epic-2-retrospective: optional
 
   epic-3: backlog

@@ -1,0 +1,4 @@
+from fastapi_archetype.aop.logging_decorator import apply_logging
+from fastapi_archetype.services import dummy_service
+
+apply_logging(dummy_service)
