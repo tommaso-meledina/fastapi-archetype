@@ -68,7 +68,7 @@ development_status:
   5-1-multi-stage-dockerfile: done
   epic-5-retrospective: optional
 
-  epic-6: in-progress
+  epic-6: done
   6-1-docker-compose-with-application-and-mariadb: done
   6-2-observability-stack-otel-collector-and-prometheus: done
   epic-6-retrospective: optional
