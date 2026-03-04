@@ -5,10 +5,11 @@ receivers:
       http:
 
 exporters:
+  debug:
+    verbosity: basic
+
   prometheus:
     endpoint: "0.0.0.0:8889"
-    const_labels:
-      label1: value1
 
   jaeger:
     endpoint: jaeger-all-in-one:14250
@@ -31,7 +32,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [jaeger]
+      exporters: [jaeger, debug]
     metrics:
       receivers: [otlp]
       exporters: [prometheus]

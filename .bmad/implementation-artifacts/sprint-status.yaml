@@ -70,5 +70,5 @@ development_status:
 
   epic-6: in-progress
   6-1-docker-compose-with-application-and-mariadb: done
-  6-2-observability-stack-otel-collector-and-prometheus: backlog
+  6-2-observability-stack-otel-collector-and-prometheus: review
   epic-6-retrospective: optional
