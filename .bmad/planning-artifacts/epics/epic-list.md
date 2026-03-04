@@ -25,3 +25,23 @@ A developer can build a Docker image and run the full application in a container
 ## Epic 6: Docker Compose Development Environment
 A developer can run `docker compose up` and get the full application running against MariaDB with traces flowing to an OTEL collector and metrics scraped by Prometheus — a complete production-like environment with no manual service setup.
 **Phase:** 1 (Infrastructure)
+
+## Epic 7: Custom Prometheus Metric Example
+A developer can see a custom application-specific Prometheus metric (a business counter) exposed alongside the auto-instrumented HTTP metrics at `/metrics`, serving as a replicable pattern for adding domain-specific metrics.
+**FRs covered:** FR23a
+**Phase:** 2 (Expansion)
+
+## Epic 8: API Versioning
+A developer can see that all business API endpoints are organized under a versioned URL prefix (`/v1/`), while infrastructure endpoints remain at the root — a clear, framework-native pattern for future API versions.
+**FRs covered:** FR37–FR38
+**Phase:** 2 (Expansion)
+
+## Epic 9: Rate Limiting
+A developer can see per-endpoint rate limiting enforced on the API, with limits configurable via environment variables, standard rate-limit response headers, and a clear 429 error response.
+**FRs covered:** FR30–FR32
+**Phase:** 2 (Expansion)
+
+## Epic 10: Authentication and Role-Based Access Control
+A developer can see JWT-based authentication and RBAC integrated using FastAPI's built-in security utilities, with selective endpoint protection via dependency injection.
+**FRs covered:** FR33–FR36
+**Phase:** 2 (Expansion)

@@ -46,6 +46,16 @@ NFR8: A developer can understand the project structure and the role of each modu
 NFR9: The patterns used for the `/dummies` resource (model, route, validation, tests, AOP, constants) are clear enough to serve as a copy-and-adapt template for new resources
 NFR10: All configuration values have sensible defaults or clear documentation of required values, so a developer can get the application running with minimal setup
 
+FR37: The application organizes all business API endpoints under a versioned URL prefix (e.g., `/v1/dummies`) using FastAPI's `APIRouter`
+FR38: Infrastructure endpoints (`/health`, `/metrics`, `/docs`, `/redoc`) remain at the root level, unversioned
+FR30: The application enforces per-endpoint rate limits on API requests using `slowapi`
+FR31: Rate limit thresholds are configurable via environment variables, with sensible defaults
+FR32: The application returns a 429 response with standard rate-limit headers and a structured error body when limits are exceeded
+FR33: The application supports JWT-based authentication using FastAPI's built-in OAuth2 utilities
+FR34: The application provides a token endpoint for obtaining JWT access tokens
+FR35: The application supports role-based access control (RBAC), allowing selective endpoint protection via FastAPI's dependency injection
+FR36: Authentication configuration (JWT secret, algorithm, token expiry) is configurable via environment variables
+
 ## Additional Requirements
 
 **From Architecture — Starter Template:**
@@ -123,3 +133,12 @@ NFR10: All configuration values have sensible defaults or clear documentation of
 | FR27 | Epic 1 | Centralized error codes/messages |
 | FR28 | Epic 1 | Optional structured resource objects |
 | FR29 | Epic 1 | Health endpoint (runtime liveness) |
+| FR30 | Epic 9 | Per-endpoint rate limiting |
+| FR31 | Epic 9 | Rate limit thresholds from env variables |
+| FR32 | Epic 9 | 429 response with rate-limit headers |
+| FR33 | Epic 10 | JWT authentication via FastAPI OAuth2 |
+| FR34 | Epic 10 | Token endpoint for JWT access tokens |
+| FR35 | Epic 10 | Role-based access control (RBAC) |
+| FR36 | Epic 10 | Auth config from env variables |
+| FR37 | Epic 8 | Versioned URL prefix for business endpoints |
+| FR38 | Epic 8 | Infrastructure endpoints unversioned at root |

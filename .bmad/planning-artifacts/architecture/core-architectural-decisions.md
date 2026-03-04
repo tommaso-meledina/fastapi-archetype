@@ -14,11 +14,11 @@
 - Dockerfile strategy (affects deployment)
 - Linting & formatting (affects developer workflow)
 
-**Deferred Decisions (Post-MVP):**
-- Authentication & authorization → Phase 2
-- Rate limiting → Phase 2
-- API versioning → Phase 2
-- Custom Prometheus metric example (FR23a) → Phase 2
+**Deferred Decisions (Post-MVP → Phase 2):**
+- Authentication & authorization — JWT via `python-jose[cryptography]`, password hashing via `passlib[bcrypt]`, FastAPI built-in `OAuth2PasswordBearer`, RBAC with selective endpoint protection
+- Rate limiting — `slowapi` with per-endpoint limits configurable via environment variables
+- API versioning — URL prefix (`/v1/`) using FastAPI `APIRouter(prefix="/v1")`
+- Custom Prometheus metric example (FR23a) — business counter via Prometheus client library
 - Database migrations (Alembic) → not in MVP scope; single-table schema managed via SQLModel `create_all`
 
 ## Data Architecture
@@ -37,7 +37,7 @@
 
 ## Authentication & Security
 
-Deferred to Phase 2 per PRD. No authentication, authorization, or security middleware in MVP scope.
+Deferred to Phase 2 per PRD. JWT-based authentication using FastAPI's built-in OAuth2 utilities (`OAuth2PasswordBearer`), `python-jose[cryptography]` for token encoding, `passlib[bcrypt]` for password hashing. RBAC with selective endpoint protection via `Depends()`.
 
 ## API & Communication Patterns
 

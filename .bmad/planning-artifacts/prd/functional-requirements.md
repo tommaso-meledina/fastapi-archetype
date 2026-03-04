@@ -53,6 +53,24 @@
 - FR24: The application provides a Dockerfile that builds a production-ready container image
 - FR25: The Docker image starts the application and serves requests without additional configuration beyond the `.env` file
 
+## API Versioning
+
+- FR37: The application organizes all business API endpoints under a versioned URL prefix (e.g., `/v1/dummies`) using FastAPI's `APIRouter`
+- FR38: Infrastructure endpoints (`/health`, `/metrics`, `/docs`, `/redoc`) remain at the root level, unversioned
+
+## Rate Limiting
+
+- FR30: The application enforces per-endpoint rate limits on API requests using `slowapi`
+- FR31: Rate limit thresholds are configurable via environment variables, with sensible defaults
+- FR32: The application returns a 429 response with standard rate-limit headers and a structured error body when limits are exceeded
+
+## Authentication & Authorization
+
+- FR33: The application supports JWT-based authentication using FastAPI's built-in OAuth2 utilities
+- FR34: The application provides a token endpoint for obtaining JWT access tokens
+- FR35: The application supports role-based access control (RBAC), allowing selective endpoint protection via FastAPI's dependency injection
+- FR36: Authentication configuration (JWT secret, algorithm, token expiry) is configurable via environment variables
+
 ## Code Organization
 
 - FR26: All resource paths, configuration keys, and shared constants are defined in centralized constant files, not scattered as string literals
