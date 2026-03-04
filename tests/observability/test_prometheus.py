@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from fastapi_archetype.models.dummy import Dummy
 from fastapi_archetype.observability.prometheus import DUMMIES_CREATED_TOTAL
-from fastapi_archetype.services.dummy_service import create_dummy
+from fastapi_archetype.services.v1.dummy_service import create_dummy
 
 if TYPE_CHECKING:
     from fastapi.testclient import TestClient

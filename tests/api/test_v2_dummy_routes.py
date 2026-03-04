@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
+V2_SERVICE_LOGGER = "fastapi_archetype.services.v2.dummy_service"
+
 
 def test_v2_list_dummies_empty(client: TestClient) -> None:
     response = client.get("/v2/dummies")
@@ -40,12 +42,12 @@ def test_v1_and_v2_share_data(client: TestClient) -> None:
 
 
 def test_v2_logs_on_list(client: TestClient, caplog: logging.LogRecord) -> None:
-    with caplog.at_level(logging.INFO, logger="fastapi_archetype.api.v2.dummy_routes"):
+    with caplog.at_level(logging.INFO, logger=V2_SERVICE_LOGGER):
         client.get("/v2/dummies")
-    assert any("v2 list_dummies returned" in r.message for r in caplog.records)
+    assert any("v2 get_all_dummies returned" in r.message for r in caplog.records)
 
 
 def test_v2_logs_on_create(client: TestClient, caplog: logging.LogRecord) -> None:
-    with caplog.at_level(logging.INFO, logger="fastapi_archetype.api.v2.dummy_routes"):
+    with caplog.at_level(logging.INFO, logger=V2_SERVICE_LOGGER):
         client.post("/v2/dummies", json={"name": "Logged"})
     assert any("v2 create_dummy" in r.message for r in caplog.records)

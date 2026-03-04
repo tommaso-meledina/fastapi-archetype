@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, status
 from fastapi_archetype.core.constants import DUMMIES
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.models.dummy import Dummy
-from fastapi_archetype.services import dummy_service
+from fastapi_archetype.services.v1 import dummy_service
 
 if TYPE_CHECKING:
     from sqlmodel import Session
