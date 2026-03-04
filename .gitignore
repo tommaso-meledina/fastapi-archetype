@@ -17,3 +17,5 @@ build/
 .coverage
 htmlcov/
 compose/observability/grafana/storage/
+.cursor/
+_bmad/
