@@ -87,6 +87,6 @@ development_status:
 
   epic-11: in-progress
   11-1-auth-error-response-sanitization: done
-  11-2-synthetic-idp-integration-tests: backlog
+  11-2-synthetic-idp-integration-tests: done
   11-3-role-mapping-provider-abstraction: backlog
   epic-11-retrospective: optional
