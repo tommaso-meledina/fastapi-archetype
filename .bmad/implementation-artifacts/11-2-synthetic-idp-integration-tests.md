@@ -50,7 +50,7 @@ so that **bearer-token validation, claim mapping, and role enforcement are verif
 
 ### Architecture Compliance
 
-- Uses `python-jose` and `cryptography` — both already in dependency tree, no new deps
+- Uses `PyJWT` and `cryptography` — both already in dependency tree, no new deps
 - Tests in `tests/auth/` mirroring source structure
 - Provider-level tests (TestProviderLevelValidation) + endpoint integration tests (TestEndpointIntegration)
 

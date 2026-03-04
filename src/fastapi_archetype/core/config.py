@@ -84,10 +84,7 @@ class AppSettings(BaseSettings):
 
         if missing_fields:
             missing = ", ".join(missing_fields)
-            msg = (
-                "AUTH_TYPE=entra requires the following settings: "
-                f"{missing}"
-            )
+            msg = f"AUTH_TYPE=entra requires the following settings: {missing}"
             raise ValueError(msg)
         return self
 

@@ -220,11 +220,11 @@ This document records every architectural decision (AD) made during the design a
 
 | Option | Pros | Cons |
 |--------|------|------|
-| `python-jose[cryptography]` | - Mature JWT library - `cryptography` backend for RSA/EC key handling - Supports JWK construction and signature verification | - Less actively maintained than PyJWT |
-| `PyJWT` | - Most popular Python JWT library - Actively maintained | - JWK handling requires additional setup |
+| `PyJWT[crypto]` | - Most popular Python JWT library - Actively maintained - `PyJWK` class handles JWK construction and key matching natively - `jwt.decode()` combines signature verification and claim parsing in one call - `cryptography` extra handles RSA/EC key operations | - None significant |
+| `python-jose[cryptography]` | - Mature JWT library - Supports JWK construction | - Less actively maintained - Manual signature verification required (split token, decode signature, construct key, call `key.verify()`) |
 | `authlib` | - Full OAuth/OIDC toolkit | - Much larger dependency surface than needed |
 
-**Decision and justification:** `python-jose[cryptography]`. It provides JWT parsing, JWK construction, and signature verification in a single package. The `cryptography` extra handles RSA key operations needed for Entra token validation. The library is already proven in FastAPI ecosystems.
+**Decision and justification:** `PyJWT[crypto]`. It is the most popular and actively maintained Python JWT library. The `PyJWK` class constructs keys directly from JWK dictionaries, and `jwt.decode()` handles signature verification, expiration, and not-before validation in a single call — eliminating the need for manual signature byte manipulation. Active maintenance is critical for a security-sensitive dependency. The `cryptography` extra handles RSA key operations needed for Entra token validation.
 
 ## AD 17 - Auth Error Response Sanitization
 

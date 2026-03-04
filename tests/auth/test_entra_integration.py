@@ -71,9 +71,7 @@ def _build_patched_provider(
             }
         return {}
 
-    async def _fake_http_post_form(
-        url: str, data: dict[str, str]
-    ) -> dict[str, Any]:
+    async def _fake_http_post_form(url: str, data: dict[str, str]) -> dict[str, Any]:
         return {"access_token": "fake-obo-token"}
 
     provider._http_get = _fake_http_get  # type: ignore[method-assign]

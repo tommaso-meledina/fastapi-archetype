@@ -4,8 +4,8 @@ from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 import httpx
-from jose import JWTError, jwk, jwt
-from jose.utils import base64url_decode
+import jwt
+from jwt import PyJWK
 
 from fastapi_archetype.auth.contracts import (
     AuthFeatureNotSupportedError,
@@ -30,14 +30,17 @@ class EntraExternalAuthProvider(AuthProvider):
     async def authenticate_bearer_token(self, token: str) -> Principal:
         try:
             header = jwt.get_unverified_header(token)
-            claims = jwt.get_unverified_claims(token)
-        except JWTError as exc:
+        except jwt.InvalidTokenError as exc:
             raise UnauthorizedError("Malformed bearer token") from exc
 
+        alg = header.get("alg")
+        if not isinstance(alg, str):
+            raise UnauthorizedError("Missing token algorithm")
+
         jwks = await self._get_jwks()
-        key = self._select_signing_key(jwks, header.get("kid"))
-        self._verify_signature(token, key, header.get("alg"))
-        self._validate_standard_claims(claims)
+        signing_key = self._select_signing_key(jwks, header.get("kid"))
+        claims = self._decode_and_verify(token, signing_key, alg)
+        self._validate_issuer_and_audience(claims)
         return self._principal_from_claims(claims)
 
     async def get_client_credentials_access_token(self, scope: str) -> str:
@@ -186,28 +189,31 @@ class EntraExternalAuthProvider(AuthProvider):
                 return key
         raise UnauthorizedError("No signing key available in JWKS")
 
-    def _verify_signature(
+    def _decode_and_verify(
         self,
         token: str,
         signing_key: dict[str, Any],
-        alg: Any,
-    ) -> None:
-        if not isinstance(alg, str):
-            raise UnauthorizedError("Missing token algorithm")
-        message, encoded_signature = token.rsplit(".", 1)
-        decoded_signature = base64url_decode(encoded_signature.encode("utf-8"))
-        key = jwk.construct(signing_key, algorithm=alg)
-        if not key.verify(message.encode("utf-8"), decoded_signature):
-            raise UnauthorizedError("Invalid token signature")
+        alg: str,
+    ) -> dict[str, Any]:
+        try:
+            jwk_data = {**signing_key}
+            if "alg" not in jwk_data:
+                jwk_data["alg"] = alg
+            key = PyJWK(jwk_data).key
+            return jwt.decode(
+                token,
+                key=key,
+                algorithms=[alg],
+                options={"verify_iss": False, "verify_aud": False},
+            )
+        except jwt.ExpiredSignatureError as exc:
+            raise UnauthorizedError("Token has expired") from exc
+        except jwt.ImmatureSignatureError as exc:
+            raise UnauthorizedError("Token not yet valid") from exc
+        except jwt.InvalidTokenError as exc:
+            raise UnauthorizedError("Invalid token signature") from exc
 
-    def _validate_standard_claims(self, claims: dict[str, Any]) -> None:
-        now_ts = int(datetime.now(UTC).timestamp())
-        exp = claims.get("exp")
-        if isinstance(exp, int) and exp < now_ts:
-            raise UnauthorizedError("Token has expired")
-        nbf = claims.get("nbf")
-        if isinstance(nbf, int) and nbf > now_ts:
-            raise UnauthorizedError("Token not yet valid")
+    def _validate_issuer_and_audience(self, claims: dict[str, Any]) -> None:
         iss = claims.get("iss")
         if (
             self._settings.auth_external_issuer
@@ -234,12 +240,10 @@ class EntraExternalAuthProvider(AuthProvider):
             scope=str(claims["scp"]) if "scp" in claims else None,
             app_id=str(claims["appid"]) if "appid" in claims else None,
             roles=(
-                [str(role) for role in raw_roles]
-                if isinstance(raw_roles, list)
-                else []
+                [str(role) for role in raw_roles] if isinstance(raw_roles, list) else []
             ),
-            groups=[
-                str(group) for group in raw_groups
-            ] if isinstance(raw_groups, list) else [],
+            groups=[str(group) for group in raw_groups]
+            if isinstance(raw_groups, list)
+            else [],
             claims=claims,
         )

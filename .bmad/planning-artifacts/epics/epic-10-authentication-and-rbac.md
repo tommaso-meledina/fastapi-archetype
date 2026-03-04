@@ -3,7 +3,7 @@
 A developer can see external IdP-based bearer-token authentication and RBAC integrated into the application, with explicit per-route protection via FastAPI dependencies and a clear extension point for additional providers.
 
 **New libraries required:**
-- `python-jose[cryptography]` — JWT parsing/signature verification
+- `PyJWT[crypto]` — JWT parsing/signature verification
 - `httpx` — async outbound calls to discovery/JWKS/token/Graph endpoints
 
 ## Story 10.1: External IdP Authentication Infrastructure

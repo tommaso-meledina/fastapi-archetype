@@ -26,7 +26,7 @@ All dependencies are declared in `pyproject.toml`. Do not add or replace depende
 | prometheus-fastapi-instrumentator | >=7.1.0 | HTTP metrics auto-instrumentation |
 | prometheus_client | (transitive) | Custom metrics |
 | slowapi | >=0.1.9 | Per-endpoint rate limiting |
-| python-jose[cryptography] | >=3.5.0 | JWT validation (Entra auth) |
+| PyJWT[crypto] | >=2.9.0 | JWT validation (Entra auth) |
 | httpx | (transitive at runtime via auth) | Outbound HTTP for JWKS/token/Graph |
 
 ### Dev
