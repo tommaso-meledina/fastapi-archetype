@@ -93,7 +93,8 @@ All FRs trace to explicit files in the project tree via the Requirements to Stru
 
 **Areas for Future Enhancement (post-MVP):**
 - Database migrations (Alembic) when schema evolves beyond single table
-- Authentication & authorization middleware (Phase 2)
+- Multi-IdP provider support beyond the current external Entra provider
+- Role semantic mapping layer (e.g., Graph appRoleId to domain role labels) for richer RBAC ergonomics
 - API versioning strategy (Phase 2)
 - Rate limiting (Phase 2)
 - Custom Prometheus metric example (Phase 2, FR23a)

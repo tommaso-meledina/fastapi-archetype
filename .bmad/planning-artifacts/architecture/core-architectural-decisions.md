@@ -15,7 +15,6 @@
 - Linting & formatting (affects developer workflow)
 
 **Deferred Decisions (Post-MVP → Phase 2):**
-- Authentication & authorization — JWT via `python-jose[cryptography]`, password hashing via `passlib[bcrypt]`, FastAPI built-in `OAuth2PasswordBearer`, RBAC with selective endpoint protection
 - Rate limiting — `slowapi` with per-endpoint limits configurable via environment variables
 - API versioning — URL prefix (`/v1/`) using FastAPI `APIRouter(prefix="/v1")`
 - Custom Prometheus metric example (FR23a) — business counter via Prometheus client library
@@ -37,7 +36,7 @@
 
 ## Authentication & Security
 
-Deferred to Phase 2 per PRD. JWT-based authentication using FastAPI's built-in OAuth2 utilities (`OAuth2PasswordBearer`), `python-jose[cryptography]` for token encoding, `passlib[bcrypt]` for password hashing. RBAC with selective endpoint protection via `Depends()`.
+Authentication and authorization are implemented with an external IdP-first pattern: request bearer tokens are validated using remote JWKS/discovery metadata and mapped into a typed principal model; RBAC is enforced through explicit route dependencies (`require_auth`, `require_role`) rather than global middleware. The system supports two auth modes: `AUTH_TYPE=none` for local/dev bypass and `AUTH_TYPE=entra` for external identity integration. Outbound OAuth flows (`client_credentials` and on-behalf-of) are provided for downstream API access (including Graph-backed role retrieval when enabled). No local username/password store or local token-issuance endpoint is part of the architecture.
 
 ## API & Communication Patterns
 

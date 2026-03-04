@@ -51,10 +51,10 @@ FR38: Infrastructure endpoints (`/health`, `/metrics`, `/docs`, `/redoc`) remain
 FR30: The application enforces per-endpoint rate limits on API requests using `slowapi`
 FR31: Rate limit thresholds are configurable via environment variables, with sensible defaults
 FR32: The application returns a 429 response with standard rate-limit headers and a structured error body when limits are exceeded
-FR33: The application supports JWT-based authentication using FastAPI's built-in OAuth2 utilities
-FR34: The application provides a token endpoint for obtaining JWT access tokens
-FR35: The application supports role-based access control (RBAC), allowing selective endpoint protection via FastAPI's dependency injection
-FR36: Authentication configuration (JWT secret, algorithm, token expiry) is configurable via environment variables
+FR33: The application supports external IdP bearer-token authentication with JWT signature/claim validation (issuer required, audience optional) and maps claims into a typed principal model
+FR34: The application supports outbound OAuth token acquisition (client credentials and on-behalf-of) for external service and Graph integrations, and does not require a local token-issuance endpoint
+FR35: The application supports role-based access control (RBAC) through reusable FastAPI dependencies, allowing selective endpoint protection and optional remote role enrichment
+FR36: Authentication and authorization integration settings (auth mode, IdP endpoints, client credentials, Graph role lookup, HTTP timeout/retry, role-enforcement toggle) are configurable via environment variables
 
 ## Additional Requirements
 
@@ -136,9 +136,9 @@ FR36: Authentication configuration (JWT secret, algorithm, token expiry) is conf
 | FR30 | Epic 9 | Per-endpoint rate limiting |
 | FR31 | Epic 9 | Rate limit thresholds from env variables |
 | FR32 | Epic 9 | 429 response with rate-limit headers |
-| FR33 | Epic 10 | JWT authentication via FastAPI OAuth2 |
-| FR34 | Epic 10 | Token endpoint for JWT access tokens |
-| FR35 | Epic 10 | Role-based access control (RBAC) |
-| FR36 | Epic 10 | Auth config from env variables |
+| FR33 | Epic 10 | External IdP JWT bearer authentication |
+| FR34 | Epic 10 | Outbound OAuth token acquisition (CC + OBO), no local token endpoint |
+| FR35 | Epic 10 | Route-level RBAC with optional remote role enrichment |
+| FR36 | Epic 10 | Auth/authz integration config from env variables |
 | FR37 | Epic 8 | Versioned URL prefix for business endpoints |
 | FR38 | Epic 8 | Infrastructure endpoints unversioned at root |

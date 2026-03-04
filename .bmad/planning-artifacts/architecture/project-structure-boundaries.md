@@ -27,7 +27,19 @@ fastapi-archetype/
 │       │   └── dummy.py                    # Dummy SQLModel: ORM + Pydantic validation (FR6–FR7)
 │       ├── api/
 │       │   ├── __init__.py
-│       │   └── dummy_routes.py             # GET /dummies, POST /dummies (FR1–FR2, FR4)
+│       │   ├── v1/
+│       │   │   └── dummy_routes.py         # /v1/dummies (GET open, POST auth-protected)
+│       │   └── v2/
+│       │       └── dummy_routes.py         # /v2/dummies (GET open, POST role-protected)
+│       ├── auth/
+│       │   ├── contracts.py                # AuthProvider interface + auth domain errors
+│       │   ├── models.py                   # Principal + Role model
+│       │   ├── dependencies.py             # require_auth / require_role FastAPI dependencies
+│       │   ├── facade.py                   # Provider-agnostic auth facade
+│       │   ├── factory.py                  # Settings-driven provider wiring
+│       │   └── providers/
+│       │       ├── none.py                 # AUTH_TYPE=none development provider
+│       │       └── entra.py                # AUTH_TYPE=entra external IdP provider
 │       ├── services/
 │       │   ├── __init__.py
 │       │   └── dummy_service.py            # Business logic; AOP-decorated target (FR17–FR19)
@@ -116,3 +128,7 @@ Cross-cutting (parallel to request flow):
 | FR23a (Custom Prometheus metric) | `observability/prometheus.py` | Phase 2 — custom metric alongside auto-instrumented HTTP metrics |
 | FR24–FR25 (Docker) | `Dockerfile` | `.env.example` |
 | FR26–FR28 (Constants/codes) | `core/constants.py`, `core/errors.py` | — |
+| FR33 (External IdP bearer auth) | `auth/providers/entra.py`, `auth/dependencies.py` | `core/config.py` |
+| FR34 (Outbound OAuth token acquisition) | `auth/providers/entra.py` | `auth/facade.py` |
+| FR35 (Route-level RBAC) | `auth/dependencies.py`, `api/v2/dummy_routes.py` | `auth/models.py` |
+| FR36 (Auth/authz env config) | `core/config.py` | `.env.example`, `compose/docker-compose.yaml` |

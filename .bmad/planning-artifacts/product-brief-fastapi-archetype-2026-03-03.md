@@ -68,7 +68,7 @@ N/A -- as an internal reference/scaffolding project, a formal user journey is no
 
 - **Phase 0 (MVP):** Reference implementation with all capabilities except those explicitly deferred to later phases
 - **Phase 1:** Docker-compose environment adding MariaDB, OTEL collector, and Prometheus
-- **Phase 2:** Expansion features — authentication, rate limiting, API versioning, custom Prometheus metric example
+- **Phase 2:** Expansion features — external IdP authentication/RBAC, rate limiting, API versioning, custom Prometheus metric example
 - **Phase 3:** Cookiecutter scaffolding wrapping the feature-complete implementation into a reusable project template
 
 ### Phase 0 (MVP) Success Criteria
@@ -139,5 +139,5 @@ Defined in the Success Metrics section above (Phase 0 Success Criteria).
 ### Future Vision
 
 - **Phase 1:** Docker-compose environment adding MariaDB, OTEL collector, and Prometheus
-- **Phase 2:** Expansion features — authentication, rate limiting, API versioning, custom Prometheus metric example
+- **Phase 2:** Expansion features — external IdP authentication/RBAC, rate limiting, API versioning, custom Prometheus metric example
 - **Phase 3:** Cookiecutter scaffolding wrapping the feature-complete implementation into a reusable project template

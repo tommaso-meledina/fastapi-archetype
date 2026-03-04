@@ -44,6 +44,6 @@ Structured error responses with:
 
 - **Rate limiting:** deferred to Phase 2
 - **API versioning:** deferred to Phase 2
-- **Authentication:** deferred to Phase 2
+- **Authentication:** external IdP integration pattern (no local token endpoint), with `AUTH_TYPE=none` for local/dev and `AUTH_TYPE=entra` for remote bearer-token validation
 - **Custom Prometheus metric example:** deferred to Phase 2 (FR23a)
 - **SDK generation:** not applicable

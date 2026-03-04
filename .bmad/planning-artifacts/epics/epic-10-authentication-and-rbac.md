@@ -1,77 +1,76 @@
-# Epic 10: Authentication and Role-Based Access Control
+# Epic 10: External IdP Authentication and Role-Based Access Control
 
-A developer can see JWT-based authentication and role-based access control (RBAC) integrated into the application using FastAPI's built-in security utilities — with selective endpoint protection via dependency injection and a replicable pattern for securing any service scaffolded from this archetype.
+A developer can see external IdP-based bearer-token authentication and RBAC integrated into the application, with explicit per-route protection via FastAPI dependencies and a clear extension point for additional providers.
 
 **New libraries required:**
-- `python-jose[cryptography]` — JWT encoding/decoding (used in FastAPI's official security tutorial)
-- `passlib[bcrypt]` — password hashing (used in FastAPI's official security tutorial)
+- `python-jose[cryptography]` — JWT parsing/signature verification
+- `httpx` — async outbound calls to discovery/JWKS/token/Graph endpoints
 
-## Story 10.1: JWT Authentication Infrastructure
+## Story 10.1: External IdP Authentication Infrastructure
 
 As a **software engineer**,
-I want **a JWT-based authentication flow using FastAPI's built-in OAuth2 utilities**,
-So that **I have a working, standard authentication pattern I can adapt for any service, with token-based security that integrates with Swagger UI's Authorize button**.
+I want **authentication to rely on externally issued bearer tokens (remote IdP) rather than local credential validation**,
+So that **services based on this archetype can integrate with enterprise identity platforms without implementing local username/password auth flows**.
 
 **Acceptance Criteria:**
 
-**Given** the application is running
-**When** I send a `POST` to the token endpoint with valid credentials
-**Then** the response contains a JWT access token
-**And** the token includes user identity and role claims
+**Given** `AppSettings` defines authentication mode and provider settings
+**When** I inspect configuration behavior
+**Then** `AUTH_TYPE` supports `none` and `entra`
+**And** `AUTH_TYPE=entra` requires issuer, discovery/JWKS, token endpoint, client id, and client secret settings
 
-**Given** the application is running
-**When** I send a `POST` to the token endpoint with invalid credentials
-**Then** the response is a 401 with a structured error following the application's error format
+**Given** the application runs with `AUTH_TYPE=entra`
+**When** a protected endpoint receives a bearer token
+**Then** the token is validated against remote JWKS keys
+**And** issuer validation is enforced
+**And** audience validation is enforced only when `AUTH_EXTERNAL_AUDIENCE` is configured
+**And** token claims are mapped into a typed principal model
 
-**Given** `AppSettings` defines authentication configuration
-**When** I inspect the settings
-**Then** JWT secret key, algorithm, and token expiry are configurable via environment variables
-**And** sensible defaults are provided for development
+**Given** token validation fails (missing, malformed, invalid signature, expired, bad issuer/audience)
+**When** I call a protected endpoint
+**Then** the response is a 401 with the application's structured error format
 
 **Given** the authentication implementation
 **When** I inspect the code
-**Then** it uses `fastapi.security.OAuth2PasswordBearer` for token extraction
-**And** it uses `python-jose` for JWT encoding/decoding
-**And** it uses `passlib` for password hashing
-**And** the pattern follows FastAPI's official security tutorial structure
+**Then** it uses `fastapi.security.HTTPBearer` to extract bearer tokens
+**And** it performs async outbound OAuth/IdP calls via provider-specific implementations behind an auth facade
+**And** it does not expose a local token-issuance endpoint
 
-**Given** the Swagger UI at `/docs`
-**When** I click the "Authorize" button
-**Then** I can authenticate using the OAuth2 Password flow and subsequent requests include the token automatically
+**Given** the application runs with `AUTH_TYPE=none`
+**When** protected endpoints are called without a token
+**Then** requests are treated as authenticated for local development via a deterministic stub principal
 
 ## Story 10.2: Role-Based Access Control and Selective Endpoint Protection
 
 As a **software engineer**,
-I want **role-based access control that allows selective protection of individual endpoints via FastAPI's dependency injection**,
-So that **I can control which endpoints require authentication and which roles are authorized, using a pattern I can replicate for new endpoints**.
+I want **RBAC to be enforced via reusable route dependencies backed by external-identity claims and optional Graph role lookups**,
+So that **I can selectively secure endpoints while keeping protection logic explicit and easy to replicate**.
 
 **Acceptance Criteria:**
 
-**Given** the application defines user roles
+**Given** the application defines a central role model
 **When** I inspect the implementation
-**Then** roles are represented as an enum or similar structure in a central location
-**And** user records include a role assignment
+**Then** roles are represented in a shared enum/type
+**And** principals carry normalized role claims
 
-**Given** a protected endpoint (e.g., `POST /dummies`)
-**When** I send a request without a valid JWT token
+**Given** an endpoint protected with authentication-only dependency
+**When** I call it with `AUTH_TYPE=entra` and no bearer token
 **Then** the response is a 401 with a structured error
 
-**Given** a protected endpoint requiring a specific role
-**When** I send a request with a valid JWT token but insufficient role
+**Given** an endpoint protected with role dependency
+**When** I call it with an authenticated principal that lacks the required role
 **Then** the response is a 403 with a structured error
 
-**Given** an unprotected endpoint (e.g., `GET /dummies`)
-**When** I send a request without a token
-**Then** the response succeeds normally — no authentication required
+**Given** graph-role enforcement is enabled
+**When** role checks run
+**Then** role evaluation combines token roles with externally fetched role assignments for the current user
+
+**Given** an unprotected endpoint
+**When** I call it without a token
+**Then** the response succeeds normally
 
 **Given** the endpoint protection implementation
-**When** I inspect the code
-**Then** protection is applied via `Depends()` on individual route handlers
-**And** the role-check dependency is reusable and accepts the required role as a parameter
-**And** the pattern is clear enough to replicate: adding protection to a new endpoint requires only adding a `Depends()` parameter
-
-**Given** the application
-**When** I inspect which endpoints are protected
-**Then** at least one endpoint demonstrates authentication-only protection
-**And** at least one endpoint demonstrates role-based protection
-**And** at least one endpoint remains fully open
+**When** I inspect route handlers
+**Then** protection is applied explicitly through `Depends()` per endpoint
+**And** role checking is reusable through a parameterized dependency factory
+**And** adding auth/authz to a new endpoint requires only wiring the appropriate dependency

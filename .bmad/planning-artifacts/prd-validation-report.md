@@ -253,7 +253,7 @@ This is a **reference implementation** project. Its explicit purpose is to demon
 #### Required Sections (from project-types.csv)
 
 **endpoint_specs:** Present -- Endpoint Specification table in API Backend Specific Requirements
-**auth_model:** Intentionally Deferred -- "Authentication: deferred to Phase 2" explicitly documented
+**auth_model:** Present -- external IdP bearer-token auth model documented (including `AUTH_TYPE=none|entra` and route-level auth dependencies)
 **data_schemas:** Present -- Data Schemas subsection + FR6 (SQLModel single model)
 **error_codes:** Present -- Error Response Format subsection + FR3, FR27
 **rate_limits:** Intentionally Deferred -- "Rate limiting: deferred to Phase 2" explicitly documented
@@ -267,13 +267,13 @@ This is a **reference implementation** project. Its explicit purpose is to demon
 
 #### Compliance Summary
 
-**Required Sections:** 4/6 present, 2/6 intentionally deferred (with explicit documentation)
+**Required Sections:** 5/6 present, 1/6 intentionally deferred (rate limits)
 **Excluded Sections Present:** 1 (user_journeys -- valid deviation, developer workflows not UI journeys)
-**Compliance Score:** 100% (all requirements addressed: 4 present + 2 intentionally deferred with rationale)
+**Compliance Score:** 100% (all requirements addressed: 5 present + 1 intentionally deferred with rationale)
 
 **Severity:** Pass
 
-**Recommendation:** All required sections for api_backend are addressed. Deferred items (auth, rate limiting) are explicitly documented with phase assignments. User Journeys presence is a valid deviation for a developer-facing reference implementation.
+**Recommendation:** All required sections for api_backend are addressed. Rate limiting remains explicitly deferred while authentication is now fully specified using the external IdP model. User Journeys presence is a valid deviation for a developer-facing reference implementation.
 
 ### SMART Requirements Validation
 

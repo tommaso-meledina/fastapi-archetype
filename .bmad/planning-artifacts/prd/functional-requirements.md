@@ -66,10 +66,10 @@
 
 ## Authentication & Authorization
 
-- FR33: The application supports JWT-based authentication using FastAPI's built-in OAuth2 utilities
-- FR34: The application provides a token endpoint for obtaining JWT access tokens
-- FR35: The application supports role-based access control (RBAC), allowing selective endpoint protection via FastAPI's dependency injection
-- FR36: Authentication configuration (JWT secret, algorithm, token expiry) is configurable via environment variables
+- FR33: The application supports external IdP bearer-token authentication with JWT signature/claim validation (issuer required, audience optional) and maps claims into a typed principal model
+- FR34: The application supports outbound OAuth token acquisition (client credentials and on-behalf-of) for external service and Graph integrations, and does not require a local token-issuance endpoint
+- FR35: The application supports role-based access control (RBAC) through reusable FastAPI dependencies, allowing selective endpoint protection and optional remote role enrichment
+- FR36: Authentication and authorization integration settings (auth mode, IdP endpoints, client credentials, Graph role lookup, HTTP timeout/retry, role-enforcement toggle) are configurable via environment variables
 
 ## Code Organization
 

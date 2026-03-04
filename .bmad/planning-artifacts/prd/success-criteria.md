@@ -28,5 +28,5 @@ N/A -- internal reference/scaffolding project. Success is measured by technical 
 | All 12 MVP capabilities implemented and working together | 100% | Phase 0 |
 | Test coverage | > 90% | Phase 0 |
 | Docker-compose environment with MariaDB + OTEL + Prometheus | All services healthy | Phase 1 |
-| Expansion features (auth, rate limiting, API versioning, custom metric) integrated | All tests pass | Phase 2 |
+| Expansion features (external IdP auth/RBAC, rate limiting, API versioning, custom metric) integrated | All tests pass | Phase 2 |
 | New project scaffolded and running | < 5 minutes | Phase 3 |

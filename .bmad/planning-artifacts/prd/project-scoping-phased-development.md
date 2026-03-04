@@ -32,7 +32,7 @@
 - Docker-compose environment with MariaDB, OTEL collector, and Prometheus
 
 **Phase 2 (Expansion):**
-- Authentication
+- External IdP authentication and RBAC (`AUTH_TYPE=none|entra`, route-level dependencies, optional Graph role enrichment)
 - Rate limiting
 - API versioning
 - Custom Prometheus metric example (FR23a)

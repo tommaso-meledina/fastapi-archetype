@@ -41,7 +41,7 @@ A developer can see per-endpoint rate limiting enforced on the API, with limits 
 **FRs covered:** FR30–FR32
 **Phase:** 2 (Expansion)
 
-## Epic 10: Authentication and Role-Based Access Control
-A developer can see JWT-based authentication and RBAC integrated using FastAPI's built-in security utilities, with selective endpoint protection via dependency injection.
+## Epic 10: External IdP Authentication and Role-Based Access Control
+A developer can see external IdP-backed bearer-token authentication and RBAC integrated with explicit route dependencies, including optional remote role enrichment and a development `AUTH_TYPE=none` mode.
 **FRs covered:** FR33–FR36
 **Phase:** 2 (Expansion)
