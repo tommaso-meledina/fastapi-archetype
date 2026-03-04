@@ -8,6 +8,7 @@
 - [Purpose](#purpose)
 - [Usage](#usage)
 - [Capabilities](#capabilities)
+- [Extension Guide](#extension-guide)
 
 ## Purpose
 
@@ -255,3 +256,109 @@ Check the codebase:
 uv run ruff check src/ tests/
 uv run ruff format --check src/ tests/
 ```
+
+## Extension Guide
+
+The `/dummies` resource serves as a template. To add a new resource (for example, `Widget`), follow these steps.
+
+**1. Define the model** in `src/fastapi_archetype/models/widget.py`:
+
+```python
+from pydantic import ConfigDict
+from sqlmodel import Field, SQLModel
+
+def _to_camel(name: str) -> str:
+    components = name.split("_")
+    return components[0] + "".join(x.title() for x in components[1:])
+
+class Widget(SQLModel, table=True):
+    model_config = ConfigDict(alias_generator=_to_camel, populate_by_name=True)
+    __tablename__ = "WIDGET"
+
+    id: int | None = Field(default=None, primary_key=True)
+    label: str
+    weight: float | None = None
+```
+
+SQLModel handles both the ORM mapping and Pydantic validation from this single definition.
+
+**2. Register the resource constant** in `core/constants.py`:
+
+```python
+WIDGETS = ResourceDefinition(
+    path="/widgets",
+    name="Widgets",
+    description="Widget resources",
+)
+```
+
+**3. Create the service** at `services/v1/widget_service.py`, following the same pattern as `dummy_service.py`:
+
+```python
+from __future__ import annotations
+from typing import TYPE_CHECKING
+from sqlmodel import select
+from fastapi_archetype.models.widget import Widget
+
+if TYPE_CHECKING:
+    from sqlmodel import Session
+
+def get_all_widgets(session: Session) -> list[Widget]:
+    return list(session.exec(select(Widget)).all())
+
+def create_widget(session: Session, widget: Widget) -> Widget:
+    session.add(widget)
+    session.commit()
+    session.refresh(widget)
+    return widget
+```
+
+**4. Wire up AOP logging** in `services/__init__.py`:
+
+```python
+from fastapi_archetype.services.v1 import widget_service as v1_widget_service
+apply_logging(v1_widget_service)
+```
+
+**5. Add the routes** at `api/v1/widget_routes.py`:
+
+```python
+from __future__ import annotations
+from typing import TYPE_CHECKING
+from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi_archetype.core.constants import WIDGETS
+from fastapi_archetype.core.database import get_session
+from fastapi_archetype.core.rate_limit import limiter
+from fastapi_archetype.core.config import AppSettings
+from fastapi_archetype.models.widget import Widget
+from fastapi_archetype.services.v1 import widget_service
+
+if TYPE_CHECKING:
+    from sqlmodel import Session
+
+router = APIRouter(prefix=WIDGETS.path, tags=[WIDGETS.name])
+_settings = AppSettings()
+
+@router.get("", response_model=list[Widget])
+@limiter.limit(_settings.rate_limit_get_dummies)
+def list_widgets(request: Request, response: Response, session: Session = Depends(get_session)) -> list[Widget]:
+    return widget_service.get_all_widgets(session)
+
+@router.post("", response_model=Widget, status_code=status.HTTP_201_CREATED)
+@limiter.limit(_settings.rate_limit_post_dummies)
+def create_widget(request: Request, widget: Widget, response: Response, session: Session = Depends(get_session)) -> Widget:
+    return widget_service.create_widget(session, widget)
+```
+
+Add auth dependencies (`require_auth`, `require_role`) to protected endpoints as needed.
+
+**6. Include the router** in `api/v1/__init__.py`:
+
+```python
+from fastapi_archetype.api.v1.widget_routes import router as widget_router
+router.include_router(widget_router)
+```
+
+**7. Add tests** under `tests/`, mirroring the structure in `tests/api/test_dummy_routes.py` and `tests/services/v1/test_dummy_service.py`. The existing `conftest.py` fixtures (SQLite in-memory engine, test client, session override) work for any new model without modification.
+
+The new resource automatically inherits OpenTelemetry tracing, Prometheus HTTP metrics, structured error handling, rate limiting, and AOP logging with no additional configuration.
