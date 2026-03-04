@@ -84,3 +84,9 @@ development_status:
   epic-9: done
   9-1-per-endpoint-rate-limiting-with-environment-configuration: done
   epic-9-retrospective: optional
+
+  epic-11: in-progress
+  11-1-auth-error-response-sanitization: done
+  11-2-synthetic-idp-integration-tests: backlog
+  11-3-role-mapping-provider-abstraction: backlog
+  epic-11-retrospective: optional

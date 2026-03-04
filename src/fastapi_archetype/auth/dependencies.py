@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 from typing import Annotated
 
@@ -12,6 +13,8 @@ from fastapi_archetype.auth.factory import build_auth_facade
 from fastapi_archetype.auth.models import Principal, Role  # noqa: TC001
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.errors import AppException, ErrorCode
+
+logger = logging.getLogger(__name__)
 
 _settings = AppSettings()
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -41,15 +44,17 @@ async def get_current_principal(
         request.state.bearer_token = ""
         return principal
     if token is None:
-        raise AppException(ErrorCode.UNAUTHORIZED, detail="Missing bearer token")
+        raise AppException(ErrorCode.UNAUTHORIZED)
     try:
         principal = await facade.authenticate_bearer_token(token)
     except UnauthorizedError as exc:
-        raise AppException(ErrorCode.UNAUTHORIZED, detail=str(exc)) from exc
+        logger.warning("Bearer token authentication failed: %s", exc)
+        raise AppException(ErrorCode.UNAUTHORIZED) from exc
     except AppException:
         raise
     except Exception as exc:
-        raise AppException(ErrorCode.UNAUTHORIZED, detail=str(exc)) from exc
+        logger.warning("Unexpected authentication error: %s", exc)
+        raise AppException(ErrorCode.UNAUTHORIZED) from exc
     request.state.current_principal = principal
     request.state.bearer_token = token
     return principal
@@ -77,13 +82,16 @@ def require_role(required_role: Role):
                         bearer_token,
                     )
                 except Exception as exc:
-                    raise AppException(ErrorCode.UNAUTHORIZED, detail=str(exc)) from exc
+                    logger.warning("Graph role enrichment failed: %s", exc)
+                    raise AppException(ErrorCode.UNAUTHORIZED) from exc
                 roles.update({role.lower() for role in graph_roles})
         if required_role.value not in roles:
-            raise AppException(
-                ErrorCode.FORBIDDEN,
-                detail=f"Missing required role: {required_role.value}",
+            logger.warning(
+                "Role check failed: principal %s lacks role %s",
+                principal.subject,
+                required_role.value,
             )
+            raise AppException(ErrorCode.FORBIDDEN)
         return principal
 
     return _dependency
