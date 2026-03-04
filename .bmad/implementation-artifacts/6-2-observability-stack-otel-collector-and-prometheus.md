@@ -1,6 +1,6 @@
 # Story 6.2: Observability Stack — OTEL Collector and Prometheus
 
-Status: review
+Status: done
 
 ## Story
 
@@ -94,6 +94,21 @@ so that **I can verify traces are exported and metrics are scraped end-to-end wi
 - [Source: compose/observability/otel-collector-config.yaml]
 - [Source: compose/observability/prometheus.yaml]
 
+## Senior Developer Review (AI)
+
+**Review Date:** 2026-03-04
+**Review Outcome:** Approve (with fixes applied)
+
+**Findings:** 1 High, 1 Medium, 2 Low
+
+**Action Items:**
+- [x] [HIGH] Fix OTEL Collector image: core distribution (`otel/opentelemetry-collector`) does not include `jaeger` or `prometheus` exporters — switch to `otel/opentelemetry-collector-contrib`
+- [x] [MEDIUM] Add `global` section to Prometheus config with default `scrape_interval` and `evaluation_interval`
+- [ ] [LOW] Consider adding otel-collector scrape job to Prometheus targeting port 8889
+- [ ] [LOW] Consider adding persistent volume for Prometheus data
+
+**All ACs validated and implemented. All tasks confirmed complete.**
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -114,7 +129,10 @@ claude-4.6-opus (Cursor Agent)
 ### Change Log
 
 - 2026-03-04: Implemented Observability Stack — OTEL Collector and Prometheus (Story 6.2)
+- 2026-03-04: Code review — switched to contrib collector image, added Prometheus global config
 
 ### File List
 
 - compose/observability/otel-collector-config.yaml (modified — added debug exporter, removed const_labels)
+- compose/.env (modified — changed OTELCOL_IMG to contrib image)
+- compose/observability/prometheus.yaml (modified — added global section)
