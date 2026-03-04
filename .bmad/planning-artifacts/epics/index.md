@@ -19,7 +19,7 @@
     - [Epic 7: Custom Prometheus Metric Example](./epic-list.md#epic-7-custom-prometheus-metric-example)
     - [Epic 8: API Versioning](./epic-list.md#epic-8-api-versioning)
     - [Epic 9: Rate Limiting](./epic-list.md#epic-9-rate-limiting)
-  - [Epic 10: External IdP Authentication and Role-Based Access Control](./epic-list.md#epic-10-external-idp-authentication-and-role-based-access-control)
+    - [Epic 10: External IdP Authentication and Role-Based Access Control](./epic-list.md#epic-10-external-idp-authentication-and-role-based-access-control)
     - [Epic 11: Auth/Authz Hardening](./epic-list.md#epic-11-authauthz-hardening)
   - [Epic 1: Running Application with CRUD API](./epic-1-running-application-with-crud-api.md)
     - [Story 1.1: Project Initialization and Package Structure](./epic-1-running-application-with-crud-api.md#story-11-project-initialization-and-package-structure)

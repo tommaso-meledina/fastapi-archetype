@@ -85,6 +85,11 @@ development_status:
   9-1-per-endpoint-rate-limiting-with-environment-configuration: done
   epic-9-retrospective: optional
 
+  epic-10: done
+  10-1-external-idp-authentication-infrastructure: done
+  10-2-role-based-access-control-and-selective-endpoint-protection: done
+  epic-10-retrospective: optional
+
   epic-11: done
   11-1-auth-error-response-sanitization: done
   11-2-synthetic-idp-integration-tests: done
