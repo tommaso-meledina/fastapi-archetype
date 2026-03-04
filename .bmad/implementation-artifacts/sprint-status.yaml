@@ -81,6 +81,6 @@ development_status:
   8-1-url-prefix-versioning-with-apirouter: done
   epic-8-retrospective: optional
 
-  epic-9: in-progress
-  9-1-per-endpoint-rate-limiting-with-environment-configuration: review
+  epic-9: done
+  9-1-per-endpoint-rate-limiting-with-environment-configuration: done
   epic-9-retrospective: optional

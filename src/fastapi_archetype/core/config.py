@@ -33,7 +33,6 @@ class AppSettings(BaseSettings):
 
     root_path: str = ""
 
-    rate_limit_default: str = "100/minute"
     rate_limit_get_dummies: str = "100/minute"
     rate_limit_post_dummies: str = "10/minute"
 

@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 if TYPE_CHECKING:
     from fastapi import Request
     from fastapi.exceptions import RequestValidationError
+    from slowapi.errors import RateLimitExceeded
 
 
 class ErrorCode(enum.Enum):
@@ -45,14 +46,15 @@ async def app_exception_handler(_request: Request, exc: AppException) -> JSONRes
     )
 
 
-async def rate_limit_exceeded_handler(_request: Request, exc: Any) -> JSONResponse:
-    retry_after = getattr(exc, "detail", None)
+async def rate_limit_exceeded_handler(
+    _request: Request, exc: RateLimitExceeded
+) -> JSONResponse:
     return JSONResponse(
         status_code=ErrorCode.RATE_LIMITED.http_status,
         content=_build_error_body(
             ErrorCode.RATE_LIMITED.code,
             ErrorCode.RATE_LIMITED.message,
-            f"Retry after {retry_after} seconds" if retry_after else None,
+            str(exc.detail),
         ),
     )
 

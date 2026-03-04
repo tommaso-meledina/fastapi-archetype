@@ -1,6 +1,6 @@
 # Story 9.1: Per-Endpoint Rate Limiting with Environment Configuration
 
-Status: review
+Status: done
 
 ## Story
 
@@ -137,10 +137,14 @@ claude-4.6-opus (Cursor Agent)
 - 7 new tests covering: headers on success, 429 on exceed, error body structure, v2 headers, health not limited, remaining decrement
 - All 68 tests pass (7 new + 61 existing), zero regressions
 - Ruff lint and format pass
+- Code review: fixed incorrect detail formatting in rate_limit_exceeded_handler (now passes exc.detail directly)
+- Code review: removed unused rate_limit_default setting (dead code)
+- Code review: properly typed rate_limit_exceeded_handler parameter as RateLimitExceeded
 
 ### Change Log
 
 - 2026-03-04: Implemented per-endpoint rate limiting with slowapi (Story 9.1) — configurable via env vars, structured 429 response, rate-limit headers on all responses
+- 2026-03-04: Code review fixes — corrected error detail formatting, removed dead code, improved type annotations
 
 ### File List
 
