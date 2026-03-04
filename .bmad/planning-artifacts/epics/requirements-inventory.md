@@ -55,6 +55,9 @@ FR33: The application supports external IdP bearer-token authentication with JWT
 FR34: The application supports outbound OAuth token acquisition (client credentials and on-behalf-of) for external service and Graph integrations, and does not require a local token-issuance endpoint
 FR35: The application supports role-based access control (RBAC) through reusable FastAPI dependencies, allowing selective endpoint protection and optional remote role enrichment
 FR36: Authentication and authorization integration settings (auth mode, IdP endpoints, client credentials, Graph role lookup, HTTP timeout/retry, role-enforcement toggle) are configurable via environment variables
+FR39: Auth error responses return generic, safe client-facing messages; provider-specific failure details are logged server-side only
+FR40: The `entra` auth code path is covered by integration tests using a synthetic IdP (test-generated RSA keypair, monkeypatched HTTP) that verify bearer validation, claim mapping, and role enforcement end-to-end
+FR41: Role checks resolve internal role labels to external identifiers through a pluggable `RoleMappingProvider` contract (`to_external(str) -> str`), with a default identity-mapping implementation
 
 ## Additional Requirements
 
@@ -142,3 +145,6 @@ FR36: Authentication and authorization integration settings (auth mode, IdP endp
 | FR36 | Epic 10 | Auth/authz integration config from env variables |
 | FR37 | Epic 8 | Versioned URL prefix for business endpoints |
 | FR38 | Epic 8 | Infrastructure endpoints unversioned at root |
+| FR39 | Epic 11 | Auth error response sanitization (no internal detail leakage) |
+| FR40 | Epic 11 | Synthetic IdP integration tests for entra auth path |
+| FR41 | Epic 11 | Pluggable RoleMappingProvider with identity-mapping default |

@@ -70,6 +70,9 @@
 - FR34: The application supports outbound OAuth token acquisition (client credentials and on-behalf-of) for external service and Graph integrations, and does not require a local token-issuance endpoint
 - FR35: The application supports role-based access control (RBAC) through reusable FastAPI dependencies, allowing selective endpoint protection and optional remote role enrichment
 - FR36: Authentication and authorization integration settings (auth mode, IdP endpoints, client credentials, Graph role lookup, HTTP timeout/retry, role-enforcement toggle) are configurable via environment variables
+- FR39: Auth error responses return generic, safe client-facing messages; provider-specific failure details are logged server-side only
+- FR40: The `entra` auth code path is covered by integration tests using a synthetic IdP (test-generated RSA keypair, monkeypatched HTTP) that verify bearer validation, claim mapping, and role enforcement end-to-end
+- FR41: Role checks resolve internal role labels to external identifiers through a pluggable `RoleMappingProvider` contract (`to_external(str) -> str`), with a default identity-mapping implementation
 
 ## Code Organization
 

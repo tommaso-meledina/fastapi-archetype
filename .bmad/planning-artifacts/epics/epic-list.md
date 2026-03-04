@@ -45,3 +45,8 @@ A developer can see per-endpoint rate limiting enforced on the API, with limits 
 A developer can see external IdP-backed bearer-token authentication and RBAC integrated with explicit route dependencies, including optional remote role enrichment and a development `AUTH_TYPE=none` mode.
 **FRs covered:** FR33–FR36
 **Phase:** 2 (Expansion)
+
+## Epic 11: Auth/Authz Hardening
+Auth subsystem refinements to improve production-readiness: sanitized error responses, validated auth behavior under realistic IdP simulation, and an extensible role-mapping contract for bridging internal role labels to external identity systems.
+**FRs covered:** FR39–FR41
+**Phase:** 2 (Expansion)
