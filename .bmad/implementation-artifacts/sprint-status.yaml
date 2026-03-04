@@ -72,3 +72,7 @@ development_status:
   6-1-docker-compose-with-application-and-mariadb: done
   6-2-observability-stack-otel-collector-and-prometheus: done
   epic-6-retrospective: optional
+
+  epic-7: done
+  7-1-custom-business-counter-metric: done
+  epic-7-retrospective: optional
