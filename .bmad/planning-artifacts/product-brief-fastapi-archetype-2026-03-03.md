@@ -10,7 +10,7 @@ author: Tom
 
 ## Executive Summary
 
-**fastapi-archetype** is a reference implementation that demonstrates a complete, production-grade Python/FastAPI stack -- the modern equivalent of a mature Java/Spring Boot setup. Its initial purpose is to prove that all key enterprise capabilities (ORM with automatic REST exposure, validation, testing, OpenAPI docs, AOP, observability via OTEL/Prometheus, boilerplate reduction, and containerization) can coexist coherently in a single Python/FastAPI application. Its final objective is to package this proven setup into a scaffolding project (via Cookiecutter) for mass-generating Python/FastAPI microservices with all these capabilities already wired up. The project uses a minimal `/dummies` CRUD resource backed by MariaDB to keep the domain trivial while the infrastructure and cross-cutting concerns remain the focus. Cookiecutter-based scaffolding is deferred to Phase 2.
+**fastapi-archetype** is a reference implementation that demonstrates a complete, production-grade Python/FastAPI stack -- the modern equivalent of a mature Java/Spring Boot setup. Its initial purpose is to prove that all key enterprise capabilities (ORM with automatic REST exposure, validation, testing, OpenAPI docs, AOP, observability via OTEL/Prometheus, boilerplate reduction, and containerization) can coexist coherently in a single Python/FastAPI application. Its final objective is to package the proven, feature-complete implementation into a scaffolding project (via Cookiecutter) for mass-generating Python/FastAPI microservices with all these capabilities already wired up. The project uses a minimal `/dummies` CRUD resource backed by MariaDB to keep the domain trivial while the infrastructure and cross-cutting concerns remain the focus. Cookiecutter-based scaffolding is deferred to Phase 3, after all expansion features are integrated.
 
 ---
 
@@ -68,8 +68,8 @@ N/A -- as an internal reference/scaffolding project, a formal user journey is no
 
 - **Phase 0 (MVP):** Reference implementation with all capabilities except those explicitly deferred to later phases
 - **Phase 1:** Docker-compose environment adding MariaDB, OTEL collector, and Prometheus
-- **Phase 2:** Cookiecutter scaffolding wrapping the application code into a reusable project template
-- **Phase 3:** Authentication support
+- **Phase 2:** Expansion features — authentication, rate limiting, API versioning, custom Prometheus metric example
+- **Phase 3:** Cookiecutter scaffolding wrapping the feature-complete implementation into a reusable project template
 
 ### Phase 0 (MVP) Success Criteria
 
@@ -90,6 +90,12 @@ The MVP is considered complete when all of the following are true:
 - The application connects to MariaDB, exports traces to the OTEL collector, and is scraped by Prometheus -- all within the compose environment
 
 ### Phase 2 Success Criteria
+
+- Authentication, rate limiting, and API versioning are integrated into the reference implementation
+- Custom Prometheus metric example demonstrates a replicable pattern alongside auto-instrumented metrics
+- All existing tests continue to pass; new capabilities have corresponding tests
+
+### Phase 3 Success Criteria
 
 - A new project can be scaffolded from the Cookiecutter template and running in under 5 minutes
 
@@ -123,8 +129,8 @@ N/A -- success is measured by the quality gates above, not by traditional KPIs.
 | Capability | Deferred To | Rationale |
 |---|---|---|
 | Docker-compose environment (MariaDB, OTEL collector, Prometheus) | Phase 1 | Infrastructure concern; MVP assumes external services are available |
-| Cookiecutter scaffolding | Phase 2 | Requires proven reference implementation first |
-| Authentication | Phase 3 | Not needed to demonstrate the core architectural capabilities |
+| Authentication, rate limiting, API versioning, custom Prometheus metric | Phase 2 | Not needed to demonstrate the core architectural capabilities |
+| Cookiecutter scaffolding | Phase 3 | Requires proven, feature-complete reference implementation first |
 
 ### MVP Success Criteria
 
@@ -133,5 +139,5 @@ Defined in the Success Metrics section above (Phase 0 Success Criteria).
 ### Future Vision
 
 - **Phase 1:** Docker-compose environment adding MariaDB, OTEL collector, and Prometheus
-- **Phase 2:** Cookiecutter scaffolding wrapping the application code into a reusable project template
-- **Phase 3:** Authentication support
+- **Phase 2:** Expansion features — authentication, rate limiting, API versioning, custom Prometheus metric example
+- **Phase 3:** Cookiecutter scaffolding wrapping the feature-complete implementation into a reusable project template

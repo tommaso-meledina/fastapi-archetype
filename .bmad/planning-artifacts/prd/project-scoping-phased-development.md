@@ -31,14 +31,14 @@
 **Phase 1 (Infrastructure):**
 - Docker-compose environment with MariaDB, OTEL collector, and Prometheus
 
-**Phase 2 (Scaffolding):**
-- Cookiecutter template wrapping the proven implementation
-
-**Phase 3 (Expansion):**
+**Phase 2 (Expansion):**
 - Authentication
 - Rate limiting
 - API versioning
 - Custom Prometheus metric example (FR23a)
+
+**Phase 3 (Scaffolding):**
+- Cookiecutter template wrapping the proven, feature-complete implementation
 
 ## Risk Mitigation Strategy
 

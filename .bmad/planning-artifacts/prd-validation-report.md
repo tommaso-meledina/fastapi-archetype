@@ -253,10 +253,10 @@ This is a **reference implementation** project. Its explicit purpose is to demon
 #### Required Sections (from project-types.csv)
 
 **endpoint_specs:** Present -- Endpoint Specification table in API Backend Specific Requirements
-**auth_model:** Intentionally Deferred -- "Authentication: deferred to Phase 3" explicitly documented
+**auth_model:** Intentionally Deferred -- "Authentication: deferred to Phase 2" explicitly documented
 **data_schemas:** Present -- Data Schemas subsection + FR6 (SQLModel single model)
 **error_codes:** Present -- Error Response Format subsection + FR3, FR27
-**rate_limits:** Intentionally Deferred -- "Rate limiting: deferred to Phase 3" explicitly documented
+**rate_limits:** Intentionally Deferred -- "Rate limiting: deferred to Phase 2" explicitly documented
 **api_docs:** Present -- API Documentation subsection + FR10-FR12
 
 #### Excluded Sections (should not be present)

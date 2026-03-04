@@ -22,7 +22,7 @@
 
 **Functional Requirements:** 29/29 covered
 
-All FRs trace to explicit files in the project tree via the Requirements to Structure Mapping. FR23a (custom Prometheus metric) is scoped to Phase 3.
+All FRs trace to explicit files in the project tree via the Requirements to Structure Mapping. FR23a (custom Prometheus metric) is scoped to Phase 2.
 
 **Non-Functional Requirements:** 10/10 covered
 
@@ -93,10 +93,10 @@ All FRs trace to explicit files in the project tree via the Requirements to Stru
 
 **Areas for Future Enhancement (post-MVP):**
 - Database migrations (Alembic) when schema evolves beyond single table
-- Authentication & authorization middleware (Phase 3)
-- API versioning strategy (Phase 3)
-- Rate limiting (Phase 3)
-- Custom Prometheus metric example (Phase 3, FR23a)
+- Authentication & authorization middleware (Phase 2)
+- API versioning strategy (Phase 2)
+- Rate limiting (Phase 2)
+- Custom Prometheus metric example (Phase 2, FR23a)
 
 ## Implementation Handoff
 

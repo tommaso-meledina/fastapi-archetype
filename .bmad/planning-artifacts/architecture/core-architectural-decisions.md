@@ -15,10 +15,10 @@
 - Linting & formatting (affects developer workflow)
 
 **Deferred Decisions (Post-MVP):**
-- Authentication & authorization → Phase 3
-- Rate limiting → Phase 3
-- API versioning → Phase 3
-- Custom Prometheus metric example (FR23a) → Phase 3
+- Authentication & authorization → Phase 2
+- Rate limiting → Phase 2
+- API versioning → Phase 2
+- Custom Prometheus metric example (FR23a) → Phase 2
 - Database migrations (Alembic) → not in MVP scope; single-table schema managed via SQLModel `create_all`
 
 ## Data Architecture
@@ -37,7 +37,7 @@
 
 ## Authentication & Security
 
-Deferred to Phase 3 per PRD. No authentication, authorization, or security middleware in MVP scope.
+Deferred to Phase 2 per PRD. No authentication, authorization, or security middleware in MVP scope.
 
 ## API & Communication Patterns
 
