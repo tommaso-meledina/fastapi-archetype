@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from sqlmodel import SQLModel
 
-from fastapi_archetype.api.dummy_routes import router as dummy_router
+from fastapi_archetype.api.v1 import router as v1_router
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.constants import HEALTH_PATH
 from fastapi_archetype.core.database import get_engine
@@ -50,7 +50,7 @@ app = FastAPI(
 
 app.add_exception_handler(AppException, app_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
-app.include_router(dummy_router)
+app.include_router(v1_router)
 
 
 @app.get(HEALTH_PATH, tags=["Infrastructure"])

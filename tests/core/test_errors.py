@@ -61,7 +61,7 @@ def test_build_error_body_null_detail() -> None:
 
 
 def test_validation_error_via_http(client: TestClient) -> None:
-    response = client.post("/dummies")
+    response = client.post("/v1/dummies")
     assert response.status_code == 422
     data = response.json()
     assert data["errorCode"] == "VALIDATION_ERROR"

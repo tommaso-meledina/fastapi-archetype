@@ -26,12 +26,12 @@ def test_custom_counter_increments_multiple(session: Session) -> None:
 
 def test_counter_unchanged_on_failed_creation(client: TestClient) -> None:
     before = DUMMIES_CREATED_TOTAL._value.get()
-    client.post("/dummies")
+    client.post("/v1/dummies")
     assert DUMMIES_CREATED_TOTAL._value.get() == before
 
 
 def test_metrics_endpoint_includes_custom_metric(client: TestClient) -> None:
-    client.post("/dummies", json={"name": "MetricTest"})
+    client.post("/v1/dummies", json={"name": "MetricTest"})
     response = client.get("/metrics")
     assert response.status_code == 200
     body = response.text
@@ -41,8 +41,8 @@ def test_metrics_endpoint_includes_custom_metric(client: TestClient) -> None:
 
 def test_metrics_counter_reflects_posts(client: TestClient) -> None:
     before = DUMMIES_CREATED_TOTAL._value.get()
-    client.post("/dummies", json={"name": "A"})
-    client.post("/dummies", json={"name": "B"})
+    client.post("/v1/dummies", json={"name": "A"})
+    client.post("/v1/dummies", json={"name": "B"})
     after = DUMMIES_CREATED_TOTAL._value.get()
     assert after == before + 2
 
