@@ -116,17 +116,17 @@ This document records every architectural decision (AD) made during the design a
 
 ## AD 09 - AOP Function Logging Mechanism
 
-**Context:** All service-layer functions should be automatically logged (inputs and return values) without modifying each function individually. The PRD specifies plain Python decorators first, falling back to `wrapt` only if necessary.
+**Context:** All service-layer functions should be automatically logged (inputs, return values, and exceptions) without modifying each function individually. The mechanism must be applied programmatically at the module level so that service code carries no decorator annotations. The PRD specifies plain Python decorators first, falling back to `wrapt` only if necessary.
 
 **Options:**
 
 | Option | Pros | Cons |
 |--------|------|------|
-| Plain Python decorator (`functools.wraps`) + `apply_logging(module)` | - No external dependency - `apply_logging` wraps all public functions in a module at import time - Clean separation: services code is never modified | - No exception-path logging - No idempotency guard |
+| Plain Python decorator (`functools.wraps`) + `apply_logging(module)` | - No external dependency - `apply_logging` wraps all public functions in a module at import time - Clean separation: services code is never modified - Exception-path logging at ERROR level completes the I/O picture | - No idempotency guard |
 | `wrapt` decorator library | - Handles edge cases (classmethods, descriptors) - Preserves introspection better | - External dependency - Not needed for plain functions |
 | `aspectlib` | - Full AOP framework with pointcuts | - Heavy dependency for a simple use case - Less Pythonic |
 
-**Decision and justification:** Plain Python decorators with `functools.wraps`. The `log_io` decorator logs at DEBUG level, and `apply_logging(module)` wraps all public functions in a target module. Only functions whose `__module__` matches the target are wrapped (re-exported imports are skipped). `wrapt` was not needed — plain decorators proved sufficient for the service-layer use case.
+**Decision and justification:** Plain Python decorators with `functools.wraps`, applied programmatically via `apply_logging(module)` at package initialization — individual service functions carry no decorator annotation. The `log_io` decorator logs inputs and return values at DEBUG level and exceptions at ERROR level, ensuring failures surface in production logs without requiring DEBUG verbosity. `apply_logging(module)` wraps all public functions in a target module at import time; only functions whose `__module__` matches the target are wrapped (re-exported imports are skipped). `wrapt` was not needed — plain decorators proved sufficient for the service-layer use case.
 
 ## AD 10 - Logging Configuration
 
@@ -140,7 +140,7 @@ This document records every architectural decision (AD) made during the design a
 | structlog | - Structured JSON logging - Processor pipeline | - Additional dependency - More complex setup |
 | loguru | - Simpler API - Auto-formatting | - Additional dependency - Replaces stdlib patterns |
 
-**Decision and justification:** stdlib `logging.basicConfig` called in the application lifespan with `LOG_LEVEL` from settings, `sys.stdout` as destination, and `force=True`. Modules obtain loggers via `logging.getLogger(__name__)`. No additional logging library is needed.
+**Decision and justification:** stdlib `logging.basicConfig` called in the application lifespan with `LOG_LEVEL` from settings, `sys.stdout` as destination, and `force=True`. Modules obtain loggers via `logging.getLogger(__name__)`. This is a temporary baseline decision. Structured JSON logging with OTEL trace/span ID correlation is deferred to Epic 12 (Structured Logging with Trace Correlation), not excluded from the project roadmap.
 
 ## AD 11 - OpenTelemetry Tracing Integration
 
@@ -294,7 +294,7 @@ This document records every architectural decision (AD) made during the design a
 | OTEL Collector (core) + Jaeger + Prometheus | - Lighter collector image | - Core distribution lacks Jaeger and Prometheus exporters; cannot route traces or expose collector metrics |
 | Application-only (no observability services) | - Simplest compose file | - Cannot verify observability integration end-to-end |
 
-**Decision and justification:** Full stack with OTEL Collector contrib distribution, Jaeger, Prometheus, and Grafana. The contrib distribution was required because the core OTEL Collector does not include the Jaeger exporter or Prometheus exporter. The stack enables end-to-end verification of the entire observability pipeline.
+**Decision and justification:** Full stack with OTEL Collector contrib distribution, Jaeger, Prometheus, and Grafana. The contrib distribution was required because the core OTEL Collector does not include the Jaeger exporter or Prometheus exporter. The stack enables end-to-end verification of the entire observability pipeline. This decision may be worth revisiting in the future; Grafana Tempo would integrate natively with the existing Grafana instance, accept OTLP directly, and eliminate the need for both Jaeger and the Jaeger exporter in the collector.
 
 ## AD 22 - Dependency Management and Build Tooling
 

@@ -5,8 +5,8 @@ A developer can see that all service-layer functions are automatically logged (i
 ## Story 2.1: AOP Function I/O Logging Decorator
 
 As a **software engineer**,
-I want **a decorator-based mechanism that automatically logs function input arguments and return values for all service-layer functions**,
-So that **I get cross-cutting debug visibility into business logic without modifying individual functions, and I can see the AOP pattern to apply it to new service modules**.
+I want **a module-level AOP mechanism that automatically logs function input arguments, return values, and exceptions for all service-layer functions — applied programmatically at package initialization without annotating individual functions**,
+So that **I get cross-cutting debug and error visibility into business logic without modifying individual functions, and I can see the AOP pattern to apply it to new service modules**.
 
 **Acceptance Criteria:**
 

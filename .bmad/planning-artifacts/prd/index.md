@@ -38,6 +38,7 @@
     - [Cross-Cutting Concerns (AOP)](./functional-requirements.md#cross-cutting-concerns-aop)
     - [Observability](./functional-requirements.md#observability)
     - [Containerization](./functional-requirements.md#containerization)
+    - [Structured Logging](./functional-requirements.md#structured-logging)
     - [Code Organization](./functional-requirements.md#code-organization)
   - [Non-Functional Requirements](./non-functional-requirements.md)
     - [Code Quality & Maintainability](./non-functional-requirements.md#code-quality-maintainability)

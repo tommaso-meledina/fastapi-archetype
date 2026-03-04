@@ -5,8 +5,8 @@ Status: done
 ## Story
 
 As a **software engineer**,
-I want **a decorator-based mechanism that automatically logs function input arguments and return values for all service-layer functions**,
-so that **I get cross-cutting debug visibility into business logic without modifying individual functions, and I can see the AOP pattern to apply it to new service modules**.
+I want **a module-level AOP mechanism that automatically logs function input arguments, return values, and exceptions for all service-layer functions — applied programmatically at package initialization without annotating individual functions**,
+so that **I get cross-cutting debug and error visibility into business logic without modifying individual functions, and I can see the AOP pattern to apply it to new service modules**.
 
 ## Acceptance Criteria
 
@@ -107,10 +107,9 @@ Files NOT to touch:
 **MEDIUM (1 — auto-fixed):**
 1. `apply_logging` wrapped all functions in module namespace including imports (e.g. `select` from sqlmodel). Fixed by adding `__module__` check to only wrap functions defined in the target module.
 
-**LOW (3 — noted, not blocking):**
-1. No exception-path logging in the decorator; if a function raises, only the "called with" entry appears.
-2. No idempotency guard; calling `apply_logging` twice double-wraps functions.
-3. `%r` formatting of args may be verbose for complex objects (Session, SQLModel instances).
+**LOW (2 — noted, not blocking):**
+1. No idempotency guard; calling `apply_logging` twice double-wraps functions.
+2. `%r` formatting of args may be verbose for complex objects (Session, SQLModel instances).
 
 ### Action Items
 

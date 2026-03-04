@@ -56,3 +56,6 @@
     - [Story 11.1: Auth Error Response Sanitization](./epic-11-auth-authz-hardening.md#story-111-auth-error-response-sanitization)
     - [Story 11.2: Synthetic IdP Integration Tests](./epic-11-auth-authz-hardening.md#story-112-synthetic-idp-integration-tests)
     - [Story 11.3: RoleMappingProvider Abstraction](./epic-11-auth-authz-hardening.md#story-113-rolemappingprovider-abstraction)
+  - [Epic 12: Structured Logging with Trace Correlation](./epic-12-structured-logging.md)
+    - [Story 12.1: JSON Log Formatter with Environment Toggle](./epic-12-structured-logging.md#story-121-json-log-formatter-with-environment-toggle)
+    - [Story 12.2: OTEL Trace Context Injection into Log Records](./epic-12-structured-logging.md#story-122-otel-trace-context-injection-into-log-records)

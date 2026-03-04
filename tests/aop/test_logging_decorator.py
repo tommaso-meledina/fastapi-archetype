@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import logging
 from types import ModuleType
-from typing import TYPE_CHECKING
+
+import pytest
 
 from fastapi_archetype.aop.logging_decorator import apply_logging, log_io
-
-if TYPE_CHECKING:
-    import pytest
 
 
 def test_log_io_logs_inputs(caplog: pytest.LogCaptureFixture) -> None:
@@ -73,6 +71,20 @@ def test_apply_logging_skips_private_functions() -> None:
 
     apply_logging(mod)
     assert not hasattr(mod._private, "__wrapped__")
+
+
+def test_log_io_logs_exception_at_error(caplog: pytest.LogCaptureFixture) -> None:
+    @log_io
+    def explode() -> None:
+        raise ValueError("boom")
+
+    with caplog.at_level(logging.DEBUG), pytest.raises(ValueError, match="boom"):
+        explode()
+
+    error_records = [r for r in caplog.records if r.levelno == logging.ERROR]
+    assert len(error_records) == 1
+    assert "explode raised" in error_records[0].message
+    assert "ValueError: boom" in error_records[0].message
 
 
 def test_apply_logging_skips_reexported_imports() -> None:

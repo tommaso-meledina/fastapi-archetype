@@ -74,11 +74,11 @@ Consistent structure for all application errors:
 | Logging configuration | `logging.basicConfig` in `main.py` lifespan; level from `LOG_LEVEL` setting (default `INFO`) | Single configuration point at startup; level-driven visibility control |
 | Logger creation | `logging.getLogger(__name__)` per module | Python standard; enables per-module log control; traceable to source |
 | Log destination | stdout, unbuffered | Container best practice; OTEL collector and Docker handle routing |
-| AOP function I/O | `DEBUG` level | Avoids noise in production; available when needed |
+| AOP function I/O | `DEBUG` level (inputs/outputs), `ERROR` level (exceptions) | I/O avoids noise in production; exceptions always surface |
 | Request lifecycle | `INFO` level | Normal operational visibility |
 | Recoverable issues | `WARNING` level | Attention-worthy but not failures |
 | Failures | `ERROR` level | Requires investigation |
-| Log format | Structured (JSON in production, human-readable in development) | Machine-parseable for OTEL / log aggregation |
+| Log format | Human-readable text (current baseline); structured JSON with OTEL trace correlation is the target state (Epic 12) | Machine-parseable for OTEL / log aggregation |
 
 **Validation:**
 

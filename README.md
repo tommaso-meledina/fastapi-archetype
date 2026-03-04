@@ -21,7 +21,7 @@ The project demonstrates the following capabilities working together end-to-end:
 - Typed configuration management via pydantic-settings with `.env` support
 - Enum-based structured error handling with consistent JSON responses
 - URL-prefix API versioning (`/v1`, `/v2`) with `APIRouter`
-- Decorator-based AOP function I/O logging applied at the package level
+- AOP function I/O logging applied programmatically at the module level (no per-function annotations)
 - OpenTelemetry distributed tracing with optional OTLP export
 - Prometheus metrics (auto-instrumented HTTP metrics and custom business counters)
 - Per-endpoint rate limiting with environment-configurable thresholds
@@ -148,9 +148,9 @@ Compare the behavior of `POST /v1/dummies` (requires any authenticated principal
 
 ### AOP Function Logging
 
-A `log_io` decorator logs function input arguments and return values at DEBUG level. The `apply_logging` function wraps all public functions in a module automatically — no per-function modification needed. The services layer uses this to provide full call tracing.
+The `log_io` decorator logs function inputs and return values at DEBUG level and exceptions at ERROR level. The `apply_logging` function wraps all public functions in a module programmatically at import time — no per-function annotation needed. The services layer uses this to provide full call tracing with automatic error visibility.
 
-With `LOG_LEVEL=DEBUG`, every service call produces `invoked with args (...)` and `returned ...` log lines on stdout.
+With `LOG_LEVEL=DEBUG`, every service call produces `invoked with args (...)` and `returned ...` log lines on stdout. Exceptions are logged at ERROR level regardless of the configured log level.
 
 ### OpenTelemetry Distributed Tracing
 

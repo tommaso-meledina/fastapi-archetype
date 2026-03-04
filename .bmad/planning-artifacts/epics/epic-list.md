@@ -50,3 +50,8 @@ A developer can see external IdP-backed bearer-token authentication and RBAC int
 Auth subsystem refinements to improve production-readiness: sanitized error responses, validated auth behavior under realistic IdP simulation, and an extensible role-mapping contract for bridging internal role labels to external identity systems.
 **FRs covered:** FR39–FR41
 **Phase:** 2 (Expansion)
+
+## Epic 12: Structured Logging with Trace Correlation
+A developer sees structured JSON logs in production with OTEL trace/span IDs embedded in every entry, enabling log-to-trace correlation in observability platforms. Development mode retains human-readable text output.
+**FRs covered:** FR42–FR44
+**Phase:** 3 (Refinement)

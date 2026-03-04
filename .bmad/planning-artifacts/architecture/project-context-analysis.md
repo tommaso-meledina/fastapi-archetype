@@ -13,7 +13,7 @@
 | Configuration Management | FR8–FR9 | Startup-time .env loading with fail-fast validation; no lazy config discovery |
 | API Documentation | FR10–FR12 | Zero-effort — FastAPI's built-in OpenAPI generation; Swagger at /docs, ReDoc at /redoc |
 | Testing | FR13–FR16 | Unit tests mock externals; integration tests use SQLite in-memory; >90% coverage target |
-| AOP Logging | FR17–FR19 | Decorator-based interception of function I/O across a designated package without per-function modification |
+| AOP Logging | FR17–FR19 | Module-level programmatic wrapping of function I/O and exceptions across a designated package without per-function annotation |
 | Observability | FR20–FR23 | Dual instrumentation: OTEL traces for distributed tracing + Prometheus metrics at /metrics for scraping |
 | Containerization | FR24–FR25 | Dockerfile producing a self-contained image; .env is the only external input |
 | Code Organization | FR26–FR28 | Centralized constants, error codes/messages, and optional structured resource objects |

@@ -35,7 +35,7 @@
 
 ## Cross-Cutting Concerns (AOP)
 
-- FR17: The application provides a decorator-based AOP mechanism that logs function input arguments and return values
+- FR17: The application provides an AOP mechanism that programmatically wraps all functions in a designated package to log input arguments, return values, and exceptions — without modifying individual function definitions
 - FR17a: The application configures the Python logging subsystem at startup, directing all log output to stdout with a configurable log level (defaulting to INFO)
 - FR18: The AOP logging decorator can be applied to all functions within a designated package without modifying each function individually
 - FR19: The AOP logging mechanism uses plain Python decorators, falling back to `wrapt` only if plain decorators prove insufficient
@@ -73,6 +73,12 @@
 - FR39: Auth error responses return generic, safe client-facing messages; provider-specific failure details are logged server-side only
 - FR40: The `entra` auth code path is covered by integration tests using a synthetic IdP (test-generated RSA keypair, monkeypatched HTTP) that verify bearer validation, claim mapping, and role enforcement end-to-end
 - FR41: Role checks resolve internal role labels to external identifiers through a pluggable `RoleMappingProvider` contract (`to_external(str) -> str`), with a default identity-mapping implementation
+
+## Structured Logging
+
+- FR42: The application outputs structured JSON log entries in production mode, with a human-readable format in development, controlled by a `LOG_FORMAT` setting
+- FR43: Every log entry in JSON mode includes the OTEL `trace_id` and `span_id` from the current request context, enabling correlation between logs and distributed traces
+- FR44: The structured logging integration preserves existing behavior: `logging.getLogger(__name__)` per module, `LOG_LEVEL` control, AOP function I/O logging at DEBUG level
 
 ## Code Organization
 

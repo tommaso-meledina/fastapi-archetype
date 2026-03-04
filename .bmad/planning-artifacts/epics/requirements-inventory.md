@@ -19,7 +19,7 @@ FR13: The application's unit tests mock all external dependencies (database, OTE
 FR14: The application's integration tests run against an in-memory SQLite database, requiring no external infrastructure
 FR15: The application's test suite covers all endpoints with both valid and invalid input scenarios
 FR16: The application's test suite achieves >90% code coverage; code that is particularly difficult to test (e.g., strictly non-functional components) may be excluded from coverage measurement through standard exclusion mechanisms
-FR17: The application provides a decorator-based AOP mechanism that logs function input arguments and return values
+FR17: The application provides an AOP mechanism that programmatically wraps all functions in a designated package to log input arguments, return values, and exceptions — without modifying individual function definitions
 FR17a: The application configures the Python logging subsystem at startup, directing all log output to stdout with a configurable log level (defaulting to INFO)
 FR18: The AOP logging decorator can be applied to all functions within a designated package without modifying each function individually
 FR19: The AOP logging mechanism uses plain Python decorators, falling back to `wrapt` only if plain decorators prove insufficient
@@ -58,6 +58,9 @@ FR36: Authentication and authorization integration settings (auth mode, IdP endp
 FR39: Auth error responses return generic, safe client-facing messages; provider-specific failure details are logged server-side only
 FR40: The `entra` auth code path is covered by integration tests using a synthetic IdP (test-generated RSA keypair, monkeypatched HTTP) that verify bearer validation, claim mapping, and role enforcement end-to-end
 FR41: Role checks resolve internal role labels to external identifiers through a pluggable `RoleMappingProvider` contract (`to_external(str) -> str`), with a default identity-mapping implementation
+FR42: The application outputs structured JSON log entries in production mode, with a human-readable format in development, controlled by a `LOG_FORMAT` setting
+FR43: Every log entry in JSON mode includes the OTEL `trace_id` and `span_id` from the current request context, enabling correlation between logs and distributed traces
+FR44: The structured logging integration preserves existing behavior: `logging.getLogger(__name__)` per module, `LOG_LEVEL` control, AOP function I/O logging at DEBUG level
 
 ## Additional Requirements
 
@@ -122,7 +125,7 @@ FR41: Role checks resolve internal role labels to external identifiers through a
 | FR14 | Epic 4 | Integration tests with SQLite |
 | FR15 | Epic 4 | Full endpoint test coverage |
 | FR16 | Epic 4 | >90% code coverage |
-| FR17 | Epic 2 | Decorator-based AOP logging |
+| FR17 | Epic 2 | Module-level AOP logging (inputs, outputs, exceptions) |
 | FR17a | Epic 2 | Logging subsystem configuration (stdout, configurable level) |
 | FR18 | Epic 2 | Package-level decorator application |
 | FR19 | Epic 2 | Plain Python decorators (wrapt fallback) |
@@ -148,3 +151,6 @@ FR41: Role checks resolve internal role labels to external identifiers through a
 | FR39 | Epic 11 | Auth error response sanitization (no internal detail leakage) |
 | FR40 | Epic 11 | Synthetic IdP integration tests for entra auth path |
 | FR41 | Epic 11 | Pluggable RoleMappingProvider with identity-mapping default |
+| FR42 | Epic 12 | Structured JSON log output with LOG_FORMAT toggle |
+| FR43 | Epic 12 | OTEL trace_id/span_id injection into log entries |
+| FR44 | Epic 12 | Structured logging preserves existing logging conventions |

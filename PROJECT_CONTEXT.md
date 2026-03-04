@@ -179,8 +179,8 @@ To add a new version: create `api/v3/`, `services/v3/`, register the router in `
 
 `aop/logging_decorator.py` provides:
 
-- `log_io(func)` — decorator that logs `func invoked with args (...)` and `func returned ...` at DEBUG level.
-- `apply_logging(module)` — wraps all public functions defined in a module with `log_io`. Only functions whose `__module__` matches the target are wrapped (re-exported imports are skipped).
+- `log_io(func)` — decorator that logs inputs at DEBUG, return values at DEBUG, and exceptions at ERROR. Exception-path logging ensures failures surface in production logs without requiring DEBUG verbosity.
+- `apply_logging(module)` — programmatically wraps all public functions defined in a module with `log_io` at import time. Only functions whose `__module__` matches the target are wrapped (re-exported imports are skipped). Individual service functions carry no decorator annotation.
 
 `services/__init__.py` imports every service module and calls `apply_logging()` on each. New service modules must be added there.
 
@@ -314,7 +314,7 @@ Ruff is configured in `pyproject.toml`:
 
 - `logging.basicConfig` is called once in the lifespan with `LOG_LEVEL` from settings.
 - Modules obtain loggers via `logging.getLogger(__name__)`.
-- AOP logging is at DEBUG level; application-level logging in services uses INFO.
+- AOP logging is at DEBUG level for I/O and ERROR level for exceptions; application-level logging in services uses INFO.
 
 ## Anti-Patterns to Avoid
 

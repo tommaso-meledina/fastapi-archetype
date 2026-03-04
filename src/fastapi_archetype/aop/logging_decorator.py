@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import inspect
 import logging
+import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -41,15 +42,28 @@ def _format_call_args(
     return ", ".join(parts)
 
 
+def _format_exc() -> str:
+    """Return a compact ``ExcType: message`` string for the current exception."""
+    exc_type, exc_val, _ = sys.exc_info()
+    if exc_type is None:
+        return "Unknown exception"
+    name = exc_type.__qualname__
+    return f"{name}: {exc_val}" if exc_val else name
+
+
 def log_io(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Decorator that logs function input arguments and return value at DEBUG level."""
+    """Decorator that logs function I/O at DEBUG and exceptions at ERROR."""
 
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         qualname = func.__qualname__
         formatted = _format_call_args(func, args, kwargs)
         logger.debug("%s invoked with args (%s)", qualname, formatted)
-        result = func(*args, **kwargs)
+        try:
+            result = func(*args, **kwargs)
+        except Exception:
+            logger.error("%s raised %s", qualname, _format_exc())
+            raise
         logger.debug("%s returned %s", qualname, _format_arg(result))
         return result
 
