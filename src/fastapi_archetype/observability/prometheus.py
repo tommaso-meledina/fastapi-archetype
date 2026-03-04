@@ -28,6 +28,7 @@ metrics = Metrics(
         dummies_created_total=Counter(
             "dummies_created_total",
             "Total number of dummy resources created",
+            labelnames=["api_version"],
         ),
     ),
 )

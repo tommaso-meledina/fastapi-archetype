@@ -24,6 +24,6 @@ def create_dummy(session: Session, dummy: Dummy) -> Dummy:
     session.add(dummy)
     session.commit()
     session.refresh(dummy)
-    metrics.counters.dummies_created_total.inc()
+    metrics.counters.dummies_created_total.labels(api_version="v2").inc()
     logger.info("v2 create_dummy id=%s name=%r", dummy.id, dummy.name)
     return dummy

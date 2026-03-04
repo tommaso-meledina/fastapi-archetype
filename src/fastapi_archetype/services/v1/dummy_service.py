@@ -19,5 +19,5 @@ def create_dummy(session: Session, dummy: Dummy) -> Dummy:
     session.add(dummy)
     session.commit()
     session.refresh(dummy)
-    metrics.counters.dummies_created_total.inc()
+    metrics.counters.dummies_created_total.labels(api_version="v1").inc()
     return dummy
