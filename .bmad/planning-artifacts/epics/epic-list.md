@@ -21,3 +21,7 @@ A developer can run the complete test suite to verify all capabilities work toge
 A developer can build a Docker image and run the full application in a container with no configuration beyond the `.env` file. The image runs consistently across Linux and macOS.
 **FRs covered:** FR24–FR25
 **NFRs addressed:** NFR6–NFR7
+
+## Epic 6: Docker Compose Development Environment
+A developer can run `docker compose up` and get the full application running against MariaDB with traces flowing to an OTEL collector and metrics scraped by Prometheus — a complete production-like environment with no manual service setup.
+**Phase:** 1 (Infrastructure)

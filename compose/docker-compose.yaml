@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+
+  mariadb:
+      container_name: mariadb
+      image: mariadb:11
+      ports:
+        - "3306:3306" # make this depend from an env variable as well
+      environment:
+        - MARIADB_DATABASE=${DATABASE_NAME}
+        - MARIADB_USER=${DATASOURCE_USER}
+        - MARIADB_PASSWORD=${DATASOURCE_PASSWORD}
+        - MYSQL_ROOT_PASSWORD=${DATASOURCE_PASSWORD}
+      volumes:
+        - mariadb-etc:/etc/mysql
+        - mariadb-data:/var/lib/mysql/data
+      healthcheck:
+        test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+        start_period: 10s
+        interval: 10s
+        timeout: 5s
+        retries: 3
+      networks:
+        - fastapi-archetype-poc
+
+  fastapi-archetype:
+    build:
+      context: ${FASTAPI_ARCHETYPE_CONTEXT_PATH}
+      dockerfile: ${FASTAPI_ARCHETYPE_DOCKERFILE_PATH}
+    container_name: fastapi-archetype
+    ports:
+      - "8000:8000" # make this depend from an env variable as well
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 2
+      start_period: 10s
+    environment:
+      - OTEL_EXPORT_ENABLED=true
+      # add any other as necessary
+    networks:
+      - fastapi-archetype-poc
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SERVER_HTTP_PORT: 3001
+    networks:
+      - fastapi-archetype-poc
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./observability/grafana/storage:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:latest
+    restart: always
+    networks:
+      - fastapi-archetype-poc
+    ports:
+      - "16686:16686"
+      - "14268"
+      - "14250"
+
+  otel-collector:
+    image: ${OTELCOL_IMG}
+    restart: always
+    command: ["--config=/etc/otel-collector-config.yaml", "${OTELCOL_ARGS}"]
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "55679:55679" # zpages extension
+    networks:
+      - fastapi-archetype-poc
+    depends_on:
+      - jaeger-all-in-one
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    restart: always
+    volumes:
+      - ./observability/prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090" # make this depend from an env variable as well
+    networks:
+      - fastapi-archetype-poc
+
+
+networks:
+  fastapi-archetype-poc:
+
+volumes:
+  mariadb-etc:
+  mariadb-data:
