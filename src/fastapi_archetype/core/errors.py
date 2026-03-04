@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 class ErrorCode(enum.Enum):
     INTERNAL_ERROR = ("INTERNAL_ERROR", "An unexpected error occurred", 500)
+    RATE_LIMITED = ("RATE_LIMITED", "Rate limit exceeded", 429)
     VALIDATION_ERROR = ("VALIDATION_ERROR", "Request validation failed", 422)
     NOT_FOUND = ("NOT_FOUND", "Resource not found", 404)
     DUMMY_NOT_FOUND = ("DUMMY_NOT_FOUND", "Dummy not found", 404)
@@ -40,6 +41,18 @@ async def app_exception_handler(_request: Request, exc: AppException) -> JSONRes
         status_code=exc.error_code.http_status,
         content=_build_error_body(
             exc.error_code.code, exc.error_code.message, exc.detail
+        ),
+    )
+
+
+async def rate_limit_exceeded_handler(_request: Request, exc: Any) -> JSONResponse:
+    retry_after = getattr(exc, "detail", None)
+    return JSONResponse(
+        status_code=ErrorCode.RATE_LIMITED.http_status,
+        content=_build_error_body(
+            ErrorCode.RATE_LIMITED.code,
+            ErrorCode.RATE_LIMITED.message,
+            f"Retry after {retry_after} seconds" if retry_after else None,
         ),
     )
 

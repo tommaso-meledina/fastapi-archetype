@@ -6,6 +6,7 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 from fastapi_archetype.core.database import get_session
+from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
 
 
@@ -34,6 +35,7 @@ def client_fixture(session):
         yield session
 
     app.dependency_overrides[get_session] = _override
+    limiter.reset()
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from slowapi.errors import RateLimitExceeded
 from sqlmodel import SQLModel
 
 from fastapi_archetype.api.v1 import router as v1_router
@@ -17,8 +18,10 @@ from fastapi_archetype.core.database import get_engine
 from fastapi_archetype.core.errors import (
     AppException,
     app_exception_handler,
+    rate_limit_exceeded_handler,
     validation_exception_handler,
 )
+from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.observability.otel import setup_otel
 from fastapi_archetype.observability.prometheus import setup_prometheus
 
@@ -49,7 +52,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
 app.add_exception_handler(AppException, app_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)  # type: ignore[arg-type]
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
 app.include_router(v1_router)
 app.include_router(v2_router)
