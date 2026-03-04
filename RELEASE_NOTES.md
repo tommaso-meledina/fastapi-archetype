@@ -68,3 +68,8 @@
 * add missing Epic 10 to sprint status and fix index indentation
 
 
+### Integration
+
+* set up automatic changelog
+
+
