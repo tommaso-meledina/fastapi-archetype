@@ -12,6 +12,8 @@ At every stable point, before executing tests and committing changes (see below)
 
 Agents SHALL strictly adhere to documented technical specifications. Agents MUST limit themselves to the adoption of the technologies and libraries listed in the documentation. Agents MUST NOT introduce additional/alternative technologies or libraries. If a problem is not solvable without the addition/replacement of one or more elements from this list, the agent MUST obtain explicit approval from the humen operator in order to do so.
 
+Agents MUST take the project context, as described in [PROJECT_CONTEXT](./PROJECT_CONTEXT.md), into consideration at all times.
+
 ## Git operations
 
 Agents SHALL commit frequently, at every point of stability within the execution of a task. Commit messages SHALL adhere to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) standard.
