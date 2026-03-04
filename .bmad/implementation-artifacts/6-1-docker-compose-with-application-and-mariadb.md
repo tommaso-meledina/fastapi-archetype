@@ -1,6 +1,6 @@
 # Story 6.1: Docker Compose with Application and MariaDB
 
-Status: review
+Status: done
 
 ## Story
 
@@ -95,6 +95,20 @@ The Dockerfile is at the project root. The compose file is in `./compose/`. Ther
 - [Source: src/fastapi_archetype/core/database.py]
 - [Source: compose/docker-compose.yaml]
 
+## Senior Developer Review (AI)
+
+**Review Date:** 2026-03-04
+**Review Outcome:** Approve (with fixes applied)
+
+**Findings:** 0 High, 1 Medium, 2 Low
+
+**Action Items:**
+- [x] [MEDIUM] Fix application health check: replace `curl` with Python `urllib.request` — `python:3.14-slim` does not include curl
+- [x] [LOW] Remove unused `OTELCOL_ARGS` variable from `compose/.env`
+- [ ] [LOW] Consider adding `OTEL_SERVICE_NAME` to application environment for explicit compose configuration
+
+**All ACs validated and implemented. All tasks confirmed complete.**
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -113,6 +127,7 @@ claude-4.6-opus (Cursor Agent)
 ### Change Log
 
 - 2026-03-04: Implemented Docker Compose with Application and MariaDB (Story 6.1)
+- 2026-03-04: Code review — fixed health check (curl → python urllib), removed unused OTELCOL_ARGS
 
 ### File List
 
