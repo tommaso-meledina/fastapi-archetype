@@ -2,15 +2,19 @@
 
 A developer can run `docker compose up` and get the full application running against MariaDB with traces flowing to an OTEL collector and metrics scraped by Prometheus — a complete production-like environment with no manual service setup.
 
+**Implementation note:** The `./compose/` directory already contains a draft Docker Compose setup (with MariaDB, OTEL collector, Prometheus, Jaeger, and Grafana services) along with OTEL collector and Prometheus configuration files. This epic's implementation should adapt and perfect that existing foundation rather than starting from scratch.
+
 ## Story 6.1: Docker Compose with Application and MariaDB
 
 As a **software engineer**,
 I want **a Docker Compose configuration that starts the application alongside a MariaDB instance with automatic database provisioning**,
 So that **I can exercise the full application against a real database with a single command, matching the production database engine**.
 
+**Implementation note:** The existing `./compose/docker-compose.yaml` already defines `mariadb` and `fastapi-archetype` services with health checks, volume mounts, and network configuration. This story should refine and complete that existing setup.
+
 **Acceptance Criteria:**
 
-**Given** `docker-compose.yml` exists at the project root
+**Given** the compose file exists in the `./compose/` directory
 **When** I inspect its contents
 **Then** it defines at least two services: the application and MariaDB
 **And** the application service builds from the existing `Dockerfile`
@@ -41,19 +45,21 @@ As a **software engineer**,
 I want **an OTEL collector and Prometheus running alongside the application in the compose environment**,
 So that **I can verify traces are exported and metrics are scraped end-to-end without setting up external observability infrastructure**.
 
+**Implementation note:** The existing `./compose/docker-compose.yaml` already defines OTEL collector, Prometheus, Jaeger, and Grafana services, and `./compose/observability/` contains draft OTEL collector and Prometheus configuration files. This story should refine and complete that existing setup — including the Jaeger and Grafana services already present.
+
 **Acceptance Criteria:**
 
-**Given** `docker-compose.yml` is updated with observability services
+**Given** the compose file includes observability services
 **When** I inspect its contents
 **Then** it defines an OTEL collector service using the official OpenTelemetry Collector image
 **And** it defines a Prometheus service using the official `prom/prometheus` image
 
-**Given** an OTEL collector configuration file exists in the project
+**Given** an OTEL collector configuration file exists in `./compose/observability/`
 **When** I inspect its contents
 **Then** it configures an OTLP gRPC receiver matching the application's `OTEL_EXPORTER_ENDPOINT`
 **And** it defines at least a logging or debug exporter so traces can be verified
 
-**Given** a Prometheus configuration file exists in the project
+**Given** a Prometheus configuration file exists in `./compose/observability/`
 **When** I inspect its contents
 **Then** it defines a scrape job targeting the application's `/metrics` endpoint on the compose network
 

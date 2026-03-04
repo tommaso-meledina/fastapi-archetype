@@ -6,6 +6,7 @@
 - FR2: The application exposes a POST endpoint that accepts a Dummy object, validates it, and creates a record in the database
 - FR3: The application returns structured error responses with unique error codes and messages for all failure scenarios
 - FR4: The application serves all request and response payloads in JSON format
+- FR29: The application exposes a `GET /health` endpoint that returns the application's health status, confirming the Python runtime and FastAPI framework are operational
 
 ## Data Persistence
 

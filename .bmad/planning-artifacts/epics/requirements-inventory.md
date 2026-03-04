@@ -6,6 +6,7 @@ FR1: The application exposes a GET endpoint that returns all Dummy records from 
 FR2: The application exposes a POST endpoint that accepts a Dummy object, validates it, and creates a record in the database
 FR3: The application returns structured error responses with unique error codes and messages for all failure scenarios
 FR4: The application serves all request and response payloads in JSON format
+FR29: The application exposes a `GET /health` endpoint that returns the application's health status, confirming the Python runtime and FastAPI framework are operational
 FR5: The application connects to a MariaDB database for persistent storage
 FR6: The application maps a Dummy model to a DUMMY table using SQLModel, with a single model definition serving both ORM and API validation
 FR7: The application validates all input data against the Dummy model schema before persisting
@@ -121,3 +122,4 @@ NFR10: All configuration values have sensible defaults or clear documentation of
 | FR26 | Epic 1 | Centralized constants |
 | FR27 | Epic 1 | Centralized error codes/messages |
 | FR28 | Epic 1 | Optional structured resource objects |
+| FR29 | Epic 1 | Health endpoint (runtime liveness) |

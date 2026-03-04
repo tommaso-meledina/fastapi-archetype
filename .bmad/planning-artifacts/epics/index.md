@@ -22,6 +22,8 @@
     - [Story 1.3: Centralized Constants and Error Handling](./epic-1-running-application-with-crud-api.md#story-13-centralized-constants-and-error-handling)
     - [Story 1.4: Database Layer and Dummy Model](./epic-1-running-application-with-crud-api.md#story-14-database-layer-and-dummy-model)
     - [Story 1.5: REST API Endpoints and Service Layer](./epic-1-running-application-with-crud-api.md#story-15-rest-api-endpoints-and-service-layer)
+    - [Story 1.7: Health Check Endpoint](./epic-1-running-application-with-crud-api.md#story-17-health-check-endpoint)
+    - [Story 1.6: Configurable Database Driver with SQLite Default](./epic-1-running-application-with-crud-api.md#story-16-configurable-database-driver-with-sqlite-default)
   - [Epic 2: Cross-Cutting Function Logging (AOP)](./epic-2-cross-cutting-function-logging-aop.md)
     - [Story 2.1: AOP Function I/O Logging Decorator](./epic-2-cross-cutting-function-logging-aop.md#story-21-aop-function-io-logging-decorator)
     - [Story 2.2: Application Logging Configuration](./epic-2-cross-cutting-function-logging-aop.md#story-22-application-logging-configuration)

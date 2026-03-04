@@ -154,6 +154,28 @@ So that **I can exercise a complete request-response cycle and use the `/dummies
 **When** the app initializes
 **Then** configuration validates first, then database engine is created, then middleware is registered, then routes are included — following the defined startup order
 
+## Story 1.7: Health Check Endpoint
+
+As a **software engineer**,
+I want **a `GET /health` endpoint that confirms the Python runtime and FastAPI application are operational**,
+So that **container orchestrators, load balancers, and the Docker Compose health check can determine whether the application process is alive and serving**.
+
+**Acceptance Criteria:**
+
+**Given** the application is running
+**When** I send `GET /health`
+**Then** the response status is 200
+**And** the response body is a JSON object indicating the application is healthy (e.g., `{"status": "UP"}`)
+
+**Given** the `/health` endpoint implementation
+**When** I inspect the code
+**Then** it uses standard FastAPI routing (a plain route on the app or a dedicated router) with no external health-check libraries
+
+**Given** the `/health` endpoint
+**When** I inspect the route registration
+**Then** the endpoint is excluded from OpenAPI documentation (not a business API)
+**And** it is excluded from Prometheus request metrics and OTEL trace instrumentation to avoid noise
+
 ## Story 1.6: Configurable Database Driver with SQLite Default
 
 As a **software engineer**,
