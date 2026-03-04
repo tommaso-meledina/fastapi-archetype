@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlmodel import select
 
 from fastapi_archetype.models.dummy import Dummy
-from fastapi_archetype.observability.prometheus import DUMMIES_CREATED_TOTAL
+from fastapi_archetype.observability.prometheus import metrics
 
 if TYPE_CHECKING:
     from sqlmodel import Session
@@ -19,5 +19,5 @@ def create_dummy(session: Session, dummy: Dummy) -> Dummy:
     session.add(dummy)
     session.commit()
     session.refresh(dummy)
-    DUMMIES_CREATED_TOTAL.inc()
+    metrics.counters.dummies_created_total.inc()
     return dummy
