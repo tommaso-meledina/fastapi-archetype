@@ -23,6 +23,13 @@ class AuthFeatureNotSupportedError(AuthError):
     """Raised when provider cannot fulfill requested capability."""
 
 
+class RoleMappingProvider(ABC):
+    """Maps internal role labels to external identifiers (e.g. GUIDs)."""
+
+    @abstractmethod
+    def to_external(self, role_name: str) -> str: ...
+
+
 class AuthProvider(ABC):
     name: str
 

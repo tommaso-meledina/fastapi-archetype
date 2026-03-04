@@ -85,7 +85,8 @@ def require_role(required_role: Role):
                     logger.warning("Graph role enrichment failed: %s", exc)
                     raise AppException(ErrorCode.UNAUTHORIZED) from exc
                 roles.update({role.lower() for role in graph_roles})
-        if required_role.value not in roles:
+        external_role = facade.role_mapper.to_external(required_role.value)
+        if external_role not in roles:
             logger.warning(
                 "Role check failed: principal %s lacks role %s",
                 principal.subject,
