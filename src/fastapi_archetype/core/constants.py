@@ -13,3 +13,5 @@ DUMMIES = ResourceDefinition(
     name="Dummies",
     description="Dummy resources for demonstrating CRUD patterns",
 )
+
+HEALTH_PATH = "/health"

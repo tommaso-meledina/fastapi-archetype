@@ -128,9 +128,14 @@ claude-4.6-opus (Cursor Agent)
 
 - 2026-03-04: Implemented Docker Compose with Application and MariaDB (Story 6.1)
 - 2026-03-04: Code review — fixed health check (curl → python urllib), removed unused OTELCOL_ARGS
+- 2026-03-04: Implemented missing GET /health endpoint (FR29) required by compose health check
 
 ### File List
 
 - compose/.env (created)
 - compose/docker-compose.yaml (modified)
-- .gitignore (modified — added `!compose/.env` exception)
+- .gitignore (modified — added `!compose/.env` exception, added grafana storage exclusion)
+- .dockerignore (modified — added `compose` exclusion)
+- src/fastapi_archetype/core/constants.py (modified — added HEALTH_PATH)
+- src/fastapi_archetype/main.py (modified — added /health endpoint)
+- tests/api/test_health.py (created)
