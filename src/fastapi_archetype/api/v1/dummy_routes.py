@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, Request, Response, status
 
+from fastapi_archetype.auth.dependencies import require_auth
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.constants import DUMMIES
 from fastapi_archetype.core.database import get_session
@@ -13,6 +14,8 @@ from fastapi_archetype.services.v1 import dummy_service
 
 if TYPE_CHECKING:
     from sqlmodel import Session
+
+    from fastapi_archetype.auth.models import Principal
 
 router = APIRouter(prefix=DUMMIES.path, tags=[DUMMIES.name])
 _settings = AppSettings()
@@ -34,6 +37,8 @@ def create_dummy(
     request: Request,
     dummy: Dummy,
     response: Response,
+    principal: Principal = Depends(require_auth),
     session: Session = Depends(get_session),
 ) -> Dummy:
+    _ = principal
     return dummy_service.create_dummy(session, dummy)

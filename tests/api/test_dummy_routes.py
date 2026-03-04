@@ -14,7 +14,8 @@ def test_list_dummies_empty(client: TestClient) -> None:
 
 def test_create_dummy_returns_201(client: TestClient) -> None:
     response = client.post(
-        "/v1/dummies", json={"name": "Widget", "description": "A test widget"}
+        "/v1/dummies",
+        json={"name": "Widget", "description": "A test widget"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -70,7 +71,8 @@ def test_response_uses_camel_case_keys(client: TestClient) -> None:
 
 def test_create_response_uses_camel_case_keys(client: TestClient) -> None:
     response = client.post(
-        "/v1/dummies", json={"name": "CamelPost", "description": "keys check"}
+        "/v1/dummies",
+        json={"name": "CamelPost", "description": "keys check"},
     )
     assert response.status_code == 201
     expected_keys = {"id", "name", "description"}

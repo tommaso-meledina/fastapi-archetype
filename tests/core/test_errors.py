@@ -33,6 +33,16 @@ def test_error_code_dummy_not_found() -> None:
     assert ErrorCode.DUMMY_NOT_FOUND.http_status == 404
 
 
+def test_error_code_unauthorized() -> None:
+    assert ErrorCode.UNAUTHORIZED.code == "UNAUTHORIZED"
+    assert ErrorCode.UNAUTHORIZED.http_status == 401
+
+
+def test_error_code_forbidden() -> None:
+    assert ErrorCode.FORBIDDEN.code == "FORBIDDEN"
+    assert ErrorCode.FORBIDDEN.http_status == 403
+
+
 def test_app_exception_carries_error_code() -> None:
     exc = AppException(ErrorCode.NOT_FOUND)
     assert exc.error_code is ErrorCode.NOT_FOUND

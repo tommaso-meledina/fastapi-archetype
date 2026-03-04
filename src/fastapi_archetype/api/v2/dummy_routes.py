@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, Request, Response, status
 
+from fastapi_archetype.auth.dependencies import require_role
+from fastapi_archetype.auth.models import Role
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.constants import DUMMIES
 from fastapi_archetype.core.database import get_session
@@ -14,8 +16,11 @@ from fastapi_archetype.services.v2 import dummy_service
 if TYPE_CHECKING:
     from sqlmodel import Session
 
+    from fastapi_archetype.auth.models import Principal
+
 router = APIRouter(prefix=DUMMIES.path, tags=[f"{DUMMIES.name} v2"])
 _settings = AppSettings()
+_require_admin_role = require_role(Role.ADMIN)
 
 
 @router.get("", response_model=list[Dummy])
@@ -34,6 +39,8 @@ def create_dummy(
     request: Request,
     dummy: Dummy,
     response: Response,
+    principal: Principal = Depends(_require_admin_role),
     session: Session = Depends(get_session),
 ) -> Dummy:
+    _ = principal
     return dummy_service.create_dummy(session, dummy)

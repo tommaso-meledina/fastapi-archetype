@@ -17,6 +17,8 @@ class ErrorCode(enum.Enum):
     VALIDATION_ERROR = ("VALIDATION_ERROR", "Request validation failed", 422)
     NOT_FOUND = ("NOT_FOUND", "Resource not found", 404)
     DUMMY_NOT_FOUND = ("DUMMY_NOT_FOUND", "Dummy not found", 404)
+    UNAUTHORIZED = ("UNAUTHORIZED", "Authentication required", 401)
+    FORBIDDEN = ("FORBIDDEN", "Access forbidden", 403)
 
     def __init__(self, code: str, message: str, http_status: int) -> None:
         self.code = code

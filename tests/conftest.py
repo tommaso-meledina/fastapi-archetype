@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
@@ -7,6 +9,9 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
+
+os.environ.setdefault("AUTH_TYPE", "none")
+
 from fastapi_archetype.main import app
 
 

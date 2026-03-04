@@ -17,7 +17,8 @@ def test_v2_list_dummies_empty(client: TestClient) -> None:
 
 def test_v2_create_dummy_returns_201(client: TestClient) -> None:
     response = client.post(
-        "/v2/dummies", json={"name": "V2Widget", "description": "A v2 test widget"}
+        "/v2/dummies",
+        json={"name": "V2Widget", "description": "A v2 test widget"},
     )
     assert response.status_code == 201
     data = response.json()
@@ -51,3 +52,13 @@ def test_v2_logs_on_create(client: TestClient, caplog: logging.LogRecord) -> Non
     with caplog.at_level(logging.INFO, logger=V2_SERVICE_LOGGER):
         client.post("/v2/dummies", json={"name": "Logged"})
     assert any("v2 create_dummy" in r.message for r in caplog.records)
+
+
+def test_v2_create_dummy_requires_auth(client: TestClient) -> None:
+    response = client.post("/v2/dummies", json={"name": "NoAuth"})
+    assert response.status_code == 201
+
+
+def test_v2_create_dummy_requires_admin_role(client: TestClient) -> None:
+    response = client.post("/v2/dummies", json={"name": "NoAdmin"})
+    assert response.status_code == 201

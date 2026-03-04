@@ -65,3 +65,20 @@ def test_database_url_mysql(monkeypatch: pytest.MonkeyPatch) -> None:
     assert (
         settings.database_url == "mysql+pymysql://testuser:testpass@dbhost:3307/testdb"
     )
+
+
+def test_entra_auth_requires_external_settings() -> None:
+    with pytest.raises(ValidationError, match="AUTH_TYPE=entra requires"):
+        AppSettings(auth_type="entra")
+
+
+def test_entra_auth_accepts_required_settings() -> None:
+    settings = AppSettings(
+        auth_type="entra",
+        auth_external_issuer="https://issuer.example.test",
+        auth_external_discovery_uri="https://issuer.example.test/.well-known/openid-configuration",
+        auth_external_token_uri="https://issuer.example.test/oauth2/v2.0/token",
+        auth_external_client_id="client-id",
+        auth_external_client_secret="client-secret",
+    )
+    assert settings.auth_type == "entra"
