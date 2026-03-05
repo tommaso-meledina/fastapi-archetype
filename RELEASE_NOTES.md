@@ -8,6 +8,7 @@
 
 * replace bare &#39;archetype&#39; DB username in compose&#x2F;.env
 * include uv.lock in generated projects
+* enforce single source of truth for database params in compose env file
 
 
 
