@@ -95,8 +95,6 @@ class AppSettings(BaseSettings):
             missing_fields.append("AUTH_EXTERNAL_TOKEN_URI")
         if not self.auth_external_client_id.strip():
             missing_fields.append("AUTH_EXTERNAL_CLIENT_ID")
-        if not self.auth_external_client_secret.strip():
-            missing_fields.append("AUTH_EXTERNAL_CLIENT_SECRET")
 
         if missing_fields:
             missing = ", ".join(missing_fields)

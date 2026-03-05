@@ -44,6 +44,7 @@ class EntraExternalAuthProvider(AuthProvider):
         return self._principal_from_claims(claims)
 
     async def get_client_credentials_access_token(self, scope: str) -> str:
+        self._require_client_secret()
         form = {
             "client_id": self._settings.auth_external_client_id,
             "client_secret": self._settings.auth_external_client_secret,
@@ -54,6 +55,7 @@ class EntraExternalAuthProvider(AuthProvider):
         return await self._request_access_token(form)
 
     async def get_on_behalf_of_access_token(self, scope: str, user_token: str) -> str:
+        self._require_client_secret()
         form = {
             "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
             "client_id": self._settings.auth_external_client_id,
@@ -91,6 +93,12 @@ class EntraExternalAuthProvider(AuthProvider):
             if isinstance(app_role_id, str) and app_role_id:
                 normalized_roles.append(app_role_id)
         return normalized_roles
+
+    def _require_client_secret(self) -> None:
+        if not self._settings.auth_external_client_secret.strip():
+            raise AuthFeatureNotSupportedError(
+                "auth_external_client_secret is not configured"
+            )
 
     async def _request_access_token(self, form: dict[str, str]) -> str:
         if not self._settings.auth_external_token_uri:
