@@ -98,7 +98,11 @@ class TestRequireRoleUsesMapper:
             poolclass=StaticPool,
         )
         SQLModel.metadata.create_all(engine)
-        return engine
+        try:
+            yield engine
+        finally:
+            SQLModel.metadata.drop_all(engine)
+            engine.dispose()
 
     @pytest.fixture(name="guid_client")
     def guid_client_fixture(

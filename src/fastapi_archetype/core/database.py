@@ -31,3 +31,10 @@ def get_engine(settings: AppSettings | None = None) -> Engine:
 def get_session() -> Generator[Session]:
     with Session(get_engine()) as session:
         yield session
+
+
+def dispose_engine() -> None:
+    global _engine  # noqa: PLW0603
+    if _engine is not None:
+        _engine.dispose()
+        _engine = None

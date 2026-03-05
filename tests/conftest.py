@@ -23,7 +23,10 @@ def engine_fixture():
         poolclass=StaticPool,
     )
     SQLModel.metadata.create_all(engine)
-    return engine
+    try:
+        yield engine
+    finally:
+        engine.dispose()
 
 
 @pytest.fixture(name="session")
