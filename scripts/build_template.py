@@ -55,7 +55,6 @@ EXCLUDED_PATHS: set[str] = {
     "INITIAL_CONTEXT.md",
     "ARCH_DECISIONS.md",
     "RELEASE_NOTES.md",
-    "PROJECT_CONTEXT.md",
     ".env",
     "README.md",
     "scripts/build_template.py",
