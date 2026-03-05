@@ -102,7 +102,7 @@ development_status:
   12-3-unified-exception-interface-and-baseline-secret-redaction: done
   epic-12-retrospective: optional
 
-  epic-13: in-progress
+  epic-13: done
   13-1-decouple-auth-and-observability-tests-from-dummy-endpoints: done
-  13-2-demo-removal-script: review
+  13-2-demo-removal-script: done
   epic-13-retrospective: optional
