@@ -96,14 +96,14 @@ def test_entra_auth_accepts_required_settings() -> None:
         auth_type="entra",
         auth_external_issuer="https://issuer.example.test",
         auth_external_discovery_uri="https://issuer.example.test/.well-known/openid-configuration",
-        auth_external_token_uri="https://issuer.example.test/oauth2/v2.0/token",
-        auth_external_client_id="client-id",
     )
     assert settings.auth_type == "entra"
+    assert settings.auth_external_token_uri == ""
+    assert settings.auth_external_client_id == ""
     assert settings.auth_external_client_secret == ""
 
 
-def test_entra_auth_accepts_optional_client_secret() -> None:
+def test_entra_auth_accepts_m2m_settings() -> None:
     settings = AppSettings(
         auth_type="entra",
         auth_external_issuer="https://issuer.example.test",
@@ -112,4 +112,6 @@ def test_entra_auth_accepts_optional_client_secret() -> None:
         auth_external_client_id="client-id",
         auth_external_client_secret="client-secret",
     )
+    assert settings.auth_external_token_uri != ""
+    assert settings.auth_external_client_id == "client-id"
     assert settings.auth_external_client_secret == "client-secret"

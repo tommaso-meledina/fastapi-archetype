@@ -91,11 +91,6 @@ class AppSettings(BaseSettings):
             missing_fields.append(
                 "AUTH_EXTERNAL_DISCOVERY_URI or AUTH_EXTERNAL_JWKS_URI"
             )
-        if not self.auth_external_token_uri.strip():
-            missing_fields.append("AUTH_EXTERNAL_TOKEN_URI")
-        if not self.auth_external_client_id.strip():
-            missing_fields.append("AUTH_EXTERNAL_CLIENT_ID")
-
         if missing_fields:
             missing = ", ".join(missing_fields)
             msg = f"AUTH_TYPE=entra requires the following settings: {missing}"

@@ -66,25 +66,55 @@ async def test_external_provider_user_roles_normalized_to_app_role_id() -> None:
     assert roles == ["role-1", "role-2"]
 
 
-def _settings_without_client_secret() -> AppSettings:
-    return AppSettings(
-        auth_type="entra",
-        auth_external_issuer="https://issuer.example.test",
-        auth_external_jwks_uri="https://issuer.example.test/keys",
-        auth_external_token_uri="https://example.test/token",
-        auth_external_client_id="client-id",
-    )
+def _settings_without_m2m(**overrides: str) -> AppSettings:
+    defaults: dict[str, str] = {
+        "auth_type": "entra",
+        "auth_external_issuer": "https://issuer.example.test",
+        "auth_external_jwks_uri": "https://issuer.example.test/keys",
+    }
+    defaults.update(overrides)
+    return AppSettings(**defaults)
 
 
 @pytest.mark.anyio
 async def test_client_credentials_raises_when_no_client_secret() -> None:
-    provider = EntraExternalAuthProvider(_settings_without_client_secret())
+    settings = _settings_without_m2m(
+        auth_external_token_uri="https://example.test/token",
+        auth_external_client_id="client-id",
+    )
+    provider = EntraExternalAuthProvider(settings)
     with pytest.raises(AuthFeatureNotSupportedError, match="client_secret"):
         await provider.get_client_credentials_access_token("scope://api/.default")
 
 
 @pytest.mark.anyio
+async def test_client_credentials_raises_when_no_client_id() -> None:
+    settings = _settings_without_m2m(
+        auth_external_token_uri="https://example.test/token",
+        auth_external_client_secret="client-secret",
+    )
+    provider = EntraExternalAuthProvider(settings)
+    with pytest.raises(AuthFeatureNotSupportedError, match="client_id"):
+        await provider.get_client_credentials_access_token("scope://api/.default")
+
+
+@pytest.mark.anyio
 async def test_obo_raises_when_no_client_secret() -> None:
-    provider = EntraExternalAuthProvider(_settings_without_client_secret())
+    settings = _settings_without_m2m(
+        auth_external_token_uri="https://example.test/token",
+        auth_external_client_id="client-id",
+    )
+    provider = EntraExternalAuthProvider(settings)
     with pytest.raises(AuthFeatureNotSupportedError, match="client_secret"):
+        await provider.get_on_behalf_of_access_token("scope://api/.default", "token")
+
+
+@pytest.mark.anyio
+async def test_obo_raises_when_no_client_id() -> None:
+    settings = _settings_without_m2m(
+        auth_external_token_uri="https://example.test/token",
+        auth_external_client_secret="client-secret",
+    )
+    provider = EntraExternalAuthProvider(settings)
+    with pytest.raises(AuthFeatureNotSupportedError, match="client_id"):
         await provider.get_on_behalf_of_access_token("scope://api/.default", "token")
