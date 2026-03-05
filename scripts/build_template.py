@@ -81,7 +81,6 @@ TEXT_REPLACEMENTS: list[tuple[str, str]] = [
     ),
     ("fastapi_archetype", "{{cookiecutter.package_name}}"),
     ("fastapi-archetype", "{{cookiecutter.project_slug}}"),
-    ("archetype", "{{cookiecutter.package_name}}"),
 ]
 
 BINARY_EXTENSIONS: frozenset[str] = frozenset(
