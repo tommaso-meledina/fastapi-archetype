@@ -4,27 +4,32 @@
 
 **Functional Requirements:**
 
-28 FRs across 8 capability areas, all centered on proving that enterprise-grade cross-cutting concerns integrate coherently in a single FastAPI application:
+The current PRD requirement inventory spans core and expansion capabilities, centered on proving that enterprise-grade cross-cutting concerns integrate coherently in a single FastAPI application:
 
 | Category | FRs | Architectural Implication |
 |---|---|---|
-| REST API | FR1–FR4 | Thin route layer; JSON-only; structured error responses with centralized codes |
-| Data Persistence | FR5–FR7 | SQLModel single-model pattern couples ORM and API schema; MariaDB target with SQLite test fallback |
+| REST API | FR1–FR4, FR29 | Thin route layer; JSON-only; structured error responses with centralized codes |
+| Data Persistence | FR5–FR7, FR5a | SQLModel single-model pattern couples ORM and API schema; MariaDB target with SQLite default/test fallback |
 | Configuration Management | FR8–FR9 | Startup-time .env loading with fail-fast validation; no lazy config discovery |
 | API Documentation | FR10–FR12 | Zero-effort — FastAPI's built-in OpenAPI generation; Swagger at /docs, ReDoc at /redoc |
-| Testing | FR13–FR16 | Unit tests mock externals; integration tests use SQLite in-memory; >90% coverage target |
-| AOP Logging | FR17–FR19 | Module-level programmatic wrapping of function I/O and exceptions across a designated package without per-function annotation |
-| Observability | FR20–FR23 | Dual instrumentation: OTEL traces for distributed tracing + Prometheus metrics at /metrics for scraping |
+| Testing | FR13–FR16, FR40 | Unit/integration coverage with synthetic IdP path coverage for `entra` auth |
+| AOP Logging | FR17–FR19, FR17a | Module-level programmatic wrapping of function I/O and exceptions across a designated package without per-function annotation |
+| Observability | FR20–FR23, FR23a | Dual instrumentation: OTEL traces + Prometheus metrics with a custom business-metric pattern |
 | Containerization | FR24–FR25 | Dockerfile producing a self-contained image; .env is the only external input |
 | Code Organization | FR26–FR28 | Centralized constants, error codes/messages, and optional structured resource objects |
+| API Versioning | FR37–FR38 | URL-prefix versioning for business endpoints while infra endpoints remain unversioned |
+| Rate Limiting | FR30–FR32 | Per-endpoint throttling via environment configuration and standard 429 behavior |
+| Authentication & Authorization | FR33–FR36, FR39, FR41 | External IdP integration, RBAC, safe client errors, and pluggable role mapping |
+| Structured Logging | FR42–FR49 | Standards-first logging with `LOG_MODE`, `traceId` correlation, exception-mode rendering, and baseline redaction |
 
 **Non-Functional Requirements:**
 
-10 NFRs driving structural and quality decisions:
+The NFR inventory now includes baseline quality attributes plus dedicated logging quality attributes:
 
 - **Code Quality (NFR1–NFR5):** Linter-enforced style, logical project structure, clean separation of capability areas, no dead code, comments only for non-obvious intent
 - **Portability (NFR6–NFR7):** Docker image runs on Linux and macOS; no host-specific dependencies beyond pyproject.toml and .env
 - **Developer Experience (NFR8–NFR10):** Project structure self-documenting; /dummies resource serves as copy-and-adapt pattern for new resources; sensible defaults minimize setup
+- **Logging Quality (NFR11–NFR15):** low-overhead operation, fault-tolerant logging behavior, consistent formatting semantics, environment-driven mode switching, and baseline secret redaction
 
 **Scale & Complexity:**
 

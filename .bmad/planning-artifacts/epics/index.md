@@ -57,5 +57,6 @@
     - [Story 11.2: Synthetic IdP Integration Tests](./epic-11-auth-authz-hardening.md#story-112-synthetic-idp-integration-tests)
     - [Story 11.3: RoleMappingProvider Abstraction](./epic-11-auth-authz-hardening.md#story-113-rolemappingprovider-abstraction)
   - [Epic 12: Structured Logging with Trace Correlation](./epic-12-structured-logging.md)
-    - [Story 12.1: JSON Log Formatter with Environment Toggle](./epic-12-structured-logging.md#story-121-json-log-formatter-with-environment-toggle)
-    - [Story 12.2: OTEL Trace Context Injection into Log Records](./epic-12-structured-logging.md#story-122-otel-trace-context-injection-into-log-records)
+    - [Story 12.1: Standards-First Logging Configuration and Mode Toggle](./epic-12-structured-logging.md#story-121-standards-first-logging-configuration-and-mode-toggle)
+    - [Story 12.2: Plain and JSON Format Contracts with Trace Correlation](./epic-12-structured-logging.md#story-122-plain-and-json-format-contracts-with-trace-correlation)
+    - [Story 12.3: Unified Exception Interface and Baseline Secret Redaction](./epic-12-structured-logging.md#story-123-unified-exception-interface-and-baseline-secret-redaction)

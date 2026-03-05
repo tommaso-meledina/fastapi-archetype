@@ -45,6 +45,11 @@ NFR7: The application has no host-specific dependencies beyond what is declared 
 NFR8: A developer can understand the project structure and the role of each module by reading the project's documentation and code organization alone
 NFR9: The patterns used for the `/dummies` resource (model, route, validation, tests, AOP, constants) are clear enough to serve as a copy-and-adapt template for new resources
 NFR10: All configuration values have sensible defaults or clear documentation of required values, so a developer can get the application running with minimal setup
+NFR11: Logging must not introduce material request-latency degradation under normal operating conditions
+NFR12: Logging failures or formatter failures must not interrupt request handling or crash application processes
+NFR13: Logging semantics are consistent across modules: UTC ISO-8601 timestamps, camelCase JSON fields, and a single `traceId` convention with `NO_TRACE_ID` fallback
+NFR14: Switching logging mode (`plain`/`json`) is environment-driven (`LOG_MODE`) and requires no code change or redeploy-time patching
+NFR15: Sensitive data exposure risk is reduced through baseline redaction of obvious secret-bearing values in log output
 
 FR37: The application organizes all business API endpoints under a versioned URL prefix (e.g., `/v1/dummies`) using FastAPI's `APIRouter`
 FR38: Infrastructure endpoints (`/health`, `/metrics`, `/docs`, `/redoc`) remain at the root level, unversioned
@@ -58,9 +63,14 @@ FR36: Authentication and authorization integration settings (auth mode, IdP endp
 FR39: Auth error responses return generic, safe client-facing messages; provider-specific failure details are logged server-side only
 FR40: The `entra` auth code path is covered by integration tests using a synthetic IdP (test-generated RSA keypair, monkeypatched HTTP) that verify bearer validation, claim mapping, and role enforcement end-to-end
 FR41: Role checks resolve internal role labels to external identifiers through a pluggable `RoleMappingProvider` contract (`to_external(str) -> str`), with a default identity-mapping implementation
-FR42: The application outputs structured JSON log entries in production mode, with a human-readable format in development, controlled by a `LOG_FORMAT` setting
-FR43: Every log entry in JSON mode includes the OTEL `trace_id` and `span_id` from the current request context, enabling correlation between logs and distributed traces
-FR44: The structured logging integration preserves existing behavior: `logging.getLogger(__name__)` per module, `LOG_LEVEL` control, AOP function I/O logging at DEBUG level
+FR42: The logging solution relies on Python/FastAPI standard logging capabilities (stdlib `logging` + framework-compatible configuration) rather than a custom-built logging subsystem
+FR43: The application supports `LOG_MODE` with values `plain` and `json`, defaults to `plain`, and falls back to `plain` with a startup warning when an invalid value is supplied
+FR44: Logging format definitions are centralized in one configuration point so plain and JSON formats can be updated without cross-module edits
+FR45: In `plain` mode, each log line includes UTC ISO-8601 timestamp, trace identifier (`traceId`), log level, and message; when no trace context exists, `NO_TRACE_ID` is emitted explicitly
+FR46: In `json` mode, logs are emitted as one JSON object per line with camelCase fields; each entry includes at least `timestamp`, `level`, `logger`, `message`, and `traceId`
+FR47: The logging API for exception paths is unified: callers pass the exception object once; `plain` mode renders exception message only, while `json` mode renders exception message plus structured stack trace fields
+FR48: Structured logging integration preserves existing conventions: `logging.getLogger(__name__)` per module, `LOG_LEVEL` control, and AOP function I/O logging at DEBUG level
+FR49: Logging output applies baseline secret-safety redaction rules so obvious sensitive values (for example tokens, passwords, and API keys) are not emitted in clear text
 
 ## Additional Requirements
 
@@ -95,7 +105,7 @@ FR44: The structured logging integration preserves existing behavior: `logging.g
 - Direct SQLModel/Pydantic serialization for success responses (no envelope wrapper)
 - Structured error response format: `errorCode`, `message`, `detail`
 - Startup sequence: Config validation → DB engine → Middleware registration → Route inclusion
-- `logging.getLogger(__name__)` per module; structured JSON in production, human-readable in dev
+- `logging.getLogger(__name__)` per module; `LOG_MODE`-driven plain/JSON output with centralized format configuration and `traceId` correlation
 - AOP: Module-level `apply_logging(module)` targeting `services/` package
 - Validation at API boundary only (Pydantic/SQLModel on request entry)
 - Multi-stage Dockerfile with `python:3.14-slim` runtime base
@@ -151,6 +161,11 @@ FR44: The structured logging integration preserves existing behavior: `logging.g
 | FR39 | Epic 11 | Auth error response sanitization (no internal detail leakage) |
 | FR40 | Epic 11 | Synthetic IdP integration tests for entra auth path |
 | FR41 | Epic 11 | Pluggable RoleMappingProvider with identity-mapping default |
-| FR42 | Epic 12 | Structured JSON log output with LOG_FORMAT toggle |
-| FR43 | Epic 12 | OTEL trace_id/span_id injection into log entries |
-| FR44 | Epic 12 | Structured logging preserves existing logging conventions |
+| FR42 | Epic 12 | Standards-first logging architecture using Python/FastAPI logging primitives |
+| FR43 | Epic 12 | `LOG_MODE` toggle (`plain`/`json`) with safe fallback behavior |
+| FR44 | Epic 12 | Single-source log format configuration |
+| FR45 | Epic 12 | Plain format with UTC ISO timestamp and `traceId`/`NO_TRACE_ID` semantics |
+| FR46 | Epic 12 | NDJSON-style JSON logs with camelCase and required fields |
+| FR47 | Epic 12 | Unified exception logging interface with mode-specific rendering |
+| FR48 | Epic 12 | Compatibility with current logger usage, levels, and AOP conventions |
+| FR49 | Epic 12 | Baseline secret redaction in logging output |

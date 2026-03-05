@@ -50,6 +50,7 @@
 * add PROJECT_CONTEXT.md as LLM-oriented project reference
 * add ARCH_DECISIONS.md with all 24 architectural decisions
 * chisel README file
+* add automatic changelog capability to README
 
 
 ### Refactoring

@@ -52,6 +52,7 @@ Auth subsystem refinements to improve production-readiness: sanitized error resp
 **Phase:** 2 (Expansion)
 
 ## Epic 12: Structured Logging with Trace Correlation
-A developer sees structured JSON logs in production with OTEL trace/span IDs embedded in every entry, enabling log-to-trace correlation in observability platforms. Development mode retains human-readable text output.
-**FRs covered:** FR42–FR44
+A developer can switch logging between enterprise-friendly plain text and NDJSON output using standard Python/FastAPI logging mechanisms, with consistent `traceId` correlation, unified exception handling behavior, and baseline sensitive-data redaction.
+**FRs covered:** FR42–FR49
+**NFRs addressed:** NFR11–NFR15
 **Phase:** 3 (Refinement)

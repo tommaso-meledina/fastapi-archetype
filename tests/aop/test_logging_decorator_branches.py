@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from fastapi_archetype.aop.logging_decorator import (
     _format_arg,
     _format_call_args,
@@ -19,7 +17,7 @@ def test_format_arg_falls_back_when_repr_raises() -> None:
 
 
 def test_format_call_args_falls_back_when_signature_fails(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch,
 ) -> None:
     def sample(a: int, b: int) -> int:
         return a + b
@@ -27,7 +25,10 @@ def test_format_call_args_falls_back_when_signature_fails(
     def _raise_type_error(_func):  # noqa: ANN001
         raise TypeError("signature unavailable")
 
-    monkeypatch.setattr("fastapi_archetype.aop.logging_decorator.inspect.signature", _raise_type_error)
+    monkeypatch.setattr(
+        "fastapi_archetype.aop.logging_decorator.inspect.signature",
+        _raise_type_error,
+    )
 
     formatted = _format_call_args(sample, (1,), {"b": 2})
     assert formatted == "1, b=2"

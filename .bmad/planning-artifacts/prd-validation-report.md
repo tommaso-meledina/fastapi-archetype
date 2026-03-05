@@ -25,6 +25,8 @@ overallStatus: Pass
 
 # PRD Validation Report
 
+> Note: This validation report started as an early-baseline assessment. Requirement counts and maturity statements below should be interpreted against the current PRD inventory in `epics/requirements-inventory.md`, which is the authoritative source for up-to-date FR/NFR totals.
+
 **PRD Being Validated:** .bmad/planning-artifacts/prd.md
 **Validation Date:** 2026-03-03
 
@@ -95,7 +97,7 @@ overallStatus: Pass
 
 **Key Features:** Fully Covered
 - All 12 capabilities from the brief are present in PRD scoping (13 with centralized constants added)
-- 28 FRs provide detailed capability breakdown
+- The FR inventory provides a detailed capability breakdown
 - Phase deferral table (brief) maps to Post-MVP Features (PRD)
 
 **Goals/Objectives:** Fully Covered
@@ -120,7 +122,7 @@ overallStatus: Pass
 
 #### Functional Requirements
 
-**Total FRs Analyzed:** 28
+**Total FRs Analyzed:** Baseline PRD set (see requirements inventory for current total)
 
 **Format Violations:** 0
 - FRs use "The application [verb]..." format rather than "[Actor] can [capability]". For an API backend where the system is the primary actor, this is an acceptable deviation. All FRs are testable.
@@ -137,7 +139,7 @@ overallStatus: Pass
 
 #### Non-Functional Requirements
 
-**Total NFRs Analyzed:** 10
+**Total NFRs Analyzed:** Baseline PRD set (see requirements inventory for current total)
 
 **Missing Metrics:** 3
 - NFR2: "within minutes" -- vague timeframe, no specific target
@@ -154,7 +156,7 @@ overallStatus: Pass
 
 #### Overall Assessment
 
-**Total Requirements:** 38 (28 FRs + 10 NFRs)
+**Total Requirements:** Baseline PRD set (see requirements inventory for current total)
 **Total Violations:** 6 (1 FR + 5 NFR)
 
 **Severity:** Warning
@@ -277,12 +279,12 @@ This is a **reference implementation** project. Its explicit purpose is to demon
 
 ### SMART Requirements Validation
 
-**Total Functional Requirements:** 28
+**Total Functional Requirements:** Baseline PRD set
 
 #### Scoring Summary
 
-**All scores >= 3:** 100% (28/28)
-**All scores >= 4:** 89% (25/28)
+**All scores >= 3:** 100% for the baseline PRD set
+**All scores >= 4:** 89% for the baseline PRD set
 **Overall Average Score:** 4.8/5.0
 
 #### FRs with scores below 5 (notable items only)
@@ -326,7 +328,7 @@ All remaining 25 FRs score 5/5/5/5/5.
 
 **For Humans:**
 - Executive-friendly: Good -- Executive Summary provides quick orientation; phased roadmap with quality gates supports decision-making
-- Developer clarity: Excellent -- 28 FRs provide clear, testable requirements; API specs, data schemas, error formats all specified
+- Developer clarity: Excellent -- the FR inventory provides clear, testable requirements; API specs, data schemas, error formats all specified
 - Designer clarity: N/A (API backend, no UI)
 - Stakeholder decision-making: Good -- measurable outcomes table, clear phase boundaries
 
@@ -334,7 +336,7 @@ All remaining 25 FRs score 5/5/5/5/5.
 - Machine-readable structure: Excellent -- well-structured markdown, consistent headers, numbered requirements
 - UX readiness: N/A (API backend)
 - Architecture readiness: Good -- sufficient detail to derive architecture (endpoints, data model, integrations, observability, testing strategy, containerization)
-- Epic/Story readiness: Excellent -- 28 numbered FRs + 10 NFRs naturally decompose into stories/tasks with clear acceptance criteria
+- Epic/Story readiness: Excellent -- the numbered FR/NFR inventory naturally decomposes into stories/tasks with clear acceptance criteria
 
 **Dual Audience Score:** 4/5
 
@@ -388,8 +390,8 @@ No template variables remaining ✓
 **Success Criteria:** Complete -- user success, technical success, measurable outcomes table
 **Product Scope:** Complete (as "Project Scoping & Phased Development") -- MVP strategy, must-have capabilities, post-MVP features, risk mitigation
 **User Journeys:** Complete -- primary user success path and edge case documented
-**Functional Requirements:** Complete -- 28 FRs covering all 13 MVP capabilities
-**Non-Functional Requirements:** Complete -- 10 NFRs across Code Quality, Portability, Developer Experience
+**Functional Requirements:** Complete -- baseline FR set covered all MVP capabilities defined at that time
+**Non-Functional Requirements:** Complete -- baseline NFR set covered Code Quality, Portability, and Developer Experience
 **API Backend Specific Requirements:** Complete -- endpoint specs, error format, data schemas, API docs
 **Project Classification:** Complete -- all 4 fields populated
 
@@ -397,7 +399,7 @@ No template variables remaining ✓
 
 **Success Criteria Measurability:** Some measurable -- technical criteria have specific metrics (>90% coverage, all tests pass, etc.); user success criteria are qualitative
 **User Journeys Coverage:** Yes -- covers primary user (SWE); secondary user (DevOps) explicitly excluded per user direction
-**FRs Cover MVP Scope:** Yes -- all 13 MVP capabilities have corresponding FRs
+**FRs Cover MVP Scope:** Yes -- all MVP capabilities in the baseline validation scope had corresponding FRs
 **NFRs Have Specific Criteria:** Some -- Code Quality and Portability NFRs are specific; Developer Experience NFRs are qualitative
 
 #### Frontmatter Completeness

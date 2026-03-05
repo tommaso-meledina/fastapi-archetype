@@ -76,9 +76,14 @@
 
 ## Structured Logging
 
-- FR42: The application outputs structured JSON log entries in production mode, with a human-readable format in development, controlled by a `LOG_FORMAT` setting
-- FR43: Every log entry in JSON mode includes the OTEL `trace_id` and `span_id` from the current request context, enabling correlation between logs and distributed traces
-- FR44: The structured logging integration preserves existing behavior: `logging.getLogger(__name__)` per module, `LOG_LEVEL` control, AOP function I/O logging at DEBUG level
+- FR42: The logging solution relies on Python/FastAPI standard logging capabilities (stdlib `logging` + framework-compatible configuration) rather than a custom-built logging subsystem
+- FR43: The application supports `LOG_MODE` with values `plain` and `json`, defaults to `plain`, and falls back to `plain` with a startup warning when an invalid value is supplied
+- FR44: Logging format definitions are centralized in one configuration point so plain and JSON formats can be updated without cross-module edits
+- FR45: In `plain` mode, each log line includes UTC ISO-8601 timestamp, trace identifier (`traceId`), log level, and message; when no trace context exists, `NO_TRACE_ID` is emitted explicitly
+- FR46: In `json` mode, logs are emitted as one JSON object per line with camelCase fields; each entry includes at least `timestamp`, `level`, `logger`, `message`, and `traceId`
+- FR47: The logging API for exception paths is unified: callers pass the exception object once; `plain` mode renders exception message only, while `json` mode renders exception message plus structured stack trace fields
+- FR48: Structured logging integration preserves existing conventions: `logging.getLogger(__name__)` per module, `LOG_LEVEL` control, and AOP function I/O logging at DEBUG level
+- FR49: Logging output applies baseline secret-safety redaction rules so obvious sensitive values (for example tokens, passwords, and API keys) are not emitted in clear text
 
 ## Code Organization
 

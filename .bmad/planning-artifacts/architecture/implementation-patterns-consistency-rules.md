@@ -71,14 +71,14 @@ Consistent structure for all application errors:
 
 | Area | Convention | Rationale |
 |---|---|---|
-| Logging configuration | `logging.basicConfig` in `main.py` lifespan; level from `LOG_LEVEL` setting (default `INFO`) | Single configuration point at startup; level-driven visibility control |
+| Logging configuration | Standards-first stdlib logging configuration in `main.py` lifespan; level from `LOG_LEVEL`, mode from `LOG_MODE` (`plain` default, `json` optional) | Single configuration point at startup; environment-driven behavior; safe fallback to `plain` on invalid mode |
 | Logger creation | `logging.getLogger(__name__)` per module | Python standard; enables per-module log control; traceable to source |
 | Log destination | stdout, unbuffered | Container best practice; OTEL collector and Docker handle routing |
 | AOP function I/O | `DEBUG` level (inputs/outputs), `ERROR` level (exceptions) | I/O avoids noise in production; exceptions always surface |
 | Request lifecycle | `INFO` level | Normal operational visibility |
 | Recoverable issues | `WARNING` level | Attention-worthy but not failures |
 | Failures | `ERROR` level | Requires investigation |
-| Log format | Human-readable text (current baseline); structured JSON with OTEL trace correlation is the target state (Epic 12) | Machine-parseable for OTEL / log aggregation |
+| Log format | `plain`: UTC ISO-8601 + `traceId` + level + message; `json`: one JSON object per line with camelCase fields (`timestamp`, `level`, `logger`, `message`, `traceId`), `NO_TRACE_ID` fallback | Supports both human troubleshooting and machine parsing with consistent correlation semantics |
 
 **Validation:**
 
@@ -91,7 +91,7 @@ Consistent structure for all application errors:
 | Order | Step | Rationale |
 |---|---|---|
 | 1 | Configuration validation (pydantic-settings) | Fail-fast: config errors surface before any I/O |
-| 1a | Logging subsystem configuration | Depends on validated config (`LOG_LEVEL`); must be active before any component logs |
+| 1a | Logging subsystem configuration | Depends on validated config (`LOG_LEVEL`, `LOG_MODE`); must be active before any component logs |
 | 2 | Database engine creation | Depends on validated config |
 | 3 | Middleware registration (OTEL, Prometheus) | Depends on config; must wrap routes |
 | 4 | Route inclusion | Last; all infrastructure ready |

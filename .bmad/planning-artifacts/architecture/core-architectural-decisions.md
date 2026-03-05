@@ -46,7 +46,7 @@ Authentication and authorization are implemented with an external IdP-first patt
 | Documentation | FastAPI built-in OpenAPI 3.x, Swagger at `/docs`, ReDoc at `/redoc` | — | PRD-specified; zero-configuration |
 | Error handling | Enum-based error registry + custom `AppException` + global exception handler | — | Satisfies FR27 (single central location); type-safe; IDE-friendly; consistent response format |
 | Configuration | pydantic-settings `BaseSettings` | 2.13.1 | Native Pydantic integration; auto `.env` loading; typed validation; fail-fast at startup (FR8–FR9) |
-| Logging configuration | `logging.basicConfig` with `LOG_LEVEL` setting (temporary baseline) | — | Stdlib only; single configuration point in lifespan; stdout destination; level defaults to INFO (FR17a). Structured JSON logging with OTEL trace correlation deferred to Epic 12 |
+| Logging configuration | Standards-first stdlib logging (`logging` + formatter/filter configuration) with `LOG_LEVEL` and `LOG_MODE` | — | Single configuration point in lifespan; stdout destination; mode defaults to `plain`; JSON mode emits NDJSON with `traceId`; invalid mode falls back to `plain`; preserves existing logger and AOP conventions (FR42–FR49) |
 
 ## Infrastructure & Deployment
 

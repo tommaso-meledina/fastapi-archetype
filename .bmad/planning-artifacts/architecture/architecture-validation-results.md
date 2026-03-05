@@ -20,11 +20,11 @@
 
 ## Requirements Coverage Validation
 
-**Functional Requirements:** 29/29 covered
+**Functional Requirements:** Current inventory coverage is complete
 
-All FRs trace to explicit files in the project tree via the Requirements to Structure Mapping. FR23a (custom Prometheus metric) is scoped to Phase 2.
+All current FRs trace to explicit files in the project tree via the Requirements to Structure Mapping, including expansion and refinement requirements such as structured logging hardening (FR42-FR49).
 
-**Non-Functional Requirements:** 10/10 covered
+**Non-Functional Requirements:** Current inventory coverage is complete
 
 | NFR | Architectural Support |
 |---|---|
@@ -38,6 +38,11 @@ All FRs trace to explicit files in the project tree via the Requirements to Stru
 | NFR8 (Self-documenting) | Layered naming; FR-annotated project tree |
 | NFR9 (Copy-and-adapt) | `/dummies` as template resource across all layers |
 | NFR10 (Sensible defaults) | pydantic-settings with defaults + `.env.example` |
+| NFR11 (Logging performance) | Standards-first stdlib logging approach with mode toggle rather than custom logging subsystem |
+| NFR12 (Logging reliability) | Logging failure isolation requirement captured in PRD/NFR inventory |
+| NFR13 (Logging consistency) | Unified UTC/camelCase/`traceId` semantics documented in implementation patterns |
+| NFR14 (Logging operability) | `LOG_MODE` environment-driven mode selection and fallback behavior specified |
+| NFR15 (Logging security hygiene) | Baseline secret-redaction requirement captured in PRD/NFR inventory |
 
 ## Gap Analysis Results
 
@@ -95,9 +100,7 @@ All FRs trace to explicit files in the project tree via the Requirements to Stru
 - Database migrations (Alembic) when schema evolves beyond single table
 - Multi-IdP provider support beyond the current external Entra provider
 - Role semantic mapping layer (e.g., Graph appRoleId to domain role labels) for richer RBAC ergonomics
-- API versioning strategy (Phase 2)
-- Rate limiting (Phase 2)
-- Custom Prometheus metric example (Phase 2, FR23a)
+- Logging implementation rollout for Epic 12 stories (structured logging mode, trace correlation formatting contract, exception rendering, redaction baseline)
 
 ## Implementation Handoff
 

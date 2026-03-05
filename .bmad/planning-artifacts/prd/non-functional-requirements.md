@@ -18,3 +18,11 @@
 - NFR8: A developer can understand the project structure and the role of each module by reading the project's documentation and code organization alone
 - NFR9: The patterns used for the `/dummies` resource (model, route, validation, tests, AOP, constants) are clear enough to serve as a copy-and-adapt template for new resources
 - NFR10: All configuration values have sensible defaults or clear documentation of required values, so a developer can get the application running with minimal setup
+
+## Logging Quality Attributes
+
+- NFR11: Logging must not introduce material request-latency degradation under normal operating conditions
+- NFR12: Logging failures or formatter failures must not interrupt request handling or crash application processes
+- NFR13: Logging semantics are consistent across modules: UTC ISO-8601 timestamps, camelCase JSON fields, and a single `traceId` convention with `NO_TRACE_ID` fallback
+- NFR14: Switching logging mode (`plain`/`json`) is environment-driven (`LOG_MODE`) and requires no code change or redeploy-time patching
+- NFR15: Sensitive data exposure risk is reduced through baseline redaction of obvious secret-bearing values in log output
