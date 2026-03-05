@@ -50,6 +50,8 @@ NFR12: Logging failures or formatter failures must not interrupt request handlin
 NFR13: Logging semantics are consistent across modules: UTC ISO-8601 timestamps, camelCase JSON fields, and a single `traceId` convention with `NO_TRACE_ID` fallback
 NFR14: Switching logging mode (`plain`/`json`) is environment-driven (`LOG_MODE`) and requires no code change or redeploy-time patching
 NFR15: Sensitive data exposure risk is reduced through baseline redaction of obvious secret-bearing values in log output
+NFR16: The demo removal script is a single-file Python 3 script with no dependencies beyond the Python standard library, requiring no installation step
+NFR17: Auth and observability test suites are decoupled from specific resource endpoints so that tests remain valid regardless of which business resources exist in the application
 
 FR37: The application organizes all business API endpoints under a versioned URL prefix (e.g., `/v1/dummies`) using FastAPI's `APIRouter`
 FR38: Infrastructure endpoints (`/health`, `/metrics`, `/docs`, `/redoc`) remain at the root level, unversioned
@@ -71,6 +73,13 @@ FR46: In `json` mode, logs are emitted as one JSON object per line with camelCas
 FR47: The logging API for exception paths is unified: callers pass the exception object once; `plain` mode renders exception message only, while `json` mode renders exception message plus structured stack trace fields
 FR48: Structured logging integration preserves existing conventions: `logging.getLogger(__name__)` per module, `LOG_LEVEL` control, and AOP function I/O logging at DEBUG level
 FR49: Logging output applies baseline secret-safety redaction rules so obvious sensitive values (for example tokens, passwords, and API keys) are not emitted in clear text
+FR50: The project includes a Python 3 script at `scripts/remove_demo.py` (project root, outside `src/`) that removes all demo (Dummy CRUD) boilerplate from the codebase, leaving only the reusable infrastructure and scaffolding
+FR51: The script deletes all files exclusively dedicated to the Dummy resource: model, routes, services, and their corresponding test files
+FR52: The script surgically edits shared source files to remove Dummy-specific content while preserving all infrastructure code
+FR53: The script removes Dummy-specific entries from `.env.example`
+FR54: The script preserves version directories with valid `__init__.py` files as structural scaffolding for new resources
+FR55: The script checks for uncommitted git changes before executing and refuses to run if the working tree is dirty
+FR56: After the script completes successfully, the application starts, serves infrastructure endpoints, and all remaining tests pass
 
 ## Additional Requirements
 
@@ -169,3 +178,10 @@ FR49: Logging output applies baseline secret-safety redaction rules so obvious s
 | FR47 | Epic 12 | Unified exception logging interface with mode-specific rendering |
 | FR48 | Epic 12 | Compatibility with current logger usage, levels, and AOP conventions |
 | FR49 | Epic 12 | Baseline secret redaction in logging output |
+| FR50 | Epic 13 | Demo removal script at `scripts/remove_demo.py` |
+| FR51 | Epic 13 | Delete all Dummy-exclusive files (model, routes, services, tests) |
+| FR52 | Epic 13 | Surgical edits to shared files removing Dummy-specific content |
+| FR53 | Epic 13 | Remove Dummy entries from `.env.example` |
+| FR54 | Epic 13 | Preserve version directories as structural scaffolding |
+| FR55 | Epic 13 | Git dirty-tree check before execution |
+| FR56 | Epic 13 | Post-cleanup application starts and all tests pass |

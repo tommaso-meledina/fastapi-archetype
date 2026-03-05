@@ -56,3 +56,9 @@ A developer can switch logging between enterprise-friendly plain text and NDJSON
 **FRs covered:** FR42–FR49
 **NFRs addressed:** NFR11–NFR15
 **Phase:** 3 (Refinement)
+
+## Epic 13: Demo Removal
+A developer who has cloned the archetype can run `python3 scripts/remove_demo.py` to strip all Dummy CRUD boilerplate — leaving a clean project with all infrastructure intact, structural scaffolding preserved, and all tests passing. Prerequisite: auth and observability tests are decoupled from specific resource endpoints.
+**FRs covered:** FR50–FR56
+**NFRs addressed:** NFR16–NFR17
+**Phase:** 2 (Expansion)

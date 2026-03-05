@@ -2,8 +2,9 @@
 
 ## User Success
 
-- A developer gets all 12 capabilities working together on first run after cloning the repository
+- A developer gets all capabilities working together on first run after cloning the repository
 - The `/dummies` CRUD resource demonstrates a clear, replicable pattern for adding new domain resources
+- A developer can run a single command to strip all demo boilerplate and start with a clean, working project
 - OpenAPI documentation at `/docs` provides immediate, interactive API exploration without additional setup
 
 ## Business Success
@@ -28,5 +29,6 @@ N/A -- internal reference/scaffolding project. Success is measured by technical 
 | All 12 MVP capabilities implemented and working together | 100% | Phase 0 |
 | Test coverage | > 90% | Phase 0 |
 | Docker-compose environment with MariaDB + OTEL + Prometheus | All services healthy | Phase 1 |
-| Expansion features (external IdP auth/RBAC, rate limiting, API versioning, custom metric) integrated | All tests pass | Phase 2 |
+| Expansion features (external IdP auth/RBAC, rate limiting, API versioning, custom metric, demo removal) integrated | All tests pass | Phase 2 |
+| Demo removal script strips boilerplate and leaves app + tests green | Single command, zero manual edits | Phase 2 |
 | New project scaffolded and running | < 5 minutes | Phase 3 |

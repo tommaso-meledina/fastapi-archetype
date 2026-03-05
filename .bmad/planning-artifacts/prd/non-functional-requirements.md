@@ -26,3 +26,8 @@
 - NFR13: Logging semantics are consistent across modules: UTC ISO-8601 timestamps, camelCase JSON fields, and a single `traceId` convention with `NO_TRACE_ID` fallback
 - NFR14: Switching logging mode (`plain`/`json`) is environment-driven (`LOG_MODE`) and requires no code change or redeploy-time patching
 - NFR15: Sensitive data exposure risk is reduced through baseline redaction of obvious secret-bearing values in log output
+
+## Demo Removal
+
+- NFR16: The demo removal script is a single-file Python 3 script with no dependencies beyond the Python standard library, requiring no installation step
+- NFR17: Auth and observability test suites are decoupled from specific resource endpoints so that tests remain valid regardless of which business resources exist in the application

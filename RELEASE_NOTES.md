@@ -52,6 +52,7 @@
 * chisel README file
 * add automatic changelog capability to README
 * align logging specs and resolve stale requirement references
+* add demo removal feature requirements and Epic 13
 
 
 ### Refactoring

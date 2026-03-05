@@ -90,3 +90,13 @@
 - FR26: All resource paths, configuration keys, and shared constants are defined in centralized constant files, not scattered as string literals
 - FR27: All error codes and their associated messages are defined in a single central location
 - FR28: Resource definitions MAY be organized as structured objects grouping related constants (path, name, description) per REST resource
+
+## Demo Removal
+
+- FR50: The project includes a Python 3 script at `scripts/remove_demo.py` (project root, outside `src/`) that removes all demo (Dummy CRUD) boilerplate from the codebase, leaving only the reusable infrastructure and scaffolding
+- FR51: The script deletes all files exclusively dedicated to the Dummy resource: model (`models/dummy.py`), routes (`api/v1/dummy_routes.py`, `api/v2/dummy_routes.py`), services (`services/v1/dummy_service.py`, `services/v2/dummy_service.py`), and their corresponding test files (`tests/api/test_dummy_routes.py`, `tests/api/test_v2_dummy_routes.py`, `tests/services/v1/test_dummy_service.py`, `tests/services/v2/test_dummy_service.py`)
+- FR52: The script surgically edits shared source files to remove Dummy-specific content while preserving all infrastructure code: `DUMMIES` from `core/constants.py`, `DUMMY_NOT_FOUND` from `core/errors.py`, `rate_limit_get_dummies` / `rate_limit_post_dummies` from `core/config.py`, Dummy service AOP wiring from `services/__init__.py`, Dummy router imports and registrations from `api/v1/__init__.py` and `api/v2/__init__.py`, and the `dummies_created_total` counter from `observability/prometheus.py`
+- FR53: The script removes Dummy-specific entries from `.env.example` (rate limit environment variables for the Dummy resource)
+- FR54: The script preserves version directories (`api/v1/`, `api/v2/`, `services/v1/`, `services/v2/`) with valid `__init__.py` files as structural scaffolding for new resources
+- FR55: The script checks for uncommitted git changes before executing and refuses to run if the working tree is dirty, printing an informative error message
+- FR56: After the script completes successfully, the application starts, serves infrastructure endpoints (`/health`, `/metrics`, `/docs`, `/redoc`), and all remaining tests pass

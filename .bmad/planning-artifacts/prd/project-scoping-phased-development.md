@@ -36,6 +36,7 @@
 - Rate limiting
 - API versioning
 - Custom Prometheus metric example (FR23a)
+- Demo removal script (`scripts/remove_demo.py`) for stripping Dummy CRUD boilerplate from the project (FR50–FR56)
 
 **Phase 3 (Scaffolding):**
 - Cookiecutter template wrapping the proven, feature-complete implementation
