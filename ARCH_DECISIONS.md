@@ -154,7 +154,7 @@ This document records every architectural decision (AD) made during the design a
 | `opentelemetry-distro` zero-code instrumentation | - Minimal code | - Less control over configuration - Environment variable-driven (conflicts with pydantic-settings pattern) |
 | No tracing | - Simplest | - Defeats the project's purpose of demonstrating observability |
 
-**Decision and justification:** Programmatic SDK setup. A `setup_otel(app, settings)` function configures a `TracerProvider`, optionally adds a `BatchSpanProcessor` with `OTLPSpanExporter` (gRPC) when export is enabled, and instruments the app via `FastAPIInstrumentor`. The `/metrics` endpoint is excluded from tracing. gRPC was chosen over HTTP as the standard OTLP transport. The OTEL Collector uses the `contrib` distribution (not `core`) because the Jaeger and Prometheus exporters are only available in contrib.
+**Decision and justification:** Programmatic SDK setup. `FastAPIInstrumentor.instrument_app(app)` is called at module level in `main.py` (before the middleware stack is built) so the OTEL middleware is present when Starlette builds the stack during the lifespan. The instrumentor uses a `ProxyTracer` that lazily delegates to the real `TracerProvider` once `setup_otel(settings)` sets it during the lifespan. `setup_otel` configures a `TracerProvider`, optionally adds a `BatchSpanProcessor` with `OTLPSpanExporter` (gRPC) when export is enabled, and sets the global provider via `trace.set_tracer_provider()`. The `/metrics` endpoint is excluded from tracing. gRPC was chosen over HTTP as the standard OTLP transport. The OTEL Collector uses the `contrib` distribution (not `core`) because the Jaeger and Prometheus exporters are only available in contrib.
 
 ## AD 12 - Prometheus Metrics
 

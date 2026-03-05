@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi.errors import RateLimitExceeded
 from sqlmodel import SQLModel
 
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     settings = AppSettings()
     configure_logging(settings)
-    tracer_provider = setup_otel(app, settings)
+    tracer_provider = setup_otel(settings)
     engine = get_engine(settings)
     SQLModel.metadata.create_all(engine)
     try:
@@ -62,4 +63,5 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+FastAPIInstrumentor.instrument_app(app, excluded_urls="metrics")
 setup_prometheus(app)

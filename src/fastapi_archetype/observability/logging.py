@@ -55,7 +55,7 @@ class PlainFormatter(logging.Formatter):
         ).isoformat()
         trace_id = getattr(record, "traceId", NO_TRACE_ID)
         message = record.getMessage()
-        line = f"{timestamp} {trace_id} {record.levelname} {record.name} {message}"
+        line = f"{timestamp} [{trace_id}] {record.levelname} {record.name} {message}"
 
         if record.exc_info and record.exc_info[1] is not None:
             exc_type, exc_val, _ = record.exc_info

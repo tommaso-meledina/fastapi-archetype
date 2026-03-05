@@ -50,7 +50,7 @@ All dependencies are declared in `pyproject.toml`. Do not add or replace depende
 
 ```
 src/fastapi_archetype/
-├── main.py                          # FastAPI app, lifespan, exception handlers, router registration
+├── main.py                          # FastAPI app, lifespan, exception handlers, router registration, OTEL instrumentation
 ├── aop/
 │   └── logging_decorator.py         # log_io decorator + apply_logging(module)
 ├── api/

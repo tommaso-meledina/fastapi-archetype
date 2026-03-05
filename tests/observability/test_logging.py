@@ -6,7 +6,6 @@ import sys
 
 import pytest
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
 
 from fastapi_archetype.core.config import AppSettings
@@ -115,10 +114,26 @@ class TestPlainFormatter:
         record = _make_record(plain_logger, "hello world")
         formatter = PlainFormatter()
         output = formatter.format(record)
-        assert NO_TRACE_ID in output
+        assert f"[{NO_TRACE_ID}]" in output
         assert "INFO" in output
         assert "test.plain" in output
         assert "hello world" in output
+
+    def test_plain_trace_id_in_brackets(
+        self, plain_logger: logging.Logger
+    ) -> None:
+        ctx = SpanContext(
+            trace_id=0xABCDEF1234567890ABCDEF1234567890,
+            span_id=0x1234567890ABCDEF,
+            is_remote=False,
+            trace_flags=TraceFlags(TraceFlags.SAMPLED),
+        )
+        span = NonRecordingSpan(ctx)
+        with trace.use_span(span):
+            record = _make_record(plain_logger, "with span")
+            output = PlainFormatter().format(record)
+            tid = record.traceId  # type: ignore[attr-defined]
+            assert f"[{tid}]" in output
 
     def test_plain_format_utc_iso8601(self, plain_logger: logging.Logger) -> None:
         record = _make_record(plain_logger, "ts check")
@@ -165,14 +180,17 @@ class TestTraceCorrelation:
     def test_active_span_injects_trace_id(
         self, plain_logger: logging.Logger
     ) -> None:
-        provider = TracerProvider()
-        trace.set_tracer_provider(provider)
-        tracer = trace.get_tracer("test")
-        with tracer.start_as_current_span("test-span"):
+        ctx = SpanContext(
+            trace_id=0xABCDEF1234567890ABCDEF1234567890,
+            span_id=0x1234567890ABCDEF,
+            is_remote=False,
+            trace_flags=TraceFlags(TraceFlags.SAMPLED),
+        )
+        span = NonRecordingSpan(ctx)
+        with trace.use_span(span):
             record = _make_record(plain_logger, "traced")
             assert record.traceId != NO_TRACE_ID  # type: ignore[attr-defined]
             assert len(record.traceId) == 32  # type: ignore[attr-defined]
-        provider.shutdown()
 
     def test_invalid_span_context_yields_no_trace_id(
         self, plain_logger: logging.Logger
@@ -280,7 +298,7 @@ class TestSecretRedaction:
         record = _make_record(plain_logger, "auth password=hunter2 done")
         output = PlainFormatter().format(record)
         assert "hunter2" not in output
-        assert "***" in output
+        assert "password=***" in output
 
     def test_json_mode_redacts_secrets(
         self, json_logger: logging.Logger
@@ -312,3 +330,33 @@ class TestExistingConventions:
             return x * 2
 
         assert sample(3) == 6
+
+
+class TestTraceCorrelationDuringRequest:
+    def test_request_carries_real_trace_id(self, client) -> None:  # type: ignore[no-untyped-def]
+        from fastapi_archetype.observability.logging import _current_trace_id
+
+        captured: list[str] = []
+
+        class _Capture(logging.Filter):
+            def filter(self, record: logging.LogRecord) -> bool:
+                captured.append(_current_trace_id())
+                return True
+
+        aop_logger = logging.getLogger(
+            "fastapi_archetype.aop.logging_decorator"
+        )
+        capture = _Capture()
+        aop_logger.addFilter(capture)
+        original_level = aop_logger.level
+        aop_logger.setLevel(logging.DEBUG)
+        try:
+            client.get("/v1/dummies")
+        finally:
+            aop_logger.removeFilter(capture)
+            aop_logger.setLevel(original_level)
+
+        assert len(captured) > 0, "Expected AOP logs during the request"
+        assert all(
+            tid != NO_TRACE_ID for tid in captured
+        ), f"Expected real trace IDs, got: {captured}"
