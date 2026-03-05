@@ -35,7 +35,11 @@ The idea is to clone or scaffold from this project to get all of the above worki
 
 ## Scaffolding
 
-Generate a new project in one command:
+The generated project is fully functional from the first `uv sync && pytest`. Requires `cookiecutter` to be installed (`pip install cookiecutter`).
+
+### Cloning the repo
+
+After cloning the repo, you can generate a new project in one command:
 
 ```bash
 python3 scripts/build_template.py -n "Order Service" -o ~/projects
@@ -53,7 +57,24 @@ This creates `~/projects/order-service/` with all archetype capabilities, parame
 | `--no-demo` | off | Exclude the Dummy CRUD demo resource |
 | `--force` | off | Overwrite if project directory exists |
 
-The generated project is fully functional from the first `uv sync && pytest`. Requires `cookiecutter` to be installed (`pip install cookiecutter`).
+### One-liner (without cloning the repo)
+
+Set build variables:
+
+```bash
+export PROJECT_NAME="My Experiment"
+export OUTPUT_DIR=~/projects
+export DESCRIPTION="My Experiment API" # optional
+export AUTHOR="Alex" # optional
+export EMAIL="alex@co.com" # optional
+export NO_DEMO=true # optional
+```
+
+Generate the `My Experiment` project on the fly:
+
+```bash
+bash -c 'T=$(mktemp -d) && git clone --depth 1 https://github.com/tommaso-meledina/fastapi-archetype.git "$T/repo" && python3 "$T/repo/scripts/build_template.py" -n "$PROJECT_NAME" -o "$OUTPUT_DIR" --description "$DESCRIPTION" --author "$AUTHOR" --email "$EMAIL" ${NO_DEMO:+--no-demo} && rm -rf "$T"'
+```
 
 ## Usage
 

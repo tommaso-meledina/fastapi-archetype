@@ -36,6 +36,7 @@
 * decouple auth and observability tests from Dummy endpoints (Epic 13, Story 13.1)
 * add demo removal script (Epic 13, Story 13.2)
 * add Cookiecutter template build script (Phase 3)
+* one-shot project creation with build_template.py
 
 
 ### Documentation
