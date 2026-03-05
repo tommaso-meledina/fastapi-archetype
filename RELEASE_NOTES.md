@@ -67,6 +67,7 @@
 * replace removed jaeger exporter with otlp&#x2F;jaeger in OTEL collector
 * code review fixes for rate limiting (Epic 9)
 * add missing Epic 10 to sprint status and fix index indentation
+* cleanly dispose DB engines and raise test coverage
 
 
 ### Integration

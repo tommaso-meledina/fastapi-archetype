@@ -257,6 +257,10 @@ uv run ruff check src/ tests/
 uv run ruff format --check src/ tests/
 ```
 
+### Automatic Changelog
+
+A `pre-commit` git hook in `.githooks/` uses [node-autochglog](https://www.npmjs.com/package/node-autochglog) to regenerate `RELEASE_NOTES.md` automatically on every commit based on Conventional Commits history.
+
 ## Extension Guide
 
 The `/dummies` resource serves as a template. To add a new resource (for example, `Widget`), follow these steps.
