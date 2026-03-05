@@ -90,10 +90,10 @@ def _mock_facade_reader_principal() -> AuthFacade:
 
 class TestUnauthorizedSanitization:
     def test_missing_token_returns_generic_401(self, entra_client: TestClient) -> None:
-        response = entra_client.get("/v1/dummies")
+        response = entra_client.get("/test/open")
         assert response.status_code == 200
 
-        response = entra_client.post("/v1/dummies", json={"name": "X"})
+        response = entra_client.post("/test/auth-required", json={"value": "X"})
         assert response.status_code == 401
         body = response.json()
         assert body["errorCode"] == "UNAUTHORIZED"
@@ -106,8 +106,8 @@ class TestUnauthorizedSanitization:
         app.dependency_overrides[get_auth_facade] = _mock_facade_unauthorized
         try:
             response = entra_client.post(
-                "/v1/dummies",
-                json={"name": "X"},
+                "/test/auth-required",
+                json={"value": "X"},
                 headers={"Authorization": "Bearer bad-token"},
             )
             assert response.status_code == 401
@@ -125,8 +125,8 @@ class TestUnauthorizedSanitization:
         app.dependency_overrides[get_auth_facade] = _mock_facade_unexpected_error
         try:
             response = entra_client.post(
-                "/v1/dummies",
-                json={"name": "X"},
+                "/test/auth-required",
+                json={"value": "X"},
                 headers={"Authorization": "Bearer some-token"},
             )
             assert response.status_code == 401
@@ -143,8 +143,8 @@ class TestUnauthorizedSanitization:
         try:
             with caplog.at_level(logging.WARNING, logger=AUTH_DEPS_LOGGER):
                 entra_client.post(
-                    "/v1/dummies",
-                    json={"name": "X"},
+                    "/test/auth-required",
+                    json={"value": "X"},
                     headers={"Authorization": "Bearer bad"},
                 )
             warning_records = [
@@ -165,8 +165,8 @@ class TestForbiddenSanitization:
         app.dependency_overrides[get_auth_facade] = _mock_facade_reader_principal
         try:
             response = entra_client.post(
-                "/v2/dummies",
-                json={"name": "X"},
+                "/test/admin-required",
+                json={"value": "X"},
                 headers={"Authorization": "Bearer valid-token"},
             )
             assert response.status_code == 403
@@ -185,8 +185,8 @@ class TestForbiddenSanitization:
         try:
             with caplog.at_level(logging.WARNING, logger=AUTH_DEPS_LOGGER):
                 entra_client.post(
-                    "/v2/dummies",
-                    json={"name": "X"},
+                    "/test/admin-required",
+                    json={"value": "X"},
                     headers={"Authorization": "Bearer valid-token"},
                 )
             warning_records = [

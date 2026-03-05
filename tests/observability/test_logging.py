@@ -359,20 +359,18 @@ class TestTraceCorrelationDuringRequest:
                 captured.append(_current_span_ids())
                 return True
 
-        aop_logger = logging.getLogger(
-            "fastapi_archetype.aop.logging_decorator"
-        )
+        stub_logger = logging.getLogger("fastapi_archetype.test_stubs")
         capture = _Capture()
-        aop_logger.addFilter(capture)
-        original_level = aop_logger.level
-        aop_logger.setLevel(logging.DEBUG)
+        stub_logger.addFilter(capture)
+        original_level = stub_logger.level
+        stub_logger.setLevel(logging.DEBUG)
         try:
-            client.get("/v1/dummies")
+            client.get("/test/open")
         finally:
-            aop_logger.removeFilter(capture)
-            aop_logger.setLevel(original_level)
+            stub_logger.removeFilter(capture)
+            stub_logger.setLevel(original_level)
 
-        assert len(captured) > 0, "Expected AOP logs during the request"
+        assert len(captured) > 0, "Expected stub log during the request"
         assert all(
             tid != NO_TRACE_ID and sid != NO_SPAN_ID
             for tid, sid in captured

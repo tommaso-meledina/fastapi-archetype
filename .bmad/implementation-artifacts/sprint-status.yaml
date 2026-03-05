@@ -101,3 +101,8 @@ development_status:
   12-2-plain-and-json-format-contracts-with-trace-correlation: done
   12-3-unified-exception-interface-and-baseline-secret-redaction: done
   epic-12-retrospective: optional
+
+  epic-13: in-progress
+  13-1-decouple-auth-and-observability-tests-from-dummy-endpoints: in-progress
+  13-2-demo-removal-script: backlog
+  epic-13-retrospective: optional

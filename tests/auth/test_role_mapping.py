@@ -108,7 +108,7 @@ class TestRequireRoleUsesMapper:
     def guid_client_fixture(
         self, _guid_engine, sign_jwt, jwks_response
     ) -> Generator[TestClient]:
-        """Client using GuidRoleMappingProvider where 'admin' → 'guid-admin-001'."""
+        """Client using GuidRoleMappingProvider where 'admin' -> 'guid-admin-001'."""
         from fastapi_archetype.auth.providers.entra import EntraExternalAuthProvider
 
         settings = AppSettings(
@@ -168,8 +168,8 @@ class TestRequireRoleUsesMapper:
     ) -> None:
         token = sign_jwt({"roles": ["guid-admin-001"]})
         response = guid_client.post(
-            "/v2/dummies",
-            json={"name": "GuidAdmin"},
+            "/test/admin-required",
+            json={"value": "GuidAdmin"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 201
@@ -181,8 +181,8 @@ class TestRequireRoleUsesMapper:
     ) -> None:
         token = sign_jwt({"roles": ["admin"]})
         response = guid_client.post(
-            "/v2/dummies",
-            json={"name": "X"},
+            "/test/admin-required",
+            json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 403

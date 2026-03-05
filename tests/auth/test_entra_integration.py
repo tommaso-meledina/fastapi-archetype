@@ -253,12 +253,12 @@ class TestEndpointIntegration:
     ) -> None:
         token = sign_jwt()
         response = entra_integration_client.post(
-            "/v1/dummies",
-            json={"name": "AuthedDummy"},
+            "/test/auth-required",
+            json={"value": "AuthedItem"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 201
-        assert response.json()["name"] == "AuthedDummy"
+        assert response.json()["value"] == "AuthedItem"
 
     def test_valid_admin_token_grants_access_to_role_protected_endpoint(
         self,
@@ -267,8 +267,8 @@ class TestEndpointIntegration:
     ) -> None:
         token = sign_jwt({"roles": ["admin"]})
         response = entra_integration_client.post(
-            "/v2/dummies",
-            json={"name": "AdminDummy"},
+            "/test/admin-required",
+            json={"value": "AdminItem"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 201
@@ -278,8 +278,8 @@ class TestEndpointIntegration:
         entra_integration_client: TestClient,
     ) -> None:
         response = entra_integration_client.post(
-            "/v1/dummies",
-            json={"name": "X"},
+            "/test/auth-required",
+            json={"value": "X"},
         )
         assert response.status_code == 401
         body = response.json()
@@ -293,8 +293,8 @@ class TestEndpointIntegration:
     ) -> None:
         token = sign_jwt({"exp": int(time.time()) - 600})
         response = entra_integration_client.post(
-            "/v1/dummies",
-            json={"name": "X"},
+            "/test/auth-required",
+            json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 401
@@ -309,8 +309,8 @@ class TestEndpointIntegration:
     ) -> None:
         token = sign_jwt({"iss": "https://evil.example.com/"})
         response = entra_integration_client.post(
-            "/v1/dummies",
-            json={"name": "X"},
+            "/test/auth-required",
+            json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 401
@@ -324,8 +324,8 @@ class TestEndpointIntegration:
     ) -> None:
         token = sign_jwt({"aud": "api://wrong"})
         response = entra_integration_client.post(
-            "/v1/dummies",
-            json={"name": "X"},
+            "/test/auth-required",
+            json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 401
@@ -345,8 +345,8 @@ class TestEndpointIntegration:
         ).decode()
         token = sign_jwt(private_pem=wrong_pem)
         response = entra_integration_client.post(
-            "/v1/dummies",
-            json={"name": "X"},
+            "/test/auth-required",
+            json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 401
@@ -364,8 +364,8 @@ class TestRoleEnforcement:
     ) -> None:
         token = sign_jwt({"roles": ["reader"]})
         response = entra_integration_client.post(
-            "/v2/dummies",
-            json={"name": "X"},
+            "/test/admin-required",
+            json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 403
@@ -380,8 +380,8 @@ class TestRoleEnforcement:
     ) -> None:
         token = sign_jwt({"roles": ["admin"]})
         response = entra_integration_client.post(
-            "/v2/dummies",
-            json={"name": "AdminWidget"},
+            "/test/admin-required",
+            json={"value": "AdminWidget"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 201
@@ -397,8 +397,8 @@ class TestGraphRoleEnrichment:
     ) -> None:
         token = sign_jwt({"roles": []})
         response = graph_enrichment_client.post(
-            "/v2/dummies",
-            json={"name": "GraphAdmin"},
+            "/test/admin-required",
+            json={"value": "GraphAdmin"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 201

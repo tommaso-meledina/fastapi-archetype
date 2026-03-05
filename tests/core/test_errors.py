@@ -28,11 +28,6 @@ def test_error_code_internal_error() -> None:
     assert ErrorCode.INTERNAL_ERROR.http_status == 500
 
 
-def test_error_code_dummy_not_found() -> None:
-    assert ErrorCode.DUMMY_NOT_FOUND.code == "DUMMY_NOT_FOUND"
-    assert ErrorCode.DUMMY_NOT_FOUND.http_status == 404
-
-
 def test_error_code_unauthorized() -> None:
     assert ErrorCode.UNAUTHORIZED.code == "UNAUTHORIZED"
     assert ErrorCode.UNAUTHORIZED.http_status == 401
@@ -51,9 +46,9 @@ def test_app_exception_carries_error_code() -> None:
 
 
 def test_app_exception_with_detail() -> None:
-    exc = AppException(ErrorCode.DUMMY_NOT_FOUND, detail="id=99")
+    exc = AppException(ErrorCode.NOT_FOUND, detail="id=99")
     assert exc.detail == "id=99"
-    assert exc.error_code is ErrorCode.DUMMY_NOT_FOUND
+    assert exc.error_code is ErrorCode.NOT_FOUND
 
 
 def test_build_error_body_structure() -> None:
@@ -71,7 +66,7 @@ def test_build_error_body_null_detail() -> None:
 
 
 def test_validation_error_via_http(client: TestClient) -> None:
-    response = client.post("/v1/dummies")
+    response = client.post("/test/open")
     assert response.status_code == 422
     data = response.json()
     assert data["errorCode"] == "VALIDATION_ERROR"
