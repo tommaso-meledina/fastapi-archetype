@@ -60,7 +60,6 @@ EXCLUDED_PATHS: set[str] = {
     "CLAUDE.md",
     "node-autochglog.config.json",
     ".githooks/",
-    "uv.lock",
     ".env",
     "README.md",
     "scripts/build_template.py",

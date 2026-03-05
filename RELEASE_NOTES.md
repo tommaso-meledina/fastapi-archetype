@@ -4,6 +4,11 @@
 ## Upcoming release
 
 
+### Fixes
+
+* replace bare &#39;archetype&#39; DB username in compose&#x2F;.env
+
+
 
 ## 1.0.0
 
