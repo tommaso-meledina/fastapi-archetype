@@ -79,7 +79,7 @@ src/fastapi_archetype/
 ├── models/
 │   └── dummy.py                     # Dummy(SQLModel, table=True) with camelCase aliases
 ├── observability/
-│   ├── logging.py                   # configure_logging(settings), PlainFormatter, JsonFormatter, TraceIdFilter, secret redaction
+│   ├── logging.py                   # configure_logging(settings), PlainFormatter, JsonFormatter, SpanFilter, secret redaction
 │   ├── otel.py                      # setup_otel(app, settings) -> TracerProvider
 │   └── prometheus.py                # Metrics dataclass, dummies_created_total counter, setup_prometheus(app)
 └── services/
@@ -316,9 +316,9 @@ Ruff is configured in `pyproject.toml`:
 
 - `configure_logging(settings)` in `observability/logging.py` is called once in the lifespan via `logging.config.dictConfig`.
 - `LOG_MODE` (`plain`/`json`, default `plain`) selects the active formatter; invalid values fall back to `plain` with a startup warning.
-- Plain format: UTC ISO-8601 timestamp, `traceId`, level, logger name, message. Exception rendering shows type and message only.
-- JSON format: one NDJSON object per line with camelCase fields (`timestamp`, `level`, `logger`, `message`, `traceId`). Exceptions add `exceptionType`, `exceptionMessage`, `stackTrace`.
-- `TraceIdFilter` injects `traceId` from the current OpenTelemetry span context; `NO_TRACE_ID` when no trace is active.
+- Plain format: UTC ISO-8601 timestamp, `[traceId]`, `[spanId]`, level, logger name, message. Exception rendering shows type and message only.
+- JSON format: one NDJSON object per line with camelCase fields (`timestamp`, `level`, `logger`, `message`, `traceId`, `spanId`). Exceptions add `exceptionType`, `exceptionMessage`, `stackTrace`.
+- `SpanFilter` injects `traceId` and `spanId` from the current OpenTelemetry span context; `NO_TRACE_ID`/`NO_SPAN_ID` when no trace is active.
 - Baseline secret redaction masks obvious sensitive values (passwords, tokens, API keys, authorization headers) in both modes.
 - Modules obtain loggers via `logging.getLogger(__name__)`.
 - AOP logging is at DEBUG level for I/O and ERROR level for exceptions (with `exc_info=True`); application-level logging in services uses INFO.

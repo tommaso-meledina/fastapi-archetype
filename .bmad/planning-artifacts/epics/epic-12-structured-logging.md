@@ -1,6 +1,6 @@
 # Epic 12: Structured Logging with Trace Correlation
 
-A developer can switch logging between enterprise-friendly plain text and NDJSON output using standard Python/FastAPI logging mechanisms, with consistent `traceId` correlation, unified exception logging behavior, and baseline sensitive-data redaction.
+A developer can switch logging between enterprise-friendly plain text and NDJSON output using standard Python/FastAPI logging mechanisms, with consistent `traceId`/`spanId` correlation, unified exception logging behavior, and baseline sensitive-data redaction.
 
 **FRs covered:** FR42–FR49
 **NFRs addressed:** NFR11–NFR15
@@ -38,24 +38,24 @@ So that **we gain enterprise logging behavior without building and maintaining a
 ## Story 12.2: Plain and JSON Format Contracts with Trace Correlation
 
 As a **software engineer**,
-I want **clear contracts for plain and JSON log output, each including `traceId` correlation semantics**,
+I want **clear contracts for plain and JSON log output, each including `traceId`/`spanId` correlation semantics**,
 So that **humans can read local logs while observability systems can parse production logs reliably**.
 
 **Acceptance Criteria:**
 
 **Given** `LOG_MODE=plain`
 **When** a log entry is emitted
-**Then** the line includes UTC ISO-8601 timestamp, `traceId`, level, and message in a deterministic formatter contract
+**Then** the line includes UTC ISO-8601 timestamp, `[traceId]`, `[spanId]`, level, and message in a deterministic formatter contract
 
 **Given** `LOG_MODE=json`
 **When** a log line is emitted during a traced request
 **Then** the output is one JSON object per line (NDJSON-compatible)
 **And** it uses camelCase field names
-**And** it includes at minimum `timestamp`, `level`, `logger`, `message`, and `traceId`
+**And** it includes at minimum `timestamp`, `level`, `logger`, `message`, `traceId`, and `spanId`
 
 **Given** no active trace context exists (startup/background/non-request path)
 **When** logging occurs in either mode
-**Then** `traceId` is emitted as `NO_TRACE_ID`
+**Then** `traceId` is emitted as `NO_TRACE_ID` and `spanId` as `NO_SPAN_ID`
 **And** no logging error is raised
 
 ## Story 12.3: Unified Exception Interface and Baseline Secret Redaction

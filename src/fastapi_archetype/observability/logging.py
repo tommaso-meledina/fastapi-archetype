@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from fastapi_archetype.core.config import AppSettings
 
 NO_TRACE_ID = "NO_TRACE_ID"
+NO_SPAN_ID = "NO_SPAN_ID"
 
 _REDACTED = "***"
 _AUTH_HEADER_RE = re.compile(
@@ -34,17 +35,19 @@ def _redact_secrets(text: str) -> str:
     )
 
 
-def _current_trace_id() -> str:
+def _current_span_ids() -> tuple[str, str]:
     span = trace.get_current_span()
     ctx = span.get_span_context()
     if ctx and ctx.trace_id:
-        return format(ctx.trace_id, "032x")
-    return NO_TRACE_ID
+        return format(ctx.trace_id, "032x"), format(ctx.span_id, "016x")
+    return NO_TRACE_ID, NO_SPAN_ID
 
 
-class TraceIdFilter(logging.Filter):
+class SpanFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        record.traceId = _current_trace_id()  # type: ignore[attr-defined]
+        trace_id, span_id = _current_span_ids()
+        record.traceId = trace_id  # type: ignore[attr-defined]
+        record.spanId = span_id  # type: ignore[attr-defined]
         return True
 
 
@@ -54,8 +57,12 @@ class PlainFormatter(logging.Formatter):
             record.created, tz=UTC
         ).isoformat()
         trace_id = getattr(record, "traceId", NO_TRACE_ID)
+        span_id = getattr(record, "spanId", NO_SPAN_ID)
         message = record.getMessage()
-        line = f"{timestamp} [{trace_id}] {record.levelname} {record.name} {message}"
+        line = (
+            f"{timestamp} [{trace_id}] [{span_id}]"
+            f" {record.levelname} {record.name} {message}"
+        )
 
         if record.exc_info and record.exc_info[1] is not None:
             exc_type, exc_val, _ = record.exc_info
@@ -78,6 +85,7 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": _redact_secrets(record.getMessage()),
             "traceId": getattr(record, "traceId", NO_TRACE_ID),
+            "spanId": getattr(record, "spanId", NO_SPAN_ID),
         }
 
         if record.exc_info and record.exc_info[1] is not None:
@@ -103,7 +111,7 @@ def configure_logging(settings: AppSettings) -> None:
         "version": 1,
         "disable_existing_loggers": False,
         "filters": {
-            "trace_id": {"()": TraceIdFilter},
+            "span_context": {"()": SpanFilter},
         },
         "formatters": {
             "plain": {"()": PlainFormatter},
@@ -114,7 +122,7 @@ def configure_logging(settings: AppSettings) -> None:
                 "class": "logging.StreamHandler",
                 "stream": "ext://sys.stdout",
                 "formatter": settings.log_mode,
-                "filters": ["trace_id"],
+                "filters": ["span_context"],
             },
         },
         "root": {

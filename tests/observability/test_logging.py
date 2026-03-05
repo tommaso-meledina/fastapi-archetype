@@ -10,10 +10,11 @@ from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
 
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.observability.logging import (
+    NO_SPAN_ID,
     NO_TRACE_ID,
     JsonFormatter,
     PlainFormatter,
-    TraceIdFilter,
+    SpanFilter,
     _redact_secrets,
     configure_logging,
 )
@@ -22,13 +23,21 @@ from fastapi_archetype.observability.logging import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
+_VALID_CTX = SpanContext(
+    trace_id=0xABCDEF1234567890ABCDEF1234567890,
+    span_id=0x1234567890ABCDEF,
+    is_remote=False,
+    trace_flags=TraceFlags(TraceFlags.SAMPLED),
+)
+
+
 @pytest.fixture()
 def plain_logger() -> logging.Logger:
     lgr = logging.getLogger("test.plain")
     lgr.handlers.clear()
     lgr.propagate = False
     handler = logging.StreamHandler()
-    handler.addFilter(TraceIdFilter())
+    handler.addFilter(SpanFilter())
     handler.setFormatter(PlainFormatter())
     lgr.addHandler(handler)
     lgr.setLevel(logging.DEBUG)
@@ -41,7 +50,7 @@ def json_logger() -> logging.Logger:
     lgr.handlers.clear()
     lgr.propagate = False
     handler = logging.StreamHandler()
-    handler.addFilter(TraceIdFilter())
+    handler.addFilter(SpanFilter())
     handler.setFormatter(JsonFormatter())
     lgr.addHandler(handler)
     lgr.setLevel(logging.DEBUG)
@@ -54,7 +63,7 @@ def _make_record(
     record = lgr.makeRecord(
         lgr.name, level, "test.py", 1, msg, (), None
     )
-    TraceIdFilter().filter(record)
+    SpanFilter().filter(record)
     return record
 
 
@@ -106,34 +115,30 @@ class TestLogModeConfiguration:
 
 
 # ---------------------------------------------------------------------------
-# Story 12.2 — Format contracts and trace correlation
+# Story 12.2 — Format contracts and trace/span correlation
 # ---------------------------------------------------------------------------
 
 class TestPlainFormatter:
     def test_plain_format_fields(self, plain_logger: logging.Logger) -> None:
         record = _make_record(plain_logger, "hello world")
-        formatter = PlainFormatter()
-        output = formatter.format(record)
+        output = PlainFormatter().format(record)
         assert f"[{NO_TRACE_ID}]" in output
+        assert f"[{NO_SPAN_ID}]" in output
         assert "INFO" in output
         assert "test.plain" in output
         assert "hello world" in output
 
-    def test_plain_trace_id_in_brackets(
+    def test_plain_trace_id_and_span_id_in_brackets(
         self, plain_logger: logging.Logger
     ) -> None:
-        ctx = SpanContext(
-            trace_id=0xABCDEF1234567890ABCDEF1234567890,
-            span_id=0x1234567890ABCDEF,
-            is_remote=False,
-            trace_flags=TraceFlags(TraceFlags.SAMPLED),
-        )
-        span = NonRecordingSpan(ctx)
+        span = NonRecordingSpan(_VALID_CTX)
         with trace.use_span(span):
             record = _make_record(plain_logger, "with span")
             output = PlainFormatter().format(record)
             tid = record.traceId  # type: ignore[attr-defined]
+            sid = record.spanId  # type: ignore[attr-defined]
             assert f"[{tid}]" in output
+            assert f"[{sid}]" in output
 
     def test_plain_format_utc_iso8601(self, plain_logger: logging.Logger) -> None:
         record = _make_record(plain_logger, "ts check")
@@ -154,45 +159,55 @@ class TestJsonFormatter:
     ) -> None:
         record = _make_record(json_logger, "field check")
         parsed = json.loads(JsonFormatter().format(record))
-        for field in ("timestamp", "level", "logger", "message", "traceId"):
+        for field in (
+            "timestamp", "level", "logger", "message", "traceId", "spanId",
+        ):
             assert field in parsed
 
     def test_json_format_camel_case(self, json_logger: logging.Logger) -> None:
         record = _make_record(json_logger, "case check")
-        output = JsonFormatter().format(record)
-        parsed = json.loads(output)
+        parsed = json.loads(JsonFormatter().format(record))
         assert "traceId" in parsed
+        assert "spanId" in parsed
         assert "trace_id" not in parsed
+        assert "span_id" not in parsed
 
     def test_json_format_utc_iso8601(self, json_logger: logging.Logger) -> None:
         record = _make_record(json_logger, "ts check")
         parsed = json.loads(JsonFormatter().format(record))
         assert "+00:00" in parsed["timestamp"]
 
+    def test_json_span_id_populated_with_active_span(
+        self, json_logger: logging.Logger
+    ) -> None:
+        span = NonRecordingSpan(_VALID_CTX)
+        with trace.use_span(span):
+            record = _make_record(json_logger, "span check")
+            parsed = json.loads(JsonFormatter().format(record))
+            assert parsed["spanId"] != NO_SPAN_ID
+            assert len(parsed["spanId"]) == 16
+
 
 class TestTraceCorrelation:
-    def test_no_trace_context_yields_no_trace_id(
+    def test_no_trace_context_yields_placeholders(
         self, plain_logger: logging.Logger
     ) -> None:
         record = _make_record(plain_logger, "no span")
         assert record.traceId == NO_TRACE_ID  # type: ignore[attr-defined]
+        assert record.spanId == NO_SPAN_ID  # type: ignore[attr-defined]
 
-    def test_active_span_injects_trace_id(
+    def test_active_span_injects_both_ids(
         self, plain_logger: logging.Logger
     ) -> None:
-        ctx = SpanContext(
-            trace_id=0xABCDEF1234567890ABCDEF1234567890,
-            span_id=0x1234567890ABCDEF,
-            is_remote=False,
-            trace_flags=TraceFlags(TraceFlags.SAMPLED),
-        )
-        span = NonRecordingSpan(ctx)
+        span = NonRecordingSpan(_VALID_CTX)
         with trace.use_span(span):
             record = _make_record(plain_logger, "traced")
             assert record.traceId != NO_TRACE_ID  # type: ignore[attr-defined]
             assert len(record.traceId) == 32  # type: ignore[attr-defined]
+            assert record.spanId != NO_SPAN_ID  # type: ignore[attr-defined]
+            assert len(record.spanId) == 16  # type: ignore[attr-defined]
 
-    def test_invalid_span_context_yields_no_trace_id(
+    def test_invalid_span_context_yields_placeholders(
         self, plain_logger: logging.Logger
     ) -> None:
         invalid_ctx = SpanContext(
@@ -203,6 +218,7 @@ class TestTraceCorrelation:
         with trace.use_span(span):
             record = _make_record(plain_logger, "invalid ctx")
             assert record.traceId == NO_TRACE_ID  # type: ignore[attr-defined]
+            assert record.spanId == NO_SPAN_ID  # type: ignore[attr-defined]
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +237,7 @@ class TestExceptionPlainMode:
                 plain_logger.name, logging.ERROR, "test.py", 1,
                 "op failed", (), ei,
             )
-        TraceIdFilter().filter(record)
+        SpanFilter().filter(record)
         output = PlainFormatter().format(record)
         assert "ValueError: something broke" in output
 
@@ -236,7 +252,7 @@ class TestExceptionPlainMode:
                 plain_logger.name, logging.ERROR, "test.py", 1,
                 "op failed", (), ei,
             )
-        TraceIdFilter().filter(record)
+        SpanFilter().filter(record)
         output = PlainFormatter().format(record)
         assert "Traceback" not in output
         assert "RuntimeError: bad state" in output
@@ -254,7 +270,7 @@ class TestExceptionJsonMode:
                 json_logger.name, logging.ERROR, "test.py", 1,
                 "op failed", (), ei,
             )
-        TraceIdFilter().filter(record)
+        SpanFilter().filter(record)
         parsed = json.loads(JsonFormatter().format(record))
         assert parsed["exceptionType"] == "TypeError"
         assert parsed["exceptionMessage"] == "wrong type"
@@ -333,14 +349,14 @@ class TestExistingConventions:
 
 
 class TestTraceCorrelationDuringRequest:
-    def test_request_carries_real_trace_id(self, client) -> None:  # type: ignore[no-untyped-def]
-        from fastapi_archetype.observability.logging import _current_trace_id
+    def test_request_carries_real_trace_and_span_ids(self, client) -> None:  # type: ignore[no-untyped-def]
+        from fastapi_archetype.observability.logging import _current_span_ids
 
-        captured: list[str] = []
+        captured: list[tuple[str, str]] = []
 
         class _Capture(logging.Filter):
             def filter(self, record: logging.LogRecord) -> bool:
-                captured.append(_current_trace_id())
+                captured.append(_current_span_ids())
                 return True
 
         aop_logger = logging.getLogger(
@@ -358,5 +374,6 @@ class TestTraceCorrelationDuringRequest:
 
         assert len(captured) > 0, "Expected AOP logs during the request"
         assert all(
-            tid != NO_TRACE_ID for tid in captured
-        ), f"Expected real trace IDs, got: {captured}"
+            tid != NO_TRACE_ID and sid != NO_SPAN_ID
+            for tid, sid in captured
+        ), f"Expected real trace/span IDs, got: {captured}"

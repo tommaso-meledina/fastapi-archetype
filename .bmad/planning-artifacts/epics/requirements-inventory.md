@@ -164,8 +164,8 @@ FR49: Logging output applies baseline secret-safety redaction rules so obvious s
 | FR42 | Epic 12 | Standards-first logging architecture using Python/FastAPI logging primitives |
 | FR43 | Epic 12 | `LOG_MODE` toggle (`plain`/`json`) with safe fallback behavior |
 | FR44 | Epic 12 | Single-source log format configuration |
-| FR45 | Epic 12 | Plain format with UTC ISO timestamp and `traceId`/`NO_TRACE_ID` semantics |
-| FR46 | Epic 12 | NDJSON-style JSON logs with camelCase and required fields |
+| FR45 | Epic 12 | Plain format with UTC ISO timestamp, `[traceId]`/`[spanId]` bracket blocks, and `NO_TRACE_ID`/`NO_SPAN_ID` semantics |
+| FR46 | Epic 12 | NDJSON-style JSON logs with camelCase and required fields including `traceId` and `spanId` |
 | FR47 | Epic 12 | Unified exception logging interface with mode-specific rendering |
 | FR48 | Epic 12 | Compatibility with current logger usage, levels, and AOP conventions |
 | FR49 | Epic 12 | Baseline secret redaction in logging output |
