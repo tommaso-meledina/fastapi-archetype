@@ -6,6 +6,7 @@
 ## Summary
 
 - [Purpose](#purpose)
+- [Scaffolding](#scaffolding)
 - [Usage](#usage)
 - [Capabilities](#capabilities)
 - [Extension Guide](#extension-guide)
@@ -31,6 +32,24 @@ The project demonstrates the following capabilities working together end-to-end:
 - Ruff linting and formatting targeting Python 3.14
 
 The idea is to clone or scaffold from this project to get all of the above working on first run.
+
+## Scaffolding
+
+The project includes a build script that generates a Cookiecutter template from the reference implementation. The template parameterizes the project name, package name, description, and author, and optionally strips the demo resource during generation.
+
+Build the template:
+
+```bash
+python3 scripts/build_template.py -o /path/to/output
+```
+
+Generate a new project from the template:
+
+```bash
+cookiecutter /path/to/output
+```
+
+The generated project is fully functional from the first `uv sync && pytest`. See `scripts/build_template.py` for details on what gets parameterized and excluded.
 
 ## Usage
 

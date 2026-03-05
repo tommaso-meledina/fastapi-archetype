@@ -123,6 +123,10 @@ compose/
 └── observability/
     ├── otel-collector-config.yaml
     └── prometheus.yaml
+
+scripts/
+├── remove_demo.py                   # Strip Dummy CRUD demo boilerplate
+└── build_template.py                # Generate Cookiecutter template from reference implementation
 ```
 
 ## Capabilities and Implementation Details
@@ -260,6 +264,21 @@ Ruff is configured in `pyproject.toml`:
 - Lint rules: `E`, `W`, `F`, `I`, `N`, `UP`, `B`, `SIM`, `TCH`
 - `extend-immutable-calls = ["fastapi.Depends", "Depends"]`
 - `known-first-party = ["fastapi_archetype"]`
+
+### 14. Cookiecutter Scaffolding
+
+`scripts/build_template.py` generates a Cookiecutter template from the reference implementation. The script copies the project to an output directory, applies text substitutions to replace hardcoded names (`fastapi_archetype`, `fastapi-archetype`, author info, description) with Jinja2 template variables, renames the source package directory, and excludes archetype-specific files (planning artifacts, IDE config, build caches, changelog tooling).
+
+The generated template includes a `hooks/post_gen_project.py` that optionally strips the Dummy CRUD demo when `include_demo_resource` is set to `false`, reusing the same removal logic as `scripts/remove_demo.py`.
+
+**Template variables:** `project_name`, `project_slug`, `package_name`, `description`, `author_name`, `author_email`, `include_demo_resource`.
+
+**Usage:**
+
+```bash
+python3 scripts/build_template.py -o /path/to/output
+cookiecutter /path/to/output
+```
 
 ## Conventions and Patterns
 

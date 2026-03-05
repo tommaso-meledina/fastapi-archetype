@@ -73,6 +73,7 @@
 * code review fixes for rate limiting (Epic 9)
 * add missing Epic 10 to sprint status and fix index indentation
 * cleanly dispose DB engines and raise test coverage
+* decouple test suite from .env file
 
 
 ### Integration
