@@ -1,7 +1,7 @@
 # Changelog
 
 
-## Upcoming release
+## 1.0.0
 
 
 ### Features
@@ -57,6 +57,7 @@
 * add automatic changelog capability to README
 * align logging specs and resolve stale requirement references
 * add demo removal feature requirements and Epic 13
+* add one-liner instructions to README
 
 
 ### Refactoring
