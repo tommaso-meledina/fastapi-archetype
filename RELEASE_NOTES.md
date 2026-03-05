@@ -33,6 +33,7 @@
 * sanitize auth error responses to prevent leaking provider internals
 * add pluggable RoleMappingProvider abstraction for role-to-external-id mapping
 * add AOP exception-path logging, revise ADs 09&#x2F;10&#x2F;21, create Epic 12
+* decouple auth and observability tests from Dummy endpoints (Epic 13, Story 13.1)
 
 
 ### Documentation
