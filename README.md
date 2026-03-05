@@ -26,11 +26,11 @@ The project demonstrates the following capabilities working together end-to-end:
 - Prometheus metrics (auto-instrumented HTTP metrics and custom business counters)
 - Per-endpoint rate limiting with environment-configurable thresholds
 - External IdP bearer-token authentication and role-based access control
-- Multi-stage Docker image and a Docker Compose stack with MariaDB, Jaeger, OTEL Collector, Prometheus, and Grafana
+- Multi-stage Docker image (demonstrated through a Docker Compose stack with MariaDB, Jaeger, OTEL Collector, Prometheus, and Grafana)
 - pytest suite with >90% coverage using SQLite in-memory and synthetic IdP fixtures
 - Ruff linting and formatting targeting Python 3.14
 
-Clone or scaffold from this project to get all of the above working on first run.
+The idea is to clone or scaffold from this project to get all of the above working on first run.
 
 ## Usage
 
@@ -42,7 +42,7 @@ Install dependencies:
 uv sync
 ```
 
-Run the application (uses SQLite in-memory by default — no database setup needed):
+Run the application (uses SQLite in-memory by default - no database setup needed):
 
 ```bash
 uv run uvicorn fastapi_archetype.main:app --reload
@@ -58,7 +58,7 @@ Build the image:
 docker build -t fastapi-archetype .
 ```
 
-Run the container (uses SQLite in-memory by default — no `.env` file required):
+Run the container (uses SQLite in-memory by default - no `.env` file required):
 
 ```bash
 docker run -p 8000:8000 fastapi-archetype
@@ -107,7 +107,7 @@ curl -X POST http://localhost:8000/v1/dummies \
 
 The `Dummy` model is defined once using SQLModel, serving as both the ORM mapping (to the `DUMMY` table) and the Pydantic validation schema. Database sessions are injected via FastAPI's `Depends()` pattern, making the database backend swappable without touching application logic.
 
-By default the application starts with SQLite in-memory — no external database needed. Set `DB_DRIVER=mysql+pymysql` and the corresponding `DB_*` variables to connect to MariaDB.
+By default the application starts with SQLite in-memory - no external database needed. Set `DB_DRIVER=mysql+pymysql` and the corresponding `DB_*` variables to connect to MariaDB.
 
 To verify, create a few dummies via POST and retrieve them with GET. Restarting with the default SQLite driver confirms the in-memory database starts fresh.
 
@@ -148,7 +148,7 @@ Compare the behavior of `POST /v1/dummies` (requires any authenticated principal
 
 ### AOP Function Logging
 
-The `log_io` decorator logs function inputs and return values at DEBUG level and exceptions at ERROR level. The `apply_logging` function wraps all public functions in a module programmatically at import time — no per-function annotation needed. The services layer uses this to provide full call tracing with automatic error visibility.
+The `log_io` decorator logs function inputs and return values at DEBUG level and exceptions at ERROR level. The `apply_logging` function wraps all public functions in a module programmatically at import time - no per-function annotation needed. The services layer uses this to provide full call tracing with automatic error visibility.
 
 With `LOG_LEVEL=DEBUG`, every service call produces `invoked with args (...)` and `returned ...` log lines on stdout. Exceptions are logged at ERROR level regardless of the configured log level.
 
@@ -168,7 +168,7 @@ Inspect metrics after sending requests:
 curl http://localhost:8000/metrics | grep dummies_created_total
 ```
 
-With the Docker Compose stack running, Prometheus at <http://localhost:9090> can query `dummies_created_total` or `http_request_duration_seconds_bucket`.
+With the Docker Compose stack running, Prometheus at <http://localhost:9090> can query e.g. `dummies_created_total` or `http_request_duration_seconds_bucket`.
 
 ### Rate Limiting
 
@@ -208,7 +208,7 @@ docker run -p 8000:8000 fastapi-archetype
 
 ### Docker Compose Observability Stack
 
-The `compose/` directory provides a full production-like environment with the following services:
+For demonstration purposes, the `compose/` directory provides a full production-like environment with the following services:
 
 | Service | Port | Purpose |
 |---------|------|---------|
@@ -219,10 +219,10 @@ The `compose/` directory provides a full production-like environment with the fo
 | Prometheus | 9090 | Metrics scraping and querying |
 | Grafana | 3001 | Dashboards and visualization |
 
-Start the stack and access each UI:
+From the `compose/` directory, start the stack and access each UI:
 
 ```bash
-docker compose -f compose/docker-compose.yaml up --build
+docker-compose up --build
 ```
 
 - Application: <http://localhost:8000/docs>
@@ -232,7 +232,7 @@ docker compose -f compose/docker-compose.yaml up --build
 
 ### Testing
 
-The test suite uses pytest with SQLite in-memory for integration tests — no external infrastructure needed. Tests are organized by layer (`api/`, `auth/`, `core/`, `services/`, `aop/`, `observability/`). Auth integration tests use a synthetic IdP with test-generated RSA keypairs and monkeypatched HTTP calls. The suite targets >90% code coverage.
+The test suite uses pytest with SQLite in-memory for integration tests - no external infrastructure needed. Tests are organized by layer (`api/`, `auth/`, `core/`, `services/`, `aop/`, `observability/`). Auth integration tests use a synthetic IdP with test-generated RSA keypairs and monkeypatched HTTP calls. The suite targets >90% code coverage.
 
 Run the full suite:
 
