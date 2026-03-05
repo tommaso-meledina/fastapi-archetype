@@ -10,13 +10,13 @@ from pydantic import BaseModel
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
-from fastapi_archetype.core.database import get_session
-from fastapi_archetype.core.rate_limit import limiter
-
+os.environ["ENV_FILE"] = ""
 os.environ.setdefault("AUTH_TYPE", "none")
 
 from fastapi_archetype.auth.dependencies import require_auth, require_role
 from fastapi_archetype.auth.models import Role
+from fastapi_archetype.core.database import get_session
+from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
 
 _stub_logger = logging.getLogger("fastapi_archetype.test_stubs")

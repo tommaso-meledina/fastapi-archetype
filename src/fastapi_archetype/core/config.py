@@ -1,3 +1,4 @@
+import os
 import warnings
 from typing import Literal
 
@@ -10,7 +11,7 @@ VALID_LOG_MODES = frozenset({"plain", "json"})
 
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=os.getenv("ENV_FILE", ".env") or None,
         env_file_encoding="utf-8",
         extra="ignore",
     )
