@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-import sys
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
@@ -22,6 +20,7 @@ from fastapi_archetype.core.errors import (
     validation_exception_handler,
 )
 from fastapi_archetype.core.rate_limit import limiter
+from fastapi_archetype.observability.logging import configure_logging
 from fastapi_archetype.observability.otel import setup_otel
 from fastapi_archetype.observability.prometheus import setup_prometheus
 
@@ -32,12 +31,7 @@ if TYPE_CHECKING:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     settings = AppSettings()
-    logging.basicConfig(
-        level=settings.log_level,
-        format="%(asctime)s %(name)s %(levelname)s %(message)s",
-        stream=sys.stdout,
-        force=True,
-    )
+    configure_logging(settings)
     tracer_provider = setup_otel(app, settings)
     engine = get_engine(settings)
     SQLModel.metadata.create_all(engine)

@@ -95,3 +95,9 @@ development_status:
   11-2-synthetic-idp-integration-tests: done
   11-3-role-mapping-provider-abstraction: done
   epic-11-retrospective: optional
+
+  epic-12: in-progress
+  12-1-standards-first-logging-configuration-and-mode-toggle: backlog
+  12-2-plain-and-json-format-contracts-with-trace-correlation: backlog
+  12-3-unified-exception-interface-and-baseline-secret-redaction: backlog
+  epic-12-retrospective: optional

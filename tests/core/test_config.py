@@ -67,6 +67,25 @@ def test_database_url_mysql(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
+def test_default_log_mode_is_plain(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LOG_MODE", raising=False)
+    settings = AppSettings()
+    assert settings.log_mode == "plain"
+
+
+def test_log_mode_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOG_MODE", "json")
+    settings = AppSettings()
+    assert settings.log_mode == "json"
+
+
+def test_log_mode_invalid_falls_back(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOG_MODE", "xml")
+    with pytest.warns(UserWarning, match="Invalid LOG_MODE"):
+        settings = AppSettings()
+    assert settings.log_mode == "plain"
+
+
 def test_entra_auth_requires_external_settings() -> None:
     with pytest.raises(ValidationError, match="AUTH_TYPE=entra requires"):
         AppSettings(auth_type="entra")

@@ -79,6 +79,7 @@ src/fastapi_archetype/
 ├── models/
 │   └── dummy.py                     # Dummy(SQLModel, table=True) with camelCase aliases
 ├── observability/
+│   ├── logging.py                   # configure_logging(settings), PlainFormatter, JsonFormatter, TraceIdFilter, secret redaction
 │   ├── otel.py                      # setup_otel(app, settings) -> TracerProvider
 │   └── prometheus.py                # Metrics dataclass, dummies_created_total counter, setup_prometheus(app)
 └── services/
@@ -108,6 +109,7 @@ tests/
 │   ├── test_errors.py
 │   └── test_rate_limit.py
 ├── observability/
+│   ├── test_logging.py
 │   └── test_prometheus.py
 └── services/
     ├── v1/
@@ -312,9 +314,14 @@ Ruff is configured in `pyproject.toml`:
 
 ### Logging
 
-- `logging.basicConfig` is called once in the lifespan with `LOG_LEVEL` from settings.
+- `configure_logging(settings)` in `observability/logging.py` is called once in the lifespan via `logging.config.dictConfig`.
+- `LOG_MODE` (`plain`/`json`, default `plain`) selects the active formatter; invalid values fall back to `plain` with a startup warning.
+- Plain format: UTC ISO-8601 timestamp, `traceId`, level, logger name, message. Exception rendering shows type and message only.
+- JSON format: one NDJSON object per line with camelCase fields (`timestamp`, `level`, `logger`, `message`, `traceId`). Exceptions add `exceptionType`, `exceptionMessage`, `stackTrace`.
+- `TraceIdFilter` injects `traceId` from the current OpenTelemetry span context; `NO_TRACE_ID` when no trace is active.
+- Baseline secret redaction masks obvious sensitive values (passwords, tokens, API keys, authorization headers) in both modes.
 - Modules obtain loggers via `logging.getLogger(__name__)`.
-- AOP logging is at DEBUG level for I/O and ERROR level for exceptions; application-level logging in services uses INFO.
+- AOP logging is at DEBUG level for I/O and ERROR level for exceptions (with `exc_info=True`); application-level logging in services uses INFO.
 
 ## Anti-Patterns to Avoid
 

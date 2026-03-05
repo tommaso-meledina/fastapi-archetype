@@ -140,7 +140,7 @@ This document records every architectural decision (AD) made during the design a
 | structlog | - Structured JSON logging - Processor pipeline | - Additional dependency - More complex setup |
 | loguru | - Simpler API - Auto-formatting | - Additional dependency - Replaces stdlib patterns |
 
-**Decision and justification:** stdlib `logging.basicConfig` called in the application lifespan with `LOG_LEVEL` from settings, `sys.stdout` as destination, and `force=True`. Modules obtain loggers via `logging.getLogger(__name__)`. This is a temporary baseline decision. Structured JSON logging with OTEL trace/span ID correlation is deferred to Epic 12 (Structured Logging with Trace Correlation), not excluded from the project roadmap.
+**Decision and justification:** stdlib `logging.config.dictConfig` called via `configure_logging(settings)` in the application lifespan. `LOG_MODE` (default `plain`, also accepts `json`) selects the active formatter; invalid values fall back to `plain` with a startup warning. Both formatters are defined in `observability/logging.py`, which centralizes all format configuration. A `TraceIdFilter` injects `traceId` from the current OpenTelemetry span context (or `NO_TRACE_ID` when no trace is active). Plain mode emits UTC ISO-8601 timestamp, traceId, level, logger name, and message. JSON mode emits one NDJSON object per line with camelCase fields. Exception rendering is mode-specific: plain shows type and message only, JSON adds structured `exceptionType`, `exceptionMessage`, and `stackTrace` fields. Baseline secret redaction masks obvious sensitive values (passwords, tokens, API keys, authorization headers). Modules continue to obtain loggers via `logging.getLogger(__name__)`.
 
 ## AD 11 - OpenTelemetry Tracing Integration
 

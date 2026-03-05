@@ -51,6 +51,7 @@
 * add ARCH_DECISIONS.md with all 24 architectural decisions
 * chisel README file
 * add automatic changelog capability to README
+* align logging specs and resolve stale requirement references
 
 
 ### Refactoring

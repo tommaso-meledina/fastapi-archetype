@@ -1,9 +1,11 @@
+import warnings
 from typing import Literal
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 VALID_LOG_LEVELS = frozenset({"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"})
+VALID_LOG_MODES = frozenset({"plain", "json"})
 
 
 class AppSettings(BaseSettings):
@@ -16,6 +18,7 @@ class AppSettings(BaseSettings):
     app_name: str = "fastapi-archetype"
     debug: bool = False
     log_level: str = "INFO"
+    log_mode: str = "plain"
 
     @field_validator("log_level")
     @classmethod
@@ -26,6 +29,18 @@ class AppSettings(BaseSettings):
             msg = f"Invalid log level '{value}'. Must be one of: {allowed}"
             raise ValueError(msg)
         return upper
+
+    @field_validator("log_mode")
+    @classmethod
+    def _normalize_log_mode(cls, value: str) -> str:
+        lower = value.lower()
+        if lower not in VALID_LOG_MODES:
+            warnings.warn(
+                f"Invalid LOG_MODE '{value}', falling back to 'plain'",
+                stacklevel=2,
+            )
+            return "plain"
+        return lower
 
     otel_export_enabled: bool = False
     otel_exporter_endpoint: str = "http://localhost:4317"

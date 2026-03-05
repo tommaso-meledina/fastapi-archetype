@@ -62,7 +62,7 @@ def log_io(func: Callable[..., Any]) -> Callable[..., Any]:
         try:
             result = func(*args, **kwargs)
         except Exception:
-            logger.error("%s raised %s", qualname, _format_exc())
+            logger.error("%s raised %s", qualname, _format_exc(), exc_info=True)
             raise
         logger.debug("%s returned %s", qualname, _format_arg(result))
         return result
