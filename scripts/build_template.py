@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Build a Cookiecutter template from the fastapi-archetype reference implementation.
+"""Generate a new FastAPI project from the fastapi-archetype reference.
 
-Run from the project root:
-    python3 scripts/build_template.py -o /path/to/output
+One-shot project creation: builds a Cookiecutter template in a temporary
+directory, invokes cookiecutter, and delivers the generated project to
+the requested output location.
 
-Requires only the Python standard library.
+Usage:
+    python3 scripts/build_template.py -n "Order Service" -o ~/projects
+
+Requires cookiecutter to be installed (pip install cookiecutter).
 """
 
 from __future__ import annotations
@@ -12,7 +16,9 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -33,7 +39,7 @@ COOKIECUTTER_JSON = {
     "include_demo_resource": ["true", "false"],
 }
 
-# Paths relative to PROJECT_ROOT that are excluded from the template entirely.
+# Paths relative to PROJECT_ROOT excluded from the template.
 # Directories MUST end with "/".
 EXCLUDED_PATHS: set[str] = {
     "_bmad/",
@@ -60,37 +66,22 @@ EXCLUDED_PATHS: set[str] = {
     "scripts/build_template.py",
 }
 
-# Ordered list of (find, replace) pairs applied to file contents.
-# Order matters: specific/longer matches first to avoid partial replacements.
+# Ordered (find, replace) pairs applied to file contents.
+# Longer/more-specific matches first to avoid partial replacements.
 TEXT_REPLACEMENTS: list[tuple[str, str]] = [
-    (
-        "FASTAPI_ARCHETYPE_CONTEXT_PATH",
-        "APP_CONTEXT_PATH",
-    ),
-    (
-        "FASTAPI_ARCHETYPE_DOCKERFILE_PATH",
-        "APP_DOCKERFILE_PATH",
-    ),
+    ("FASTAPI_ARCHETYPE_CONTEXT_PATH", "APP_CONTEXT_PATH"),
+    ("FASTAPI_ARCHETYPE_DOCKERFILE_PATH", "APP_DOCKERFILE_PATH"),
     (
         "tommaso-meledina@users.noreply.github.com",
         "{{cookiecutter.author_email}}",
     ),
-    (
-        "Tommaso",
-        "{{cookiecutter.author_name}}",
-    ),
+    ("Tommaso", "{{cookiecutter.author_name}}"),
     (
         "A reference FastAPI application demonstrating enterprise patterns",
         "{{cookiecutter.description}}",
     ),
-    (
-        "fastapi_archetype",
-        "{{cookiecutter.package_name}}",
-    ),
-    (
-        "fastapi-archetype",
-        "{{cookiecutter.project_slug}}",
-    ),
+    ("fastapi_archetype", "{{cookiecutter.package_name}}"),
+    ("fastapi-archetype", "{{cookiecutter.project_slug}}"),
 ]
 
 BINARY_EXTENSIONS: frozenset[str] = frozenset(
@@ -122,23 +113,62 @@ BINARY_EXTENSIONS: frozenset[str] = frozenset(
 )
 
 
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build a Cookiecutter template from fastapi-archetype.",
+        description=(
+            "Generate a new FastAPI project from the "
+            "fastapi-archetype reference implementation."
+        ),
+    )
+    parser.add_argument(
+        "-n",
+        "--name",
+        required=True,
+        help="Project name (e.g. 'Order Service').",
     )
     parser.add_argument(
         "-o",
         "--output",
         required=True,
         type=Path,
-        help="Output directory for the Cookiecutter template.",
+        help="Parent directory where the project will be created.",
+    )
+    parser.add_argument(
+        "--description",
+        default="A FastAPI microservice",
+        help="Short project description (default: 'A FastAPI microservice').",
+    )
+    parser.add_argument(
+        "--author",
+        default="Your Name",
+        help="Author name for pyproject.toml (default: 'Your Name').",
+    )
+    parser.add_argument(
+        "--email",
+        default="you@example.com",
+        help="Author email for pyproject.toml (default: 'you@example.com').",
+    )
+    parser.add_argument(
+        "--no-demo",
+        action="store_true",
+        help="Exclude the Dummy CRUD demo resource.",
     )
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Overwrite the output directory if it already exists.",
+        help="Overwrite the project directory if it already exists.",
     )
     return parser.parse_args()
+
+
+# ---------------------------------------------------------------------------
+# Template building helpers
+# ---------------------------------------------------------------------------
 
 
 def _is_excluded(rel_path: Path) -> bool:
@@ -181,19 +211,146 @@ def _collect_files() -> list[Path]:
     return files
 
 
-def _write_cookiecutter_json(output_dir: Path) -> None:
-    dest = output_dir / "cookiecutter.json"
+def _write_cookiecutter_json(template_root: Path) -> None:
+    dest = template_root / "cookiecutter.json"
     dest.write_text(
         json.dumps(COOKIECUTTER_JSON, indent=4) + "\n",
         encoding="utf-8",
     )
 
 
-def _write_post_gen_hook(output_dir: Path) -> None:
-    hooks_dir = output_dir / "hooks"
+def _write_post_gen_hook(template_root: Path) -> None:
+    hooks_dir = template_root / "hooks"
     hooks_dir.mkdir(parents=True, exist_ok=True)
     hook_path = hooks_dir / "post_gen_project.py"
     hook_path.write_text(_POST_GEN_HOOK_CONTENT, encoding="utf-8")
+
+
+def _write_readme(template_root: Path) -> None:
+    dest = template_root / TEMPLATE_DIR_NAME / "README.md"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(_TEMPLATE_README, encoding="utf-8")
+
+
+def _copy_project_files(template_root: Path) -> int:
+    template_dir = template_root / TEMPLATE_DIR_NAME
+    files = _collect_files()
+    copied = 0
+
+    for rel_path in files:
+        src = PROJECT_ROOT / rel_path
+        dest_rel = _compute_dest_path(rel_path)
+        dest = template_dir / dest_rel
+
+        dest.parent.mkdir(parents=True, exist_ok=True)
+
+        if _is_binary(src):
+            shutil.copy2(src, dest)
+        else:
+            try:
+                content = src.read_text(encoding="utf-8")
+            except Exception:
+                shutil.copy2(src, dest)
+            else:
+                content = _apply_replacements(content)
+                dest.write_text(content, encoding="utf-8")
+
+        copied += 1
+
+    return copied
+
+
+def _build_template(template_root: Path) -> None:
+    _write_cookiecutter_json(template_root)
+    _write_post_gen_hook(template_root)
+    _write_readme(template_root)
+    _copy_project_files(template_root)
+
+
+# ---------------------------------------------------------------------------
+# Slug derivation (mirrors the Jinja2 filter chain in cookiecutter.json)
+# ---------------------------------------------------------------------------
+
+
+def _to_slug(name: str) -> str:
+    return name.lower().replace(" ", "-").replace("_", "-")
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+
+def main() -> int:
+    args = _parse_args()
+    output_dir: Path = args.output.resolve()
+    project_slug = _to_slug(args.name)
+    project_dir = output_dir / project_slug
+
+    if shutil.which("cookiecutter") is None:
+        print(
+            "ERROR: 'cookiecutter' is not installed.\n"
+            "Install it with:  pip install cookiecutter  "
+            "(or  uv tool install cookiecutter)",
+            file=sys.stderr,
+        )
+        return 1
+
+    if project_dir.exists():
+        if not args.force:
+            print(
+                f"ERROR: Project directory already exists: "
+                f"{project_dir}\n"
+                "Use --force to overwrite.",
+                file=sys.stderr,
+            )
+            return 1
+        shutil.rmtree(project_dir)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    tmpdir = tempfile.mkdtemp(prefix="fastapi-archetype-tpl-")
+    try:
+        print("Building Cookiecutter template...")
+        _build_template(Path(tmpdir))
+
+        include_demo = "false" if args.no_demo else "true"
+        cmd = [
+            "cookiecutter",
+            tmpdir,
+            "--no-input",
+            "-o",
+            str(output_dir),
+            f"project_name={args.name}",
+            f"description={args.description}",
+            f"author_name={args.author}",
+            f"author_email={args.email}",
+            f"include_demo_resource={include_demo}",
+        ]
+
+        print(f"Generating project '{args.name}'...")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print("ERROR: cookiecutter failed:", file=sys.stderr)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+            if result.stdout:
+                print(result.stdout, file=sys.stderr)
+            return 1
+
+        if result.stdout:
+            print(result.stdout, end="")
+
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+    print(f"\nDone! Project created at: {project_dir}")
+    print("\nNext steps:")
+    print(f"  cd {project_dir}")
+    print("  uv sync")
+    print("  uv run pytest")
+    return 0
 
 
 _POST_GEN_HOOK_CONTENT = r'''#!/usr/bin/env python3
@@ -376,7 +533,6 @@ def main() -> int:
 if __name__ == "__main__":
     raise SystemExit(main())
 '''
-
 
 _TEMPLATE_README = (  # noqa: E501
     r"""# {{cookiecutter.project_name}}
@@ -599,77 +755,6 @@ New resources inherit tracing, metrics, error handling,
 rate limiting, and AOP logging automatically.
 """
 )
-
-
-def _write_readme(output_dir: Path) -> None:
-    dest = output_dir / TEMPLATE_DIR_NAME / "README.md"
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(_TEMPLATE_README, encoding="utf-8")
-
-
-def _copy_project_files(output_dir: Path) -> int:
-    template_dir = output_dir / TEMPLATE_DIR_NAME
-    files = _collect_files()
-    copied = 0
-
-    for rel_path in files:
-        src = PROJECT_ROOT / rel_path
-        dest_rel = _compute_dest_path(rel_path)
-        dest = template_dir / dest_rel
-
-        dest.parent.mkdir(parents=True, exist_ok=True)
-
-        if _is_binary(src):
-            shutil.copy2(src, dest)
-        else:
-            try:
-                content = src.read_text(encoding="utf-8")
-            except Exception:
-                shutil.copy2(src, dest)
-            else:
-                content = _apply_replacements(content)
-                dest.write_text(content, encoding="utf-8")
-
-        copied += 1
-
-    return copied
-
-
-def main() -> int:
-    args = _parse_args()
-    output_dir: Path = args.output.resolve()
-
-    if output_dir.exists():
-        if not args.force:
-            print(
-                f"ERROR: Output directory already exists: {output_dir}\n"
-                "Use --force to overwrite.",
-                file=sys.stderr,
-            )
-            return 1
-        shutil.rmtree(output_dir)
-
-    output_dir.mkdir(parents=True)
-
-    print(f"Building Cookiecutter template at: {output_dir}\n")
-
-    _write_cookiecutter_json(output_dir)
-    print("  Created: cookiecutter.json")
-
-    _write_post_gen_hook(output_dir)
-    print("  Created: hooks/post_gen_project.py")
-
-    _write_readme(output_dir)
-    print("  Created: README.md")
-
-    count = _copy_project_files(output_dir)
-    print(f"\n  Copied {count} files into {TEMPLATE_DIR_NAME}/")
-
-    print(f"\nDone! Cookiecutter template is ready at: {output_dir}")
-    print("\nUsage:")
-    print(f"  cookiecutter {output_dir}")
-    return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

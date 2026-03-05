@@ -267,17 +267,16 @@ Ruff is configured in `pyproject.toml`:
 
 ### 14. Cookiecutter Scaffolding
 
-`scripts/build_template.py` generates a Cookiecutter template from the reference implementation. The script copies the project to an output directory, applies text substitutions to replace hardcoded names (`fastapi_archetype`, `fastapi-archetype`, author info, description) with Jinja2 template variables, renames the source package directory, and excludes archetype-specific files (planning artifacts, IDE config, build caches, changelog tooling).
+`scripts/build_template.py` generates a new project in one shot. Internally it builds a Cookiecutter template in a temporary directory (applying text substitutions, directory renames, and archetype-specific exclusions), invokes `cookiecutter --no-input`, and delivers the result to the user-specified output directory.
 
-The generated template includes a `hooks/post_gen_project.py` that optionally strips the Dummy CRUD demo when `include_demo_resource` is set to `false`, reusing the same removal logic as `scripts/remove_demo.py`.
+The generated template includes a `hooks/post_gen_project.py` that optionally strips the Dummy CRUD demo when `--no-demo` is passed, reusing the same removal logic as `scripts/remove_demo.py`.
 
-**Template variables:** `project_name`, `project_slug`, `package_name`, `description`, `author_name`, `author_email`, `include_demo_resource`.
+**CLI flags:** `-n`/`--name` (required), `-o`/`--output` (required), `--description`, `--author`, `--email`, `--no-demo`, `--force`.
 
 **Usage:**
 
 ```bash
-python3 scripts/build_template.py -o /path/to/output
-cookiecutter /path/to/output
+python3 scripts/build_template.py -n "Order Service" -o ~/projects
 ```
 
 ## Conventions and Patterns

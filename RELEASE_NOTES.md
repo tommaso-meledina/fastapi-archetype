@@ -35,6 +35,7 @@
 * add AOP exception-path logging, revise ADs 09&#x2F;10&#x2F;21, create Epic 12
 * decouple auth and observability tests from Dummy endpoints (Epic 13, Story 13.1)
 * add demo removal script (Epic 13, Story 13.2)
+* add Cookiecutter template build script (Phase 3)
 
 
 ### Documentation

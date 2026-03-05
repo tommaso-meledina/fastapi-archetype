@@ -35,21 +35,25 @@ The idea is to clone or scaffold from this project to get all of the above worki
 
 ## Scaffolding
 
-The project includes a build script that generates a Cookiecutter template from the reference implementation. The template parameterizes the project name, package name, description, and author, and optionally strips the demo resource during generation.
-
-Build the template:
+Generate a new project in one command:
 
 ```bash
-python3 scripts/build_template.py -o /path/to/output
+python3 scripts/build_template.py -n "Order Service" -o ~/projects
 ```
 
-Generate a new project from the template:
+This creates `~/projects/order-service/` with all archetype capabilities, parameterized for the given project name. Additional options:
 
-```bash
-cookiecutter /path/to/output
-```
+| Flag | Default | Purpose |
+|------|---------|---------|
+| `-n`, `--name` | *(required)* | Project name |
+| `-o`, `--output` | *(required)* | Parent directory for the generated project |
+| `--description` | `A FastAPI microservice` | Short project description |
+| `--author` | `Your Name` | Author name |
+| `--email` | `you@example.com` | Author email |
+| `--no-demo` | off | Exclude the Dummy CRUD demo resource |
+| `--force` | off | Overwrite if project directory exists |
 
-The generated project is fully functional from the first `uv sync && pytest`. See `scripts/build_template.py` for details on what gets parameterized and excluded.
+The generated project is fully functional from the first `uv sync && pytest`. Requires `cookiecutter` to be installed (`pip install cookiecutter`).
 
 ## Usage
 
