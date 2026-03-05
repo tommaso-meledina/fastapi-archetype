@@ -104,5 +104,5 @@ development_status:
 
   epic-13: in-progress
   13-1-decouple-auth-and-observability-tests-from-dummy-endpoints: done
-  13-2-demo-removal-script: in-progress
+  13-2-demo-removal-script: review
   epic-13-retrospective: optional
