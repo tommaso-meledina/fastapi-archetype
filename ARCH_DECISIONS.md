@@ -210,7 +210,7 @@ This document records every architectural decision (AD) made during the design a
 | Local JWT issuance with username/password | - Self-contained | - Security liability (credential storage) - Not enterprise-pattern - Out of scope for a reference implementation |
 | Global authentication middleware | - Transparent to routes | - All-or-nothing (no selective endpoint protection) - Less explicit — harder to reason about which endpoints are protected |
 
-**Decision and justification:** External IdP-first pattern with a facade/provider abstraction. `AuthProvider` (ABC) is implemented by `NoAuthProvider` (dev bypass) and `EntraExternalAuthProvider` (JWT validation, OAuth flows, Graph role enrichment). `AuthFacade` provides a single boundary. `build_auth_facade(settings)` wires the correct provider based on `AUTH_TYPE`. Protection is applied per-route via `Depends(require_auth)` or `Depends(require_role(Role.XXX))`, keeping it explicit and composable.
+**Decision and justification:** External IdP-first pattern with a facade/provider abstraction. `AuthProvider` (ABC) is implemented by `NoAuthProvider` (dev bypass) and `EntraExternalAuthProvider` (JWT validation and outbound OAuth token acquisition). `AuthFacade` provides a single boundary. `build_auth_facade(settings)` wires the correct provider based on `AUTH_TYPE`. Protection is applied per-route via `Depends(require_auth)` or `Depends(require_role(Role.XXX))`, keeping it explicit and composable.
 
 ## AD 16 - JWT Validation Library
 

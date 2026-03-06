@@ -4,7 +4,7 @@ import logging
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from fastapi_archetype.auth.contracts import UnauthorizedError
@@ -34,14 +34,11 @@ async def get_bearer_token(
 
 
 async def get_current_principal(
-    request: Request,
     token: Annotated[str | None, Depends(get_bearer_token)],
     facade: Annotated[AuthFacade, Depends(get_auth_facade)],
 ) -> Principal:
     if _settings.auth_type == "none":
         principal = await facade.authenticate_bearer_token(token or "")
-        request.state.current_principal = principal
-        request.state.bearer_token = ""
         return principal
     if token is None:
         raise AppException(ErrorCode.UNAUTHORIZED)
@@ -55,8 +52,6 @@ async def get_current_principal(
     except Exception as exc:
         logger.warning("Unexpected authentication error: %s", exc)
         raise AppException(ErrorCode.UNAUTHORIZED) from exc
-    request.state.current_principal = principal
-    request.state.bearer_token = token
     return principal
 
 
@@ -68,24 +63,11 @@ async def require_auth(
 
 def require_role(required_role: Role):
     async def _dependency(
-        request: Request,
         principal: Annotated[Principal, Depends(get_current_principal)],
-        facade: Annotated[AuthFacade, Depends(get_auth_facade)],
+        auth_facade: Annotated[AuthFacade, Depends(get_auth_facade)],
     ) -> Principal:
         roles = {role.lower() for role in principal.roles}
-        if _settings.auth_type != "none" and _settings.auth_enforce_graph_roles:
-            bearer_token = getattr(request.state, "bearer_token", None)
-            if isinstance(bearer_token, str):
-                try:
-                    graph_roles = await facade.get_current_user_roles(
-                        principal,
-                        bearer_token,
-                    )
-                except Exception as exc:
-                    logger.warning("Graph role enrichment failed: %s", exc)
-                    raise AppException(ErrorCode.UNAUTHORIZED) from exc
-                roles.update({role.lower() for role in graph_roles})
-        external_role = facade.role_mapper.to_external(required_role.value)
+        external_role = auth_facade.role_mapper.to_external(required_role.value).lower()
         if external_role not in roles:
             logger.warning(
                 "Role check failed: principal %s lacks role %s (they have %d roles)",

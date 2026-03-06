@@ -7,7 +7,6 @@ import pytest
 
 from fastapi_archetype.auth.contracts import AuthFeatureNotSupportedError
 from fastapi_archetype.auth.factory import build_auth_facade
-from fastapi_archetype.auth.models import Principal
 from fastapi_archetype.auth.providers.none import NoAuthProvider
 from fastapi_archetype.core.config import AppSettings
 
@@ -56,29 +55,3 @@ async def test_no_auth_provider_obo_not_supported() -> None:
         await provider.get_on_behalf_of_access_token("scope", "user-token")
 
 
-@pytest.mark.anyio
-async def test_no_auth_provider_current_user_roles_returns_principal_roles() -> None:
-    provider = NoAuthProvider()
-    principal = Principal(
-        subject="subject-1",
-        user_id="user-1",
-        name="User",
-        scope="*",
-        app_id="none",
-        roles=["reader", "writer"],
-        groups=[],
-        claims={},
-    )
-
-    roles = await provider.get_current_user_roles(principal, "ignored-token")
-    assert roles == ["reader", "writer"]
-
-
-@pytest.mark.anyio
-async def test_no_auth_provider_user_role_lookup_not_supported() -> None:
-    provider = NoAuthProvider()
-    with pytest.raises(
-        AuthFeatureNotSupportedError,
-        match="Role lookup is unavailable with AUTH_TYPE=none",
-    ):
-        await provider.get_user_roles("user-1", "user-token")

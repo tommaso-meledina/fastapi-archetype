@@ -50,25 +50,16 @@ def _entra_settings(**overrides: Any) -> AppSettings:
 
 def _build_patched_provider(
     jwks_response: dict[str, Any],
-    *,
-    graph_roles: list[str] | None = None,
-    settings_overrides: dict[str, Any] | None = None,
 ) -> EntraExternalAuthProvider:
-    settings = _entra_settings(**(settings_overrides or {}))
+    settings = _entra_settings()
     provider = EntraExternalAuthProvider(settings)
 
     async def _fake_http_get(
         url: str, headers: dict[str, str] | None = None
     ) -> dict[str, Any]:
+        _ = headers
         if "keys" in url or "jwks" in url:
             return jwks_response
-        if "appRoleAssignments" in url:
-            return {
-                "value": [
-                    {"appRoleId": role, "resourceDisplayName": role}
-                    for role in (graph_roles or [])
-                ]
-            }
         return {}
 
     async def _fake_http_post_form(url: str, data: dict[str, str]) -> dict[str, Any]:
@@ -115,47 +106,6 @@ def entra_integration_client_fixture(
 
     with (
         patch("fastapi_archetype.auth.dependencies._settings.auth_type", "entra"),
-        patch(
-            "fastapi_archetype.auth.dependencies._settings.auth_enforce_graph_roles",
-            False,
-        ),
-        TestClient(app) as c,
-    ):
-        yield c
-
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture(name="graph_enrichment_client")
-def graph_enrichment_client_fixture(
-    _entra_engine,
-    jwks_response: dict[str, Any],
-) -> Generator[TestClient]:
-    """Client with graph role enrichment enabled, returning 'admin' from Graph."""
-    provider = _build_patched_provider(
-        jwks_response,
-        graph_roles=["admin"],
-        settings_overrides={"auth_enforce_graph_roles": True},
-    )
-    facade = AuthFacade(primary_provider=provider)
-
-    def _override_session():
-        with Session(_entra_engine) as session:
-            yield session
-
-    def _override_facade() -> AuthFacade:
-        return facade
-
-    app.dependency_overrides[get_session] = _override_session
-    app.dependency_overrides[get_auth_facade] = _override_facade
-    limiter.reset()
-
-    with (
-        patch("fastapi_archetype.auth.dependencies._settings.auth_type", "entra"),
-        patch(
-            "fastapi_archetype.auth.dependencies._settings.auth_enforce_graph_roles",
-            True,
-        ),
         TestClient(app) as c,
     ):
         yield c
@@ -386,19 +336,15 @@ class TestRoleEnforcement:
         )
         assert response.status_code == 201
 
-
-class TestGraphRoleEnrichment:
-    """Tests for Graph API role enrichment path."""
-
-    def test_graph_enrichment_provides_admin_role(
+    def test_missing_roles_claim_denied_fail_closed(
         self,
-        graph_enrichment_client: TestClient,
+        entra_integration_client: TestClient,
         sign_jwt: Callable[..., str],
     ) -> None:
-        token = sign_jwt({"roles": []})
-        response = graph_enrichment_client.post(
+        token = sign_jwt({"roles": None})
+        response = entra_integration_client.post(
             "/test/admin-required",
-            json={"value": "GraphAdmin"},
+            json={"value": "NoRoles"},
             headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code == 201
+        assert response.status_code == 403

@@ -106,3 +106,11 @@ development_status:
   13-1-decouple-auth-and-observability-tests-from-dummy-endpoints: done
   13-2-demo-removal-script: done
   epic-13-retrospective: optional
+
+  epic-14: done
+  14-1-remove-graph-role-retrieval-from-inbound-auth-path: done
+  14-2-preserve-rolemappingprovider-with-token-claims-resolver: done
+  14-3-remove-graph-centric-rbac-configuration-and-documentation: done
+  14-4-validate-token-only-rbac-with-integration-tests: done
+  14-5-zombie-code-eradication-for-legacy-rbac-path: done
+  epic-14-retrospective: optional

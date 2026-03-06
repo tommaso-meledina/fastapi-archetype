@@ -73,14 +73,9 @@ class AppSettings(BaseSettings):
     auth_external_token_uri: str = ""
     auth_external_client_id: str = ""
     auth_external_client_secret: str = ""
-    auth_external_graph_scope: str = "https://graph.microsoft.com/.default"
-    auth_external_graph_roles_uri_template: str = (
-        "https://graph.microsoft.com/v1.0/users/{user_id}/appRoleAssignments"
-    )
 
     auth_http_timeout_seconds: float = 10.0
     auth_http_retry_attempts: int = 1
-    auth_enforce_graph_roles: bool = False
 
     @model_validator(mode="after")
     def _validate_external_auth_requirements(self) -> AppSettings:

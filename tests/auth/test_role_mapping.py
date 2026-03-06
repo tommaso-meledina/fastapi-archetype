@@ -151,10 +151,6 @@ class TestRequireRoleUsesMapper:
 
         with (
             patch("fastapi_archetype.auth.dependencies._settings.auth_type", "entra"),
-            patch(
-                "fastapi_archetype.auth.dependencies._settings.auth_enforce_graph_roles",
-                False,
-            ),
             TestClient(app) as c,
         ):
             yield c

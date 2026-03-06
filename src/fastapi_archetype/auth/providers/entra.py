@@ -67,34 +67,6 @@ class EntraExternalAuthProvider(AuthProvider):
         }
         return await self._request_access_token(form)
 
-    async def get_current_user_roles(
-        self,
-        principal: Principal,
-        user_token: str,
-    ) -> list[str]:
-        return await self.get_user_roles(principal.user_id, user_token)
-
-    async def get_user_roles(self, user_id: str, user_token: str) -> list[str]:
-        obo_token = await self.get_on_behalf_of_access_token(
-            self._settings.auth_external_graph_scope,
-            user_token,
-        )
-        uri = self._settings.auth_external_graph_roles_uri_template.format(
-            user_id=user_id
-        )
-        body = await self._http_get(uri, {"Authorization": f"Bearer {obo_token}"})
-        values = body.get("value", []) if isinstance(body, dict) else []
-        if not isinstance(values, list):
-            return []
-        normalized_roles: list[str] = []
-        for item in values:
-            if not isinstance(item, dict):
-                continue
-            app_role_id = item.get("appRoleId")
-            if isinstance(app_role_id, str) and app_role_id:
-                normalized_roles.append(app_role_id)
-        return normalized_roles
-
     def _require_client_credentials(self) -> None:
         missing: list[str] = []
         if not self._settings.auth_external_client_id.strip():

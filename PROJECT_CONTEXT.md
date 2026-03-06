@@ -27,7 +27,7 @@ All dependencies are declared in `pyproject.toml`. Do not add or replace depende
 | prometheus_client | (transitive) | Custom metrics |
 | slowapi | >=0.1.9 | Per-endpoint rate limiting |
 | PyJWT[crypto] | >=2.9.0 | JWT validation (Entra auth) |
-| httpx | (transitive at runtime via auth) | Outbound HTTP for JWKS/token/Graph |
+| httpx | (transitive at runtime via auth) | Outbound HTTP for JWKS/token endpoints |
 
 ### Dev
 
@@ -67,7 +67,7 @@ src/fastapi_archetype/
 │   ├── factory.py                   # build_auth_facade(settings) -> AuthFacade
 │   ├── models.py                    # Principal dataclass, Role StrEnum
 │   └── providers/
-│       ├── entra.py                 # EntraExternalAuthProvider (JWT, OAuth, Graph)
+│       ├── entra.py                 # EntraExternalAuthProvider (JWT, OAuth token acquisition)
 │       ├── none.py                  # NoAuthProvider (dev bypass, grants all roles)
 │       └── role_mapping.py          # BasicRoleMappingProvider (identity mapping)
 ├── core/
@@ -218,7 +218,7 @@ Architecture: `AuthProvider` (ABC) → concrete providers (`NoAuthProvider`, `En
 **Auth modes** (controlled by `AUTH_TYPE`):
 
 - `none`: `NoAuthProvider` returns a synthetic principal with all roles. No token validation.
-- `entra`: `EntraExternalAuthProvider` validates bearer JWT (signature via JWKS, standard claims, issuer, optional audience), maps claims to `Principal`, supports client_credentials and OBO token acquisition, and optional Graph-based role enrichment.
+- `entra`: `EntraExternalAuthProvider` validates bearer JWT (signature via JWKS, standard claims, issuer, optional audience), maps claims to `Principal`, and supports client_credentials and OBO token acquisition for outbound OAuth use cases.
 
 **Role model:** `Role` is a `StrEnum` with members `ADMIN`, `WRITER`, `READER`. `RoleMappingProvider.to_external(role_name)` maps internal labels to external identifiers. `BasicRoleMappingProvider` is an identity mapping.
 

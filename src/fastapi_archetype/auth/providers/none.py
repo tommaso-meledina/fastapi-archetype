@@ -31,17 +31,3 @@ class NoAuthProvider(AuthProvider):
         raise AuthFeatureNotSupportedError(
             "OBO flow is unavailable with AUTH_TYPE=none"
         )
-
-    async def get_current_user_roles(
-        self,
-        principal: Principal,
-        user_token: str,
-    ) -> list[str]:
-        _ = user_token
-        return principal.roles
-
-    async def get_user_roles(self, user_id: str, user_token: str) -> list[str]:
-        _ = (user_id, user_token)
-        raise AuthFeatureNotSupportedError(
-            "Role lookup is unavailable with AUTH_TYPE=none"
-        )

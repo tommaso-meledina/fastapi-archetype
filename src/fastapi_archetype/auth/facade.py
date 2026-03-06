@@ -43,16 +43,3 @@ class AuthFacade:
             scope,
             user_token,
         )
-
-    async def get_current_user_roles(
-        self,
-        principal: Principal,
-        user_token: str,
-    ) -> list[str]:
-        return await self._primary_provider.get_current_user_roles(
-            principal,
-            user_token,
-        )
-
-    async def get_user_roles(self, user_id: str, user_token: str) -> list[str]:
-        return await self._primary_provider.get_user_roles(user_id, user_token)

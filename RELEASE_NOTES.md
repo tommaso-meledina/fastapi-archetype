@@ -18,6 +18,11 @@
 * add env-configurable CORS support
 
 
+### Documentation
+
+* add Epic 14 token-only RBAC shard
+
+
 
 ## 1.0.0
 

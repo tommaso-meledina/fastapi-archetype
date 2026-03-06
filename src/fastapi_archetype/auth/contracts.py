@@ -45,13 +45,3 @@ class AuthProvider(ABC):
         scope: str,
         user_token: str,
     ) -> str: ...
-
-    @abstractmethod
-    async def get_current_user_roles(
-        self,
-        principal: Principal,
-        user_token: str,
-    ) -> list[str]: ...
-
-    @abstractmethod
-    async def get_user_roles(self, user_id: str, user_token: str) -> list[str]: ...
