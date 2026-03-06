@@ -39,6 +39,7 @@ class EntraExternalAuthProvider(AuthProvider):
 
         jwks = await self._get_jwks()
         signing_key = self._select_signing_key(jwks, header.get("kid"))
+        self._validate_signing_key_metadata(signing_key, alg)
         claims = self._decode_and_verify(token, signing_key, alg)
         self._validate_issuer_and_audience(claims)
         return self._principal_from_claims(claims)
@@ -197,10 +198,26 @@ class EntraExternalAuthProvider(AuthProvider):
         for key in keys:
             if isinstance(key, dict) and kid and key.get("kid") == kid:
                 return key
+        if kid:
+            raise UnauthorizedError(f"No signing key found for token kid={kid}")
         for key in keys:
             if isinstance(key, dict):
                 return key
         raise UnauthorizedError("No signing key available in JWKS")
+
+    def _validate_signing_key_metadata(
+        self,
+        signing_key: dict[str, Any],
+        alg: str,
+    ) -> None:
+        key_type = signing_key.get("kty")
+        key_use = signing_key.get("use")
+        if alg.startswith("RS") and key_type != "RSA":
+            raise UnauthorizedError(
+                f"Signing key type mismatch: alg={alg}, key.kty={key_type}"
+            )
+        if isinstance(key_use, str) and key_use.lower() != "sig":
+            raise UnauthorizedError(f"JWKS key use is not signing: use={key_use}")
 
     def _decode_and_verify(
         self,

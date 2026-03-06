@@ -13,6 +13,11 @@
 * also remove PROJECT_CONTEXT.md exclusion from project generation logic
 
 
+### Features
+
+* add env-configurable CORS support
+
+
 
 ## 1.0.0
 

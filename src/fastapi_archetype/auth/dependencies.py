@@ -88,9 +88,10 @@ def require_role(required_role: Role):
         external_role = facade.role_mapper.to_external(required_role.value)
         if external_role not in roles:
             logger.warning(
-                "Role check failed: principal %s lacks role %s",
+                "Role check failed: principal %s lacks role %s (they have %d roles)",
                 principal.subject,
                 required_role.value,
+                len(roles),
             )
             raise AppException(ErrorCode.FORBIDDEN)
         return principal
