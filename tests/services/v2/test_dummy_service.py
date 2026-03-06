@@ -7,6 +7,7 @@ from fastapi_archetype.models.dummy import Dummy
 from fastapi_archetype.services.v2.dummy_service import create_dummy, get_all_dummies
 
 if TYPE_CHECKING:
+    from pytest import LogCaptureFixture
     from sqlmodel import Session
 
 V2_LOGGER = "fastapi_archetype.services.v2.dummy_service"
@@ -36,7 +37,7 @@ def test_create_dummy_persists(session: Session) -> None:
     assert result.description == "desc"
 
 
-def test_get_all_dummies_logs(session: Session, caplog: logging.LogRecord) -> None:
+def test_get_all_dummies_logs(session: Session, caplog: LogCaptureFixture) -> None:
     session.add(Dummy(name="Logged"))
     session.commit()
     with caplog.at_level(logging.INFO, logger=V2_LOGGER):
@@ -44,7 +45,7 @@ def test_get_all_dummies_logs(session: Session, caplog: logging.LogRecord) -> No
     assert any("v2 get_all_dummies returned" in r.message for r in caplog.records)
 
 
-def test_create_dummy_logs(session: Session, caplog: logging.LogRecord) -> None:
+def test_create_dummy_logs(session: Session, caplog: LogCaptureFixture) -> None:
     with caplog.at_level(logging.INFO, logger=V2_LOGGER):
         create_dummy(session, Dummy(name="LogMe"))
     assert any("v2 create_dummy" in r.message for r in caplog.records)

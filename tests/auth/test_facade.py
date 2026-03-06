@@ -31,11 +31,11 @@ def test_none_facade_does_not_import_entra_provider(
 ) -> None:
     original_import = builtins.__import__
 
-    def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+    def guarded_import(name, globals_=None, locals_=None, fromlist=(), level=0):
         if name == "fastapi_archetype.auth.providers.entra":
             msg = "Entra provider import must not happen with AUTH_TYPE=none"
             raise AssertionError(msg)
-        return original_import(name, globals, locals, fromlist, level)
+        return original_import(name, globals_, locals_, fromlist, level)
 
     monkeypatch.setattr(builtins, "__import__", guarded_import)
 

@@ -31,11 +31,11 @@ if TYPE_CHECKING:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    settings = AppSettings()
-    configure_logging(settings)
-    tracer_provider = setup_otel(settings)
-    engine = get_engine(settings)
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
+    _settings = AppSettings()
+    configure_logging(_settings)
+    tracer_provider = setup_otel(_settings)
+    engine = get_engine(_settings)
     SQLModel.metadata.create_all(engine)
     try:
         yield

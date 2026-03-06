@@ -10,6 +10,8 @@ from fastapi.testclient import TestClient
 import fastapi_archetype.main as main_module
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from fastapi import FastAPI
 
 
@@ -19,7 +21,7 @@ def _reload_main_app() -> FastAPI:
 
 
 @pytest.fixture(autouse=True)
-def _restore_main_module() -> None:
+def _restore_main_module() -> Generator[None]:
     yield
     os.environ["ENV_FILE"] = ""
     os.environ.pop("CORS_ENABLED", None)

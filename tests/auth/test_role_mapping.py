@@ -123,12 +123,12 @@ class TestRequireRoleUsesMapper:
         provider = EntraExternalAuthProvider(settings)
 
         async def _fake_http_get(
-            url: str, headers: dict[str, str] | None = None
+            _url: str, _headers: dict[str, str] | None = None
         ) -> dict[str, Any]:
             return jwks_response
 
         async def _fake_http_post_form(
-            url: str, data: dict[str, str]
+            _url: str, _data: dict[str, str]
         ) -> dict[str, Any]:
             return {"access_token": "fake-token"}
 

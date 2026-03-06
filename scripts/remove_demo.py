@@ -6,11 +6,16 @@ Run from the project root:  python3 scripts/remove_demo.py
 Requires a clean git working tree (no uncommitted changes).
 Uses only the Python standard library.
 """
+
 from __future__ import annotations
 
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -102,7 +107,7 @@ def _edit_api_v1_init(path: Path) -> None:
         "\n"
         "from fastapi import APIRouter\n"
         "\n"
-        "router = APIRouter(prefix=\"/v1\")\n"
+        'router = APIRouter(prefix="/v1")\n'
     )
     _write(path, content)
 
@@ -113,19 +118,15 @@ def _edit_api_v2_init(path: Path) -> None:
         "\n"
         "from fastapi import APIRouter\n"
         "\n"
-        "router = APIRouter(prefix=\"/v2\")\n"
+        'router = APIRouter(prefix="/v2")\n'
     )
     _write(path, content)
 
 
 def _edit_prometheus(path: Path) -> None:
     content = _read(path)
-    content = content.replace(
-        "from dataclasses import dataclass\n", ""
-    )
-    content = content.replace(
-        "from prometheus_client import Counter\n", ""
-    )
+    content = content.replace("from dataclasses import dataclass\n", "")
+    content = content.replace("from prometheus_client import Counter\n", "")
     block = (
         "\n\n"
         "@dataclass(frozen=True)\n"
@@ -162,7 +163,7 @@ def _edit_env_example(path: Path) -> None:
     _write(path, "".join(lines))
 
 
-_EDIT_DISPATCH: list[tuple[str, callable]] = [
+_EDIT_DISPATCH: list[tuple[str, Callable[[Path], None]]] = [
     ("src/fastapi_archetype/core/constants.py", _edit_constants),
     ("src/fastapi_archetype/core/errors.py", _edit_errors),
     ("src/fastapi_archetype/core/config.py", _edit_config),

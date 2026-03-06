@@ -43,7 +43,8 @@ def test_rate_limited_response_body_structure(client: TestClient) -> None:
 
 
 def test_health_endpoint_not_rate_limited(client: TestClient) -> None:
-    for _ in range(20):
+    response = client.get("/health")
+    for _ in range(19):
         response = client.get("/health")
     assert response.status_code == 200
     assert "x-ratelimit-limit" not in response.headers

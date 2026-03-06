@@ -99,8 +99,7 @@ class AppSettings(BaseSettings):
 
         if self.cors_allow_credentials and "*" in self.cors_allow_origins_list:
             msg = (
-                "CORS_ALLOW_ORIGINS cannot include '*' when "
-                "CORS_ALLOW_CREDENTIALS=true"
+                "CORS_ALLOW_ORIGINS cannot include '*' when CORS_ALLOW_CREDENTIALS=true"
             )
             raise ValueError(msg)
         return self

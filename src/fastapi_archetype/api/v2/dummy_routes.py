@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 router = APIRouter(prefix=DUMMIES.path, tags=[f"{DUMMIES.name} v2"])
 _settings = AppSettings()
+_depends_require_admin = Depends(require_role(Role.ADMIN))
 
 
 @router.get("", response_model=list[Dummy])
@@ -38,7 +39,7 @@ def create_dummy(
     request: Request,
     dummy: Dummy,
     response: Response,
-    principal: Principal = Depends(require_role(Role.ADMIN)),
+    principal: Principal = _depends_require_admin,
     session: Session = Depends(get_session),
 ) -> Dummy:
     _ = principal

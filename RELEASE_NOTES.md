@@ -23,6 +23,11 @@
 * add Epic 14 token-only RBAC shard
 
 
+### Refactoring
+
+* remove graph invocation from RBAC flow
+
+
 
 ## 1.0.0
 

@@ -37,10 +37,10 @@ def test_build_auth_facade_errors_when_httpx_is_missing(
     )
     original_import = builtins.__import__
 
-    def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+    def guarded_import(name, globals_=None, locals_=None, fromlist=(), level=0):
         if name == "fastapi_archetype.auth.providers.entra":
             raise ModuleNotFoundError("No module named 'httpx'", name="httpx")
-        return original_import(name, globals, locals, fromlist, level)
+        return original_import(name, globals_, locals_, fromlist, level)
 
     monkeypatch.setattr(builtins, "__import__", guarded_import)
 
@@ -53,5 +53,3 @@ async def test_no_auth_provider_obo_not_supported() -> None:
     provider = NoAuthProvider()
     with pytest.raises(AuthFeatureNotSupportedError, match="OBO flow is unavailable"):
         await provider.get_on_behalf_of_access_token("scope", "user-token")
-
-

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+# noinspection PyProtectedMember
 from fastapi_archetype.core.errors import (
     AppException,
     ErrorCode,

@@ -15,6 +15,7 @@ _test_counter = Counter(
 
 
 def _op_value(operation: str) -> float:
+    # noinspection PyProtectedMember
     return _test_counter.labels(operation=operation)._value.get()
 
 
@@ -66,10 +67,7 @@ def test_counter_value_reflected_at_metrics_endpoint(client: TestClient) -> None
     response = client.get("/metrics")
     body = response.text
     for line in body.splitlines():
-        if (
-            line.startswith("test_operations_total{")
-            and 'operation="create"' in line
-        ):
+        if line.startswith("test_operations_total{") and 'operation="create"' in line:
             reported = float(line.split()[-1])
             assert reported == after
             break

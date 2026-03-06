@@ -30,9 +30,7 @@ _SECRET_KEY_RE = re.compile(
 
 def _redact_secrets(text: str) -> str:
     text = _AUTH_HEADER_RE.sub(lambda m: f"{m.group(1)}{_REDACTED}", text)
-    return _SECRET_KEY_RE.sub(
-        lambda m: f"{m.group(1)}{m.group(2)}{_REDACTED}", text
-    )
+    return _SECRET_KEY_RE.sub(lambda m: f"{m.group(1)}{m.group(2)}{_REDACTED}", text)
 
 
 def _current_span_ids() -> tuple[str, str]:
@@ -53,9 +51,7 @@ class SpanFilter(logging.Filter):
 
 class PlainFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
-        timestamp = datetime.fromtimestamp(
-            record.created, tz=UTC
-        ).isoformat()
+        timestamp = datetime.fromtimestamp(record.created, tz=UTC).isoformat()
         trace_id = getattr(record, "traceId", NO_TRACE_ID)
         span_id = getattr(record, "spanId", NO_SPAN_ID)
         message = record.getMessage()
@@ -76,9 +72,7 @@ class PlainFormatter(logging.Formatter):
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
-        timestamp = datetime.fromtimestamp(
-            record.created, tz=UTC
-        ).isoformat()
+        timestamp = datetime.fromtimestamp(record.created, tz=UTC).isoformat()
         entry: dict[str, object] = {
             "timestamp": timestamp,
             "level": record.levelname,
@@ -90,15 +84,11 @@ class JsonFormatter(logging.Formatter):
 
         if record.exc_info and record.exc_info[1] is not None:
             exc_type, exc_val, exc_tb = record.exc_info
-            entry["exceptionType"] = (
-                exc_type.__qualname__ if exc_type else "Exception"
-            )
+            entry["exceptionType"] = exc_type.__qualname__ if exc_type else "Exception"
             entry["exceptionMessage"] = _redact_secrets(str(exc_val))
             entry["stackTrace"] = [
                 _redact_secrets(line)
-                for line in traceback.format_exception(
-                    exc_type, exc_val, exc_tb
-                )
+                for line in traceback.format_exception(exc_type, exc_val, exc_tb)
             ]
             record.exc_info = None
             record.exc_text = None

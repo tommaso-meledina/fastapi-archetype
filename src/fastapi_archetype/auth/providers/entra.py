@@ -159,8 +159,8 @@ class EntraExternalAuthProvider(AuthProvider):
                 last_error = exc
         raise UnauthorizedError("HTTP POST request failed") from last_error
 
+    @staticmethod
     def _select_signing_key(
-        self,
         jwks_payload: dict[str, Any],
         kid: Any,
     ) -> dict[str, Any]:
@@ -177,8 +177,8 @@ class EntraExternalAuthProvider(AuthProvider):
                 return key
         raise UnauthorizedError("No signing key available in JWKS")
 
+    @staticmethod
     def _validate_signing_key_metadata(
-        self,
         signing_key: dict[str, Any],
         alg: str,
     ) -> None:
@@ -191,8 +191,8 @@ class EntraExternalAuthProvider(AuthProvider):
         if isinstance(key_use, str) and key_use.lower() != "sig":
             raise UnauthorizedError(f"JWKS key use is not signing: use={key_use}")
 
+    @staticmethod
     def _decode_and_verify(
-        self,
         token: str,
         signing_key: dict[str, Any],
         alg: str,
@@ -232,7 +232,8 @@ class EntraExternalAuthProvider(AuthProvider):
             return
         raise UnauthorizedError("Invalid token audience")
 
-    def _principal_from_claims(self, claims: dict[str, Any]) -> Principal:
+    @staticmethod
+    def _principal_from_claims(claims: dict[str, Any]) -> Principal:
         raw_roles = claims.get("roles", [])
         raw_groups = claims.get("groups", [])
         return Principal(

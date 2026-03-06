@@ -13,8 +13,8 @@ def test_setup_otel_with_export_disabled_logs_and_sets_provider(
     settings = AppSettings(otel_export_enabled=False)
     captured: dict[str, object] = {}
 
-    def fake_set_tracer_provider(provider):  # noqa: ANN001
-        captured["provider"] = provider
+    def fake_set_tracer_provider(tracer_provider):  # noqa: ANN001
+        captured["provider"] = tracer_provider
 
     monkeypatch.setattr(otel.trace, "set_tracer_provider", fake_set_tracer_provider)
 

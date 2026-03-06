@@ -243,7 +243,7 @@ def _copy_project_files(template_root: Path) -> int:
         else:
             try:
                 content = src.read_text(encoding="utf-8")
-            except Exception:
+            except OSError:
                 shutil.copy2(src, dest)
             else:
                 content = _apply_replacements(content)

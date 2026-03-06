@@ -9,7 +9,7 @@ from opentelemetry import trace
 from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
 
 from fastapi_archetype.core.config import AppSettings
-from fastapi_archetype.observability.logging import (
+from fastapi_archetype.observability.logging import (  # noinspection PyProtectedMember
     NO_SPAN_ID,
     NO_TRACE_ID,
     JsonFormatter,
@@ -60,9 +60,7 @@ def json_logger() -> logging.Logger:
 def _make_record(
     lgr: logging.Logger, msg: str, level: int = logging.INFO
 ) -> logging.LogRecord:
-    record = lgr.makeRecord(
-        lgr.name, level, "test.py", 1, msg, (), None
-    )
+    record = lgr.makeRecord(lgr.name, level, "test.py", 1, msg, (), None)
     SpanFilter().filter(record)
     return record
 
@@ -70,6 +68,7 @@ def _make_record(
 # ---------------------------------------------------------------------------
 # Story 12.1 — LOG_MODE configuration and toggle
 # ---------------------------------------------------------------------------
+
 
 class TestLogModeConfiguration:
     def test_default_log_mode_is_plain(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -100,23 +99,20 @@ class TestLogModeConfiguration:
         settings = AppSettings()
         configure_logging(settings)
         root = logging.getLogger()
-        assert any(
-            isinstance(h.formatter, PlainFormatter) for h in root.handlers
-        )
+        assert any(isinstance(h.formatter, PlainFormatter) for h in root.handlers)
 
     def test_configure_logging_json(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("LOG_MODE", "json")
         settings = AppSettings()
         configure_logging(settings)
         root = logging.getLogger()
-        assert any(
-            isinstance(h.formatter, JsonFormatter) for h in root.handlers
-        )
+        assert any(isinstance(h.formatter, JsonFormatter) for h in root.handlers)
 
 
 # ---------------------------------------------------------------------------
 # Story 12.2 — Format contracts and trace/span correlation
 # ---------------------------------------------------------------------------
+
 
 class TestPlainFormatter:
     def test_plain_format_fields(self, plain_logger: logging.Logger) -> None:
@@ -154,13 +150,16 @@ class TestJsonFormatter:
         parsed = json.loads(output)
         assert isinstance(parsed, dict)
 
-    def test_json_format_required_fields(
-        self, json_logger: logging.Logger
-    ) -> None:
+    def test_json_format_required_fields(self, json_logger: logging.Logger) -> None:
         record = _make_record(json_logger, "field check")
         parsed = json.loads(JsonFormatter().format(record))
         for field in (
-            "timestamp", "level", "logger", "message", "traceId", "spanId",
+            "timestamp",
+            "level",
+            "logger",
+            "message",
+            "traceId",
+            "spanId",
         ):
             assert field in parsed
 
@@ -196,9 +195,7 @@ class TestTraceCorrelation:
         assert record.traceId == NO_TRACE_ID  # type: ignore[attr-defined]
         assert record.spanId == NO_SPAN_ID  # type: ignore[attr-defined]
 
-    def test_active_span_injects_both_ids(
-        self, plain_logger: logging.Logger
-    ) -> None:
+    def test_active_span_injects_both_ids(self, plain_logger: logging.Logger) -> None:
         span = NonRecordingSpan(_VALID_CTX)
         with trace.use_span(span):
             record = _make_record(plain_logger, "traced")
@@ -211,7 +208,9 @@ class TestTraceCorrelation:
         self, plain_logger: logging.Logger
     ) -> None:
         invalid_ctx = SpanContext(
-            trace_id=0, span_id=0, is_remote=False,
+            trace_id=0,
+            span_id=0,
+            is_remote=False,
             trace_flags=TraceFlags(0),
         )
         span = NonRecordingSpan(invalid_ctx)
@@ -225,6 +224,7 @@ class TestTraceCorrelation:
 # Story 12.3 — Exception interface and secret redaction
 # ---------------------------------------------------------------------------
 
+
 class TestExceptionPlainMode:
     def test_plain_exception_includes_message(
         self, plain_logger: logging.Logger
@@ -234,8 +234,13 @@ class TestExceptionPlainMode:
         except ValueError:
             ei = sys.exc_info()
             record = plain_logger.makeRecord(
-                plain_logger.name, logging.ERROR, "test.py", 1,
-                "op failed", (), ei,
+                plain_logger.name,
+                logging.ERROR,
+                "test.py",
+                1,
+                "op failed",
+                (),
+                ei,
             )
         SpanFilter().filter(record)
         output = PlainFormatter().format(record)
@@ -249,8 +254,13 @@ class TestExceptionPlainMode:
         except RuntimeError:
             ei = sys.exc_info()
             record = plain_logger.makeRecord(
-                plain_logger.name, logging.ERROR, "test.py", 1,
-                "op failed", (), ei,
+                plain_logger.name,
+                logging.ERROR,
+                "test.py",
+                1,
+                "op failed",
+                (),
+                ei,
             )
         SpanFilter().filter(record)
         output = PlainFormatter().format(record)
@@ -267,8 +277,13 @@ class TestExceptionJsonMode:
         except TypeError:
             ei = sys.exc_info()
             record = json_logger.makeRecord(
-                json_logger.name, logging.ERROR, "test.py", 1,
-                "op failed", (), ei,
+                json_logger.name,
+                logging.ERROR,
+                "test.py",
+                1,
+                "op failed",
+                (),
+                ei,
             )
         SpanFilter().filter(record)
         parsed = json.loads(JsonFormatter().format(record))
@@ -308,17 +323,13 @@ class TestSecretRedaction:
         text = "user created id=42 name=Alice"
         assert _redact_secrets(text) == text
 
-    def test_plain_mode_redacts_secrets(
-        self, plain_logger: logging.Logger
-    ) -> None:
+    def test_plain_mode_redacts_secrets(self, plain_logger: logging.Logger) -> None:
         record = _make_record(plain_logger, "auth password=hunter2 done")
         output = PlainFormatter().format(record)
         assert "hunter2" not in output
         assert "password=***" in output
 
-    def test_json_mode_redacts_secrets(
-        self, json_logger: logging.Logger
-    ) -> None:
+    def test_json_mode_redacts_secrets(self, json_logger: logging.Logger) -> None:
         record = _make_record(json_logger, "got token=abc123")
         parsed = json.loads(JsonFormatter().format(record))
         assert "abc123" not in parsed["message"]
@@ -371,7 +382,6 @@ class TestTraceCorrelationDuringRequest:
             stub_logger.setLevel(original_level)
 
         assert len(captured) > 0, "Expected stub log during the request"
-        assert all(
-            tid != NO_TRACE_ID and sid != NO_SPAN_ID
-            for tid, sid in captured
-        ), f"Expected real trace/span IDs, got: {captured}"
+        assert all(tid != NO_TRACE_ID and sid != NO_SPAN_ID for tid, sid in captured), (
+            f"Expected real trace/span IDs, got: {captured}"
+        )
