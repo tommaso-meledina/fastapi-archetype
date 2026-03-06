@@ -62,3 +62,9 @@ A developer who has cloned the archetype can run `python3 scripts/remove_demo.py
 **FRs covered:** FR50–FR56
 **NFRs addressed:** NFR16–NFR17
 **Phase:** 2 (Expansion)
+
+## Epic 14: Token-Only Inbound RBAC with Graph Removal
+A developer can enforce inbound authorization using token claims only (`roles`) with fail-closed behavior, while preserving `RoleMappingProvider` extensibility and fully removing Graph-based role retrieval and all associated zombie code paths.
+**FRs covered:** FR1–FR11 (this request scope)
+**NFRs addressed:** NFR1–NFR6 (this request scope)
+**Phase:** 3 (Refinement)
