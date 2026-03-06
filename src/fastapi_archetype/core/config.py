@@ -48,6 +48,12 @@ class AppSettings(BaseSettings):
     otel_service_name: str = "fastapi-archetype"
 
     root_path: str = ""
+    cors_enabled: bool = False
+    cors_allow_origins: str = ""
+    cors_allow_methods: str = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    cors_allow_headers: str = "Authorization,Content-Type"
+    cors_allow_credentials: bool = False
+    cors_expose_headers: str = ""
 
     rate_limit_get_dummies: str = "100/minute"
     rate_limit_post_dummies: str = "10/minute"
@@ -79,23 +85,50 @@ class AppSettings(BaseSettings):
     @model_validator(mode="after")
     def _validate_external_auth_requirements(self) -> AppSettings:
         if self.auth_type != "entra":
-            return self
+            pass
+        else:
+            missing_fields: list[str] = []
+            if not self.auth_external_issuer.strip():
+                missing_fields.append("AUTH_EXTERNAL_ISSUER")
+            if (
+                not self.auth_external_discovery_uri.strip()
+                and not self.auth_external_jwks_uri.strip()
+            ):
+                missing_fields.append(
+                    "AUTH_EXTERNAL_DISCOVERY_URI or AUTH_EXTERNAL_JWKS_URI"
+                )
+            if missing_fields:
+                missing = ", ".join(missing_fields)
+                msg = f"AUTH_TYPE=entra requires the following settings: {missing}"
+                raise ValueError(msg)
 
-        missing_fields: list[str] = []
-        if not self.auth_external_issuer.strip():
-            missing_fields.append("AUTH_EXTERNAL_ISSUER")
-        if (
-            not self.auth_external_discovery_uri.strip()
-            and not self.auth_external_jwks_uri.strip()
-        ):
-            missing_fields.append(
-                "AUTH_EXTERNAL_DISCOVERY_URI or AUTH_EXTERNAL_JWKS_URI"
+        if self.cors_allow_credentials and "*" in self.cors_allow_origins_list:
+            msg = (
+                "CORS_ALLOW_ORIGINS cannot include '*' when "
+                "CORS_ALLOW_CREDENTIALS=true"
             )
-        if missing_fields:
-            missing = ", ".join(missing_fields)
-            msg = f"AUTH_TYPE=entra requires the following settings: {missing}"
             raise ValueError(msg)
         return self
+
+    @staticmethod
+    def _parse_csv(value: str) -> list[str]:
+        return [item.strip() for item in value.split(",") if item.strip()]
+
+    @property
+    def cors_allow_origins_list(self) -> list[str]:
+        return self._parse_csv(self.cors_allow_origins)
+
+    @property
+    def cors_allow_methods_list(self) -> list[str]:
+        return self._parse_csv(self.cors_allow_methods)
+
+    @property
+    def cors_allow_headers_list(self) -> list[str]:
+        return self._parse_csv(self.cors_allow_headers)
+
+    @property
+    def cors_expose_headers_list(self) -> list[str]:
+        return self._parse_csv(self.cors_expose_headers)
 
     @property
     def database_url(self) -> str:

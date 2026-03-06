@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi.errors import RateLimitExceeded
 from sqlmodel import SQLModel
@@ -43,12 +44,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         tracer_provider.shutdown()
 
 
+settings = AppSettings()
 app = FastAPI(
     title="fastapi-archetype",
     description="A reference FastAPI application demonstrating enterprise patterns.",
-    root_path=AppSettings().root_path,
+    root_path=settings.root_path,
     lifespan=lifespan,
 )
+
+if settings.cors_enabled:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_allow_origins_list,
+        allow_credentials=settings.cors_allow_credentials,
+        allow_methods=settings.cors_allow_methods_list,
+        allow_headers=settings.cors_allow_headers_list,
+        expose_headers=settings.cors_expose_headers_list,
+    )
 
 app.state.limiter = limiter
 app.add_exception_handler(AppException, app_exception_handler)  # type: ignore[arg-type]

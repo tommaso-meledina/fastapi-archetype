@@ -26,6 +26,7 @@ The project demonstrates the following capabilities working together end-to-end:
 - OpenTelemetry distributed tracing with optional OTLP export
 - Prometheus metrics (auto-instrumented HTTP metrics and custom business counters)
 - Per-endpoint rate limiting with environment-configurable thresholds
+- Environment-configurable CORS policy for browser clients
 - External IdP bearer-token authentication and role-based access control
 - Multi-stage Docker image (demonstrated through a Docker Compose stack with MariaDB, Jaeger, OTEL Collector, Prometheus, and Grafana)
 - pytest suite with >90% coverage using SQLite in-memory and synthetic IdP fixtures
@@ -160,6 +161,8 @@ To verify, create a few dummies via POST and retrieve them with GET. Restarting 
 All settings are loaded from environment variables (with `.env` file support) using pydantic-settings. The application validates configuration at startup and fails fast if required values are missing or malformed. See `.env.example` for the full list of supported variables.
 
 Setting `LOG_LEVEL=DEBUG` in a `.env` file and restarting the application produces detailed AOP and framework logs on stdout.
+
+CORS is controlled through `CORS_*` environment variables (`CORS_ENABLED`, `CORS_ALLOW_ORIGINS`, `CORS_ALLOW_METHODS`, `CORS_ALLOW_HEADERS`, `CORS_ALLOW_CREDENTIALS`, `CORS_EXPOSE_HEADERS`) so browser access policy can be adjusted per environment without code changes.
 
 ### Structured Error Handling
 

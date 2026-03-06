@@ -115,3 +115,38 @@ def test_entra_auth_accepts_m2m_settings() -> None:
     assert settings.auth_external_token_uri != ""
     assert settings.auth_external_client_id == "client-id"
     assert settings.auth_external_client_secret == "client-secret"
+
+
+def test_cors_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("CORS_ENABLED", raising=False)
+    monkeypatch.delenv("CORS_ALLOW_ORIGINS", raising=False)
+    settings = AppSettings()
+    assert settings.cors_enabled is False
+    assert settings.cors_allow_origins_list == []
+
+
+def test_cors_csv_parsing_trims_values(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "CORS_ALLOW_ORIGINS",
+        " http://localhost:3000 , https://app.example.com ,,",
+    )
+    monkeypatch.setenv("CORS_ALLOW_METHODS", "GET, POST,OPTIONS")
+    monkeypatch.setenv("CORS_ALLOW_HEADERS", "Authorization, Content-Type")
+    monkeypatch.setenv("CORS_EXPOSE_HEADERS", "X-Request-Id, X-Trace-Id")
+    settings = AppSettings()
+
+    assert settings.cors_allow_origins_list == [
+        "http://localhost:3000",
+        "https://app.example.com",
+    ]
+    assert settings.cors_allow_methods_list == ["GET", "POST", "OPTIONS"]
+    assert settings.cors_allow_headers_list == ["Authorization", "Content-Type"]
+    assert settings.cors_expose_headers_list == ["X-Request-Id", "X-Trace-Id"]
+
+
+def test_cors_wildcard_forbidden_with_credentials() -> None:
+    with pytest.raises(ValidationError, match="CORS_ALLOW_ORIGINS cannot include"):
+        AppSettings(
+            cors_allow_origins="*",
+            cors_allow_credentials=True,
+        )
