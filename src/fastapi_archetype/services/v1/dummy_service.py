@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from sqlmodel import select
 
-from fastapi_archetype.models.dummy import Dummy
+from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.observability.prometheus import metrics
 
 if TYPE_CHECKING:

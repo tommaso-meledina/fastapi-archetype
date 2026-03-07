@@ -22,7 +22,7 @@ Evolve the codebase so that:
 ### Target Structure
 
 - **`models/entities/`** — One file per entity (e.g. `dummy.py`). SQLModel classes with `table=True`; ORM only.
-- **`models/dto/`** — Versioned by API version. Subfolders `v1/`, `v2/`, … each with one file per resource (e.g. `models/dto/v1/dummy.py`, `models/dto/v2/dummy.py`). Plain Pydantic models (no `table=True`), with existing API conventions (e.g. camelCase aliases).
+- **`models/dto/`** — Versioned by API version. Subfolders `v1/`, `v2/`, … each with one file per resource (e.g. `models/dto/v1/dummy.py`, `models/dto/v2/dummy.py`). Plain Pydantic models (no `table=True`), with existing API conventions (e.g. camelCase aliases). **DTO naming is mandatory:** `<Method><Resource><Request|Response>` (e.g. `PostDummiesRequest`, `GetDummiesResponse`, `PostDummiesResponse`). Resource name is plural (PascalCase); do not name after the entity (e.g. avoid `DummyCreate`, `DummyResponse`).
 - **`factories/`** — New top-level package (same level as `models/`). One file per entity (e.g. `factories/dummy.py`) with:
   - **Entity → DTO:** e.g. `entity_to_dto(entity, dto_cls)` or version-specific helpers.
   - **DTO → Entity:** e.g. `dto_to_entity(dto)` for create/update (e.g. omitting `id` when creating).
@@ -107,3 +107,13 @@ so that **new resources follow the same pattern**.
 
 - Current dummy implementation can ship with DTOs only under `models/dto/v1/`; v2 structure is in place for when version-specific DTOs are added.
 - PROJECT_CONTEXT and dependency list remain unchanged (no new libraries).
+
+## DTO naming convention (mandatory)
+
+Web DTO class names **must** follow: **`<Method><Resource><Request|Response>`**
+
+- **Method:** HTTP method in PascalCase (`Get`, `Post`, `Put`, `Patch`, `Delete`).
+- **Resource:** Plural resource name in PascalCase, matching the path (e.g. `Dummies` for `/dummies`).
+- **Suffix:** `Request` for request bodies, `Response` for response bodies.
+
+This is documented as a mandatory convention in PROJECT_CONTEXT (Conventions and Patterns → DTO naming, and Anti-Patterns).

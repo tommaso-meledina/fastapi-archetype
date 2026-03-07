@@ -19,7 +19,7 @@ All dependencies are declared in `pyproject.toml`. Do not add or replace depende
 |---|---|---|
 | fastapi | >=0.135.1 | Web framework |
 | uvicorn | >=0.41.0 | ASGI server |
-| sqlmodel | >=0.0.37 | ORM + Pydantic validation (single model definition) |
+| sqlmodel | >=0.0.37 | ORM for entities; Pydantic for DTOs (see Data Persistence) |
 | pymysql | >=1.1.2 | MariaDB driver (pure Python) |
 | pydantic-settings | >=2.13.1 | Typed configuration from env / .env |
 | opentelemetry-api, opentelemetry-sdk, opentelemetry-exporter-otlp, opentelemetry-instrumentation-fastapi | >=1.39.1 / >=0.60b1 | Distributed tracing |
@@ -77,7 +77,13 @@ src/fastapi_archetype/
 │   ├── errors.py                    # ErrorCode enum, AppException, exception handlers
 │   └── rate_limit.py               # Limiter instance (slowapi, keyed by remote address)
 ├── models/
-│   └── dummy.py                     # Dummy(SQLModel, table=True) with camelCase aliases
+│   ├── entities/                    # ORM-only: one file per entity (SQLModel, table=True)
+│   │   └── dummy.py                 # Dummy entity
+│   └── dto/                         # API request/response only; versioned by API version
+│       └── v1/
+│           └── dummy.py             # PostDummiesRequest, GetDummiesResponse, PostDummiesResponse (Pydantic, camelCase)
+├── factories/                       # Entity ↔ DTO mapping (Pydantic-only: model_validate, model_dump)
+│   └── dummy.py                    # entity_to_dto, dto_to_entity
 ├── observability/
 │   ├── logging.py                   # configure_logging(settings), PlainFormatter, JsonFormatter, SpanFilter, secret redaction
 │   ├── otel.py                      # setup_otel(app, settings) -> TracerProvider
@@ -152,7 +158,9 @@ All request/response payloads are JSON. Models use `alias_generator=_to_camel` a
 
 ### 2. Data Persistence
 
-- **ORM:** SQLModel — each model is defined once as `SQLModel, table=True`, serving both ORM and Pydantic validation.
+- **Entities:** SQLModel classes with `table=True` live in `models/entities/` (one file per entity). They are used only for persistence and service-layer logic; they are not used as FastAPI request/response models.
+- **DTOs:** Plain Pydantic models (no `table=True`) live in `models/dto/<version>/` (e.g. `v1/`). They define API request/response shapes with camelCase via `alias_generator` and are used only at the route boundary.
+- **Factories:** The `factories/` package (one module per entity) provides entity ↔ DTO conversion using only Pydantic: `model_validate()` and `model_dump()`. No separate mapping library. Routes call factory functions at the boundary; services accept and return entities only.
 - **Database driver:** Configurable via `DB_DRIVER`. Defaults to `sqlite` (in-memory with `StaticPool`). Production uses `mysql+pymysql` (MariaDB).
 - **Session management:** `get_session()` is a generator yielding `Session` instances, injected into routes via `Depends(get_session)`. Tests override this dependency with a test-scoped SQLite session.
 - **Schema management:** `SQLModel.metadata.create_all(engine)` in the lifespan. No migration tool (Alembic) is in scope.
@@ -281,11 +289,21 @@ python3 scripts/build_template.py -n "Order Service" -o ~/projects
 
 ## Conventions and Patterns
 
+### DTO naming (mandatory)
+
+Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>`**
+
+- **Method:** HTTP method in PascalCase (e.g. `Get`, `Post`, `Put`, `Patch`, `Delete`).
+- **Resource:** Plural resource name in PascalCase, matching the API path (e.g. `Dummies` for `/dummies`).
+- **Suffix:** `Request` for request bodies, `Response` for response bodies.
+
+**Examples:** `PostDummiesRequest` (body for `POST /dummies`), `GetDummiesResponse` (item shape for `GET /dummies` or single-item response), `PostDummiesResponse` (body of `POST /dummies` response). Do not name DTOs after the entity (e.g. avoid `DummyCreate`, `DummyResponse`).
+
 ### Module organization
 
-- One model per file in `models/`.
-- One resource's routes per file in `api/v{n}/`.
-- One resource's service per file in `services/v{n}/`.
+- One entity per file in `models/entities/` (SQLModel, table=True). One resource’s DTOs per file in `models/dto/<version>/` (e.g. `v1/`), using the `<Method><Resource><Request|Response>` naming pattern. One factory module per entity in `factories/` (entity ↔ DTO using Pydantic only).
+- One resource's routes per file in `api/v{n}/`. Routes use DTOs for request/response and call factory functions to convert to/from entities.
+- One resource's service per file in `services/v{n}/`. Services accept and return entities only.
 - The version router `__init__.py` aggregates resource routers.
 - `services/__init__.py` aggregates AOP logging application.
 
@@ -352,19 +370,22 @@ python3 scripts/build_template.py -n "Order Service" -o ~/projects
 - Do not add code comments that merely narrate what the code does.
 - Do not skip `from __future__ import annotations` in new modules.
 - Do not modify `tests/conftest.py` fixtures to be resource-specific — they are generic by design.
+- Do not name web DTOs after the entity (e.g. `DummyCreate`, `WidgetResponse`) — use the mandatory pattern `<Method><Resource><Request|Response>` (e.g. `PostDummiesRequest`, `GetDummiesResponse`).
 
 ## Adding a New Resource
 
 To add a new resource (e.g., `Widget`):
 
-1. **Model:** Create `models/widget.py` with `class Widget(SQLModel, table=True)`, camelCase alias config, and `__tablename__`.
-2. **Constant:** Add `WIDGETS = ResourceDefinition(...)` to `core/constants.py`.
-3. **Service:** Create `services/v1/widget_service.py` with query/mutation functions taking `Session` as first argument.
-4. **AOP:** Import and `apply_logging()` the service module in `services/__init__.py`.
-5. **Routes:** Create `api/v1/widget_routes.py` with `APIRouter(prefix=WIDGETS.path, tags=[WIDGETS.name])`, rate-limited endpoints, auth dependencies as needed.
-6. **Router registration:** Include the widget router in `api/v1/__init__.py`.
-7. **Tests:** Add `tests/api/test_widget_routes.py` and `tests/services/v1/test_widget_service.py` using existing fixtures.
-8. **Custom metrics (if needed):** Add counters to the `Counters` dataclass in `observability/prometheus.py`.
-9. **Rate limits (if needed):** Add `rate_limit_get_widgets` / `rate_limit_post_widgets` fields to `AppSettings` and corresponding entries to `.env.example`.
+1. **Entity:** Create `models/entities/widget.py` with `class Widget(SQLModel, table=True)`, camelCase alias config, and `__tablename__`. This is the ORM model only; it is not used as a FastAPI request/response model.
+2. **DTOs:** Create `models/dto/v1/widget.py` with Pydantic models following the **`<Method><Resource><Request|Response>`** naming pattern (e.g. `PostWidgetsRequest`, `GetWidgetsResponse`, `PostWidgetsResponse`). Same camelCase behaviour as existing DTOs.
+3. **Factory:** Create `factories/widget.py` with `entity_to_dto(entity) -> GetWidgetsResponse` (or the appropriate response type) and `dto_to_entity(dto: PostWidgetsRequest) -> Widget` using only Pydantic (`model_validate`, `model_dump`).
+4. **Constant:** Add `WIDGETS = ResourceDefinition(...)` to `core/constants.py`.
+5. **Service:** Create `services/v1/widget_service.py` with query/mutation functions taking `Session` and entity types only (accept/return `Widget` from `models.entities.widget`).
+6. **AOP:** Import and `apply_logging()` the service module in `services/__init__.py`.
+7. **Routes:** Create `api/v1/widget_routes.py` with `APIRouter(prefix=WIDGETS.path, tags=[WIDGETS.name])`. Use DTOs for request body and response model; call factory to convert request DTO → entity for service and entity → response DTO for responses. Rate limits and auth as needed.
+8. **Router registration:** Include the widget router in `api/v1/__init__.py`.
+9. **Tests:** Add `tests/api/test_widget_routes.py` and `tests/services/v1/test_widget_service.py` using existing fixtures (service tests use the entity from `models.entities.widget`).
+10. **Custom metrics (if needed):** Add counters to the `Counters` dataclass in `observability/prometheus.py`.
+11. **Rate limits (if needed):** Add `rate_limit_get_widgets` / `rate_limit_post_widgets` fields to `AppSettings` and corresponding entries to `.env.example`.
 
 The new resource automatically inherits OpenTelemetry tracing, Prometheus HTTP metrics, structured error handling, and the configured auth mode.

@@ -115,9 +115,9 @@ development_status:
   14-5-zombie-code-eradication-for-legacy-rbac-path: done
   epic-14-retrospective: optional
 
-  epic-15: backlog
-  15-1-entity-and-dto-structure: backlog
-  15-2-factories-module: backlog
-  15-3-wire-entities-dtos-and-remove-legacy-model: backlog
-  15-4-update-project-context-and-docs: backlog
+  epic-15: done
+  15-1-entity-and-dto-structure: done
+  15-2-factories-module: done
+  15-3-wire-entities-dtos-and-remove-legacy-model: done
+  15-4-update-project-context-and-docs: done
   epic-15-retrospective: optional

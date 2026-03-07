@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from fastapi_archetype.models.dummy import Dummy
+from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.services.v2.dummy_service import create_dummy, get_all_dummies
 
 if TYPE_CHECKING:

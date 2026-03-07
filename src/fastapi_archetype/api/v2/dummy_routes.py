@@ -10,7 +10,12 @@ from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.constants import DUMMIES
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
-from fastapi_archetype.models.dummy import Dummy
+from fastapi_archetype.factories.dummy import dto_to_entity, entity_to_dto
+from fastapi_archetype.models.dto.v1.dummy import (
+    GetDummiesResponse,
+    PostDummiesRequest,
+    PostDummiesResponse,
+)
 from fastapi_archetype.services.v2 import dummy_service
 
 if TYPE_CHECKING:
@@ -23,24 +28,29 @@ _settings = AppSettings()
 _depends_require_admin = Depends(require_role(Role.ADMIN))
 
 
-@router.get("", response_model=list[Dummy])
+@router.get("", response_model=list[GetDummiesResponse])
 @limiter.limit(_settings.rate_limit_get_dummies)
 def list_dummies(
     request: Request,
     response: Response,
     session: Session = Depends(get_session),
-) -> list[Dummy]:
-    return dummy_service.get_all_dummies(session)
+) -> list[GetDummiesResponse]:
+    entities = dummy_service.get_all_dummies(session)
+    return [entity_to_dto(e) for e in entities]
 
 
-@router.post("", response_model=Dummy, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=PostDummiesResponse, status_code=status.HTTP_201_CREATED
+)
 @limiter.limit(_settings.rate_limit_post_dummies)
 def create_dummy(
     request: Request,
-    dummy: Dummy,
+    dummy: PostDummiesRequest,
     response: Response,
     principal: Principal = _depends_require_admin,
     session: Session = Depends(get_session),
-) -> Dummy:
+) -> PostDummiesResponse:
     _ = principal
-    return dummy_service.create_dummy(session, dummy)
+    entity = dto_to_entity(dummy)
+    created = dummy_service.create_dummy(session, entity)
+    return entity_to_dto(created)
