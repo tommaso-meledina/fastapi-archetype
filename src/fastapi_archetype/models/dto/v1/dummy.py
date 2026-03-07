@@ -24,9 +24,16 @@ class GetDummiesResponse(BaseModel):
         populate_by_name=True,
     )
 
-    id: int | None = None
     name: str
     description: str | None = None
 
 
-PostDummiesResponse = GetDummiesResponse
+class PostDummiesResponse(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=_to_camel,
+        populate_by_name=True,
+    )
+
+    id: int | None = None
+    name: str
+    description: str | None = None

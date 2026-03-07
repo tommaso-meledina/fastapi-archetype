@@ -65,7 +65,8 @@ def test_response_uses_camel_case_keys(client: TestClient) -> None:
     response = client.get("/v1/dummies")
     items = response.json()
     assert len(items) >= 1
-    expected_keys = {"id", "name", "description"}
+    # GET list does not expose id; only name and description (camelCase)
+    expected_keys = {"name", "description"}
     assert set(items[0].keys()) == expected_keys
 
 
