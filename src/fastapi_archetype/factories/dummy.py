@@ -30,17 +30,13 @@ def entity_to_post_response(entity: Dummy) -> PostDummiesResponse:
     )
 
 
-def dto_to_entity(dto: PostDummiesRequest) -> Dummy:
+def post_dto_to_entity(dto: PostDummiesRequest) -> Dummy:
     return Dummy.model_validate(dto.model_dump())
 
 
-def put_dto_to_entity(
-    existing: Dummy,
-    dto: PutDummiesRequest,
-) -> Dummy:
+def put_dto_to_entity(dto: PutDummiesRequest) -> Dummy:
     return Dummy(
-        id=existing.id,
-        uuid=existing.uuid,
+        uuid=dto.uuid,
         name=dto.name,
         description=dto.description,
     )

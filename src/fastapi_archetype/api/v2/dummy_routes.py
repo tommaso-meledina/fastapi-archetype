@@ -11,9 +11,9 @@ from fastapi_archetype.core.constants import DUMMIES
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.factories.dummy import (
-    dto_to_entity,
     entity_to_get_response,
     entity_to_post_response,
+    post_dto_to_entity,
 )
 from fastapi_archetype.models.dto.v1.dummy import (
     GetDummiesResponse,
@@ -55,6 +55,6 @@ def create_dummy(
     session: Session = Depends(get_session),
 ) -> PostDummiesResponse:
     _ = principal
-    entity = dto_to_entity(dummy)
+    entity = post_dto_to_entity(dummy)
     created = dummy_service.create_dummy(session, entity)
     return entity_to_post_response(created)

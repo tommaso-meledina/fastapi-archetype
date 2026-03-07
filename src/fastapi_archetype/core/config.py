@@ -124,6 +124,8 @@ class AppSettings(BaseSettings):
     def cors_expose_headers_list(self) -> list[str]:
         return self._parse_csv(self.cors_expose_headers)
 
+    # TODO: this is pretty ugly and kind of defeats the purpose of the ORM
+    # need to revisit
     @property
     def database_url(self) -> str:
         if self.db_driver == "sqlite":

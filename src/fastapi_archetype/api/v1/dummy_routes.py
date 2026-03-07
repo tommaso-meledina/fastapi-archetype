@@ -11,9 +11,9 @@ from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.errors import AppException, ErrorCode
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.factories.dummy import (
-    dto_to_entity,
     entity_to_get_response,
     entity_to_post_response,
+    post_dto_to_entity,
     put_dto_to_entity,
 )
 from fastapi_archetype.models.dto.v1.dummy import (
@@ -56,28 +56,18 @@ def create_dummy(
     session: Session = Depends(get_session),
 ) -> PostDummiesResponse:
     _ = principal
-    entity = dto_to_entity(dummy)
+    entity = post_dto_to_entity(dummy)
     created = dummy_service.create_dummy(session, entity)
     return entity_to_post_response(created)
 
 
 @router.put("/{uuid}", response_model=GetDummiesResponse)
-@limiter.limit(_settings.rate_limit_get_dummies)
-def update_dummy(
-    request: Request,
-    response: Response,
-    uuid: str,
-    body: PutDummiesRequest,
-    session: Session = Depends(get_session),
-) -> GetDummiesResponse:
+def update_dummy(uuid: str, body: PutDummiesRequest, session: Session = Depends(get_session)) -> GetDummiesResponse:
     if body.uuid != uuid:
         raise AppException(
             ErrorCode.BAD_REQUEST,
             detail="Path UUID and body UUID must match",
         )
-    existing = dummy_service.get_dummy_by_uuid(session, uuid)
-    if existing is None:
-        raise AppException(ErrorCode.DUMMY_NOT_FOUND, detail="Dummy not found")
-    entity = put_dto_to_entity(existing, body)
+    entity = put_dto_to_entity(body)
     updated = dummy_service.update_dummy(session, entity)
     return entity_to_get_response(updated)
