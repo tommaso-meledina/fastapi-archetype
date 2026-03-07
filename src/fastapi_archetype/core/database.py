@@ -37,6 +37,13 @@ def create_url_engine(url: str, *, echo: bool = False) -> Engine:
     return create_engine(url, echo=echo)
 
 
+def is_local_dev_mode(settings: AppSettings | None = None) -> bool:
+    """True when running in local/dev mode (effective DB is SQLite); table creation allowed."""
+    if settings is None:
+        settings = AppSettings()
+    return settings.effective_database_url.startswith(SQLITE_PREFIX)
+
+
 def get_engine(settings: AppSettings | None = None) -> Engine:
     global _engine  # noqa: PLW0603
     if _engine is None:

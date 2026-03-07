@@ -126,6 +126,9 @@ tests/
 compose/
 ├── .env                             # Service-level env vars for Docker Compose
 ├── docker-compose.yaml              # mariadb, fastapi-archetype, grafana, jaeger, otel-collector, prometheus
+├── mariadb/
+│   └── init/                        # MariaDB native init (runs on first start only)
+│       └── schema.sql               # DUMMY and other app tables; DB name must match .env DATABASE_NAME
 └── observability/
     ├── otel-collector-config.yaml
     └── prometheus.yaml
@@ -169,7 +172,7 @@ All request/response payloads are JSON. Models use `alias_generator=_to_camel` a
   - **Service:** The update function (e.g. `update_dummy(session, entity)`) accepts an entity. If the entity has **no** `id`, the service fetches the existing row by `entity.uuid`; if not found, it raises `AppException(ErrorCode.<RESOURCE>_NOT_FOUND)` so the app handler returns **404**. If found, the service builds an entity with the resolved `id` and `uuid` plus the incoming updatable fields, then performs the update (e.g. merge and commit). If the entity already has an `id`, the service performs the update as usual. This keeps "resolve by UUID or fail" inside the service; the route stays validation + convert + call + respond.
 - **Database connection:** Configured by an optional `DATABASE_URL` environment variable. When unset or empty/whitespace, the application uses SQLite in-memory (`sqlite://`). When set, the URL is used as-is after validation at startup; the appropriate driver (e.g. PyMySQL for MariaDB) must be in dependencies. Special characters (e.g. `@`, `:`, `/`, `%`) used within any component of `DATABASE_URL` must be percent-encoded where applicable.
 - **Session management:** `get_session()` is a generator yielding `Session` instances, injected into routes via `Depends(get_session)`. Tests override this dependency with a test-scoped SQLite session.
-- **Schema management:** `SQLModel.metadata.create_all(engine)` in the lifespan. No migration tool (Alembic) is in scope.
+- **Schema management:** Table creation is a **local/dev-only** feature. The application runs `SQLModel.metadata.create_all(engine)` in the lifespan **only when the effective database is SQLite** (e.g. no `DATABASE_URL` or `sqlite://`). For any other backend (e.g. MariaDB in Compose or production), the app does not create or alter tables; schema is provided by the environment (e.g. MariaDB’s native init via `compose/mariadb/init/schema.sql`). No migration tool (Alembic) is in scope.
 
 ### 3. Configuration Management
 
@@ -370,7 +373,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 - Do not add global middleware for auth — use explicit `Depends()` per route.
 - Do not scatter string literals for paths or error codes — use `core/constants.py` and `ErrorCode`.
 - Do not create new settings outside `AppSettings` — add fields there.
-- Do not add Alembic or database migration tooling — schema is managed via `create_all`.
+- Do not add Alembic or database migration tooling — local schema via `create_all` (SQLite only); other backends use their own init (e.g. `compose/mariadb/init/schema.sql`).
 - Do not add a local token-issuance endpoint — auth is external IdP only.
 - Do not add libraries not listed in the technology stack without human approval.
 - Do not add code comments that merely narrate what the code does.

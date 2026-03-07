@@ -12,6 +12,7 @@ services:
       - MYSQL_ROOT_PASSWORD=${DATASOURCE_PASSWORD}
     volumes:
       - mariadb-data:/var/lib/mysql
+      - ./mariadb/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 10s
