@@ -76,3 +76,7 @@ A developer sees a clear separation between ORM entities (`models/entities/`), v
 ## Epic 16: Entity UUID and PUT Dummies by UUID
 A developer sees the Dummy entity expose a stable `uuid` (string) to clients while the internal ID is never returned; the dummies API supports PUT to update a Dummy by UUID, with path and body both carrying the UUID and returning 400 if they disagree; factory logic resolves UUID to entity/ID when mapping from DTO to entity for updates.
 **Phase:** 3 (Refinement)
+
+## Epic 17: Database URL Configuration
+A developer configures the database via an optional `DATABASE_URL` environment variable; when unset, the application uses SQLite in-memory. When set, the URL is validated at startup and used as-is (the appropriate driver library must be in dependencies). Engine creation is split into a SQLite-specific path and a generic URL path, enabling plug-and-play with any SQLAlchemy-supported backend (PostgreSQL, Oracle, etc.) without code changes.
+**Phase:** 3 (Refinement)

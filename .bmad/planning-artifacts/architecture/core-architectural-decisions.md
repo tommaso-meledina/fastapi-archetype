@@ -26,13 +26,14 @@
 |---|---|---|---|
 | ORM | SQLModel | 0.0.37 | PRD-specified; single model definition for ORM + Pydantic validation |
 | Database (prod) | MariaDB | — | PRD-specified |
-| Database (dev default) | SQLite in-memory | — | Zero-setup local development; `DB_DRIVER=sqlite` (default) |
+| Database (dev default) | SQLite in-memory | — | Zero-setup local development; omit `DATABASE_URL` (default) |
 | Database (test) | SQLite in-memory | — | PRD-specified; self-contained test execution |
-| MariaDB driver | PyMySQL | 1.1.2 | Pure Python; zero system dependencies; simplest Docker story; performance irrelevant for reference implementation |
+| Database configuration | Optional `DATABASE_URL` | — | If unset or empty: SQLite in-memory. If set: URL used as-is after validation; driver must be in dependencies (Epic 17). |
+| MariaDB driver | PyMySQL | 1.1.2 | Pure Python; zero system dependencies; used when `DATABASE_URL` points at MySQL/MariaDB (e.g. Compose default). |
 | Session management | FastAPI `Depends()` with generator | — | Idiomatic FastAPI; enables clean test database swap via dependency override |
 | Schema management | SQLModel `create_all` | — | Single-table MVP; no migration complexity warranted |
 
-**Cascading implication:** The `Depends()` + generator pattern means database abstraction is handled through dependency injection and a configurable `DB_DRIVER` setting. `DB_DRIVER=sqlite` (default) uses SQLite in-memory with `StaticPool` for zero-setup local development; `DB_DRIVER=mysql+pymysql` connects to MariaDB for production. Tests override with SQLite via dependency injection. No dialect-specific code in application logic.
+**Cascading implication:** The `Depends()` + generator pattern means database abstraction is handled through dependency injection and an optional `DATABASE_URL` setting. When `DATABASE_URL` is not set or starts with `sqlite://`, the app uses a SQLite engine (in-memory or file) with `StaticPool` and `check_same_thread=False`. Otherwise the URL is validated and an engine is created from it, enabling plug-and-play with any SQLAlchemy backend (MariaDB, PostgreSQL, Oracle, etc.). Tests override with SQLite via dependency injection. No dialect-specific code in application logic beyond the SQLite vs non-SQLite engine builders.
 
 ## Authentication & Security
 

@@ -29,6 +29,7 @@
 ### Refactoring
 
 * remove graph invocation from RBAC flow
+* improve sample update-by-UUID pattern
 
 
 
