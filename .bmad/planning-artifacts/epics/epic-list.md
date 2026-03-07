@@ -68,3 +68,7 @@ A developer can enforce inbound authorization using token claims only (`roles`) 
 **FRs covered:** FR1–FR11 (this request scope)
 **NFRs addressed:** NFR1–NFR6 (this request scope)
 **Phase:** 3 (Refinement)
+
+## Epic 15: Separate Entity Models, Versioned DTOs, and Factories
+A developer sees a clear separation between ORM entities (`models/entities/`), versioned web DTOs (`models/dto/v1/`, `v2/`, …), and a dedicated mapping layer (`factories/`) using Pydantic-only conversion, so that API and persistence can evolve independently.
+**Phase:** 3 (Refinement)

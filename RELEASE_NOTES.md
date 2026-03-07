@@ -11,6 +11,7 @@
 * enforce single source of truth for database params in compose env file
 * remove unnecessary exclusions from project generation logic
 * also remove PROJECT_CONTEXT.md exclusion from project generation logic
+* address PyCharm inspection results across scripts, src, and tests
 
 
 ### Features
