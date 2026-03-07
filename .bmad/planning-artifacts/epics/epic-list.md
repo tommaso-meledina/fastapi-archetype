@@ -72,3 +72,7 @@ A developer can enforce inbound authorization using token claims only (`roles`) 
 ## Epic 15: Separate Entity Models, Versioned DTOs, and Factories
 A developer sees a clear separation between ORM entities (`models/entities/`), versioned web DTOs (`models/dto/v1/`, `v2/`, …), and a dedicated mapping layer (`factories/`) using Pydantic-only conversion, so that API and persistence can evolve independently.
 **Phase:** 3 (Refinement)
+
+## Epic 16: Entity UUID and PUT Dummies by UUID
+A developer sees the Dummy entity expose a stable `uuid` (string) to clients while the internal ID is never returned; the dummies API supports PUT to update a Dummy by UUID, with path and body both carrying the UUID and returning 400 if they disagree; factory logic resolves UUID to entity/ID when mapping from DTO to entity for updates.
+**Phase:** 3 (Refinement)
