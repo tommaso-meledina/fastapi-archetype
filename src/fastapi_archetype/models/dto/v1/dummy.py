@@ -25,6 +25,7 @@ class GetDummiesResponse(BaseModel):
     )
 
     name: str
+    name_initial: str
     description: str | None = None
 
 

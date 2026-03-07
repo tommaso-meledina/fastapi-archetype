@@ -65,9 +65,19 @@ def test_response_uses_camel_case_keys(client: TestClient) -> None:
     response = client.get("/v1/dummies")
     items = response.json()
     assert len(items) >= 1
-    # GET list does not expose id; only name and description (camelCase)
-    expected_keys = {"name", "description"}
+    # GET list: name, nameInitial (computed), description; no id
+    expected_keys = {"name", "nameInitial", "description"}
     assert set(items[0].keys()) == expected_keys
+
+
+def test_get_response_includes_computed_name_initial(client: TestClient) -> None:
+    client.post("/v1/dummies", json={"name": "Alice", "description": "Test"})
+    response = client.get("/v1/dummies")
+    assert response.status_code == 200
+    items = response.json()
+    assert len(items) >= 1
+    alice = next(i for i in items if i["name"] == "Alice")
+    assert alice["nameInitial"] == "A"
 
 
 def test_create_response_uses_camel_case_keys(client: TestClient) -> None:
