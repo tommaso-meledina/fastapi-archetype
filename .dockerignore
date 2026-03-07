@@ -16,3 +16,4 @@ docs/
 dist/
 build/
 compose
+.DS_Store

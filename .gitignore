@@ -20,3 +20,4 @@ compose/observability/grafana/storage/
 .cursor/
 _bmad/
 INITIAL_CONTEXT.md
+.DS_Store
