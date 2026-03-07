@@ -22,6 +22,7 @@
 ### Documentation
 
 * add Epic 14 token-only RBAC shard
+* add Epic 15 and stories for entity, DTO, and factories separation
 
 
 ### Refactoring
