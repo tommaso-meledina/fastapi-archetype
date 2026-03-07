@@ -24,6 +24,7 @@
 * add Epic 14 token-only RBAC shard
 * add Epic 15 and stories for entity, DTO, and factories separation
 * add Epic 16 and align PROJECT_CONTEXT with UUID and PUT-by-UUID
+* prepare specs for epic 17
 
 
 ### Refactoring

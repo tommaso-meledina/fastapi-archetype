@@ -62,7 +62,11 @@ def create_dummy(
 
 
 @router.put("/{uuid}", response_model=GetDummiesResponse)
-def update_dummy(uuid: str, body: PutDummiesRequest, session: Session = Depends(get_session)) -> GetDummiesResponse:
+def update_dummy(
+    uuid: str,
+    body: PutDummiesRequest,
+    session: Session = Depends(get_session),
+) -> GetDummiesResponse:
     if body.uuid != uuid:
         raise AppException(
             ErrorCode.BAD_REQUEST,

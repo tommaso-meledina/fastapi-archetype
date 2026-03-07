@@ -58,12 +58,7 @@ class AppSettings(BaseSettings):
     rate_limit_get_dummies: str = "100/minute"
     rate_limit_post_dummies: str = "10/minute"
 
-    db_driver: Literal["sqlite", "mysql+pymysql"] = "sqlite"
-    db_host: str = "localhost"
-    db_port: int = 3306
-    db_user: str = "root"
-    db_password: str = ""
-    db_name: str = "fastapi_archetype"
+    database_url: str | None = None
 
     auth_type: Literal["none", "entra"] = "none"
     auth_external_issuer: str = ""
@@ -124,13 +119,10 @@ class AppSettings(BaseSettings):
     def cors_expose_headers_list(self) -> list[str]:
         return self._parse_csv(self.cors_expose_headers)
 
-    # TODO: this is pretty ugly and kind of defeats the purpose of the ORM
-    # need to revisit
     @property
-    def database_url(self) -> str:
-        if self.db_driver == "sqlite":
+    def effective_database_url(self) -> str:
+        """URL used for engine creation. Unset or empty/whitespace → sqlite://."""
+        raw = self.database_url
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
             return "sqlite://"
-        return (
-            f"mysql+pymysql://{self.db_user}:{self.db_password}"
-            f"@{self.db_host}:{self.db_port}/{self.db_name}"
-        )
+        return raw.strip()

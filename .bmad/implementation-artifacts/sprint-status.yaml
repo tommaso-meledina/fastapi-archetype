@@ -127,3 +127,10 @@ development_status:
   16-2-implement-put-on-dummies-by-uuid-with-path-body-validation: done
   16-3-update-project-context-and-adding-a-new-resource-for-uuid-and-put: done
   epic-16-retrospective: optional
+
+  epic-17: done
+  17-1-config-and-database-module-database-url-and-two-engine-setup-functions: done
+  17-2-docker-compose-and-compose-env-use-database-url-only: done
+  17-3-documentation-database-url-default-sqlite-and-url-escaping: done
+  17-4-tests-config-and-database-for-database-url: done
+  epic-17-retrospective: optional

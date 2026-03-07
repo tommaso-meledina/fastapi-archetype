@@ -8,13 +8,13 @@ from fastapi_archetype.core.config import AppSettings
 
 def test_default_settings_load(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LOG_LEVEL", "INFO")
-    monkeypatch.setenv("DB_DRIVER", "sqlite")
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.delenv("DEBUG", raising=False)
     settings = AppSettings()
     assert settings.app_name == "fastapi-archetype"
     assert settings.debug is False
     assert settings.log_level == "INFO"
-    assert settings.db_driver == "sqlite"
+    assert settings.effective_database_url == "sqlite://"
 
 
 @pytest.mark.parametrize("level", ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
@@ -48,23 +48,30 @@ def test_root_path_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.root_path == "/api/v1"
 
 
-def test_database_url_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DB_DRIVER", "sqlite")
+def test_effective_database_url_default_and_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     settings = AppSettings()
-    assert settings.database_url == "sqlite://"
+    assert settings.effective_database_url == "sqlite://"
 
 
-def test_database_url_mysql(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DB_DRIVER", "mysql+pymysql")
-    monkeypatch.setenv("DB_USER", "testuser")
-    monkeypatch.setenv("DB_PASSWORD", "testpass")
-    monkeypatch.setenv("DB_HOST", "dbhost")
-    monkeypatch.setenv("DB_PORT", "3307")
-    monkeypatch.setenv("DB_NAME", "testdb")
+def test_effective_database_url_empty_string(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "")
     settings = AppSettings()
-    assert (
-        settings.database_url == "mysql+pymysql://testuser:testpass@dbhost:3307/testdb"
-    )
+    assert settings.effective_database_url == "sqlite://"
+
+
+def test_effective_database_url_whitespace(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "   ")
+    settings = AppSettings()
+    assert settings.effective_database_url == "sqlite://"
+
+
+def test_effective_database_url_set(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "mysql+pymysql://u:p@host:3306/db")
+    settings = AppSettings()
+    assert settings.effective_database_url == "mysql+pymysql://u:p@host:3306/db"
 
 
 def test_default_log_mode_is_plain(monkeypatch: pytest.MonkeyPatch) -> None:

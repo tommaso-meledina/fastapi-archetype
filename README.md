@@ -93,7 +93,7 @@ Run the application (uses SQLite in-memory by default - no database setup needed
 uv run uvicorn fastapi_archetype.main:app --reload
 ```
 
-To use MariaDB instead, set `DB_DRIVER=mysql+pymysql` in a `.env` file (see `.env.example`).
+To use MariaDB or another backend, set `DATABASE_URL` in a `.env` file to a full connection URL (see `.env.example`).
 
 ### Using Docker
 
@@ -152,7 +152,7 @@ curl -X POST http://localhost:8000/v1/dummies \
 
 The `Dummy` model is defined once using SQLModel, serving as both the ORM mapping (to the `DUMMY` table) and the Pydantic validation schema. Database sessions are injected via FastAPI's `Depends()` pattern, making the database backend swappable without touching application logic.
 
-By default the application starts with SQLite in-memory - no external database needed. Set `DB_DRIVER=mysql+pymysql` and the corresponding `DB_*` variables to connect to MariaDB.
+By default the application starts with SQLite in-memory when `DATABASE_URL` is not set. Set `DATABASE_URL` to a full connection URL (e.g. for Compose or a server database) as documented in `.env.example`.
 
 To verify, create a few dummies via POST and retrieve them with GET. Restarting with the default SQLite driver confirms the in-memory database starts fresh.
 

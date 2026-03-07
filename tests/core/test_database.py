@@ -12,7 +12,7 @@ def test_get_engine_without_settings_builds_default_settings(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(database, "_engine", None)
-    monkeypatch.setenv("DB_DRIVER", "sqlite")
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.setenv("DEBUG", "false")
 
     try:
@@ -27,7 +27,7 @@ def test_get_engine_without_settings_builds_default_settings(
 def test_get_session_yields_session(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(database, "_engine", None)
     try:
-        database.get_engine(AppSettings(db_driver="sqlite"))
+        database.get_engine(AppSettings())
 
         generator = database.get_session()
         session = next(generator)
@@ -42,8 +42,15 @@ def test_get_session_yields_session(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_dispose_engine_resets_global_engine(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(database, "_engine", None)
-    database.get_engine(AppSettings(db_driver="sqlite"))
+    database.get_engine(AppSettings())
 
     database.dispose_engine()
 
     assert database._engine is None
+
+
+def test_invalid_database_url_raises_at_engine_creation() -> None:
+    database.dispose_engine()
+    settings = AppSettings(database_url="not-a-valid-url://")
+    with pytest.raises(ValueError, match="Invalid DATABASE_URL"):
+        database.get_engine(settings)
