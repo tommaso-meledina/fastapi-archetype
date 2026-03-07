@@ -15,6 +15,7 @@ class ErrorCode(enum.Enum):
     INTERNAL_ERROR = ("INTERNAL_ERROR", "An unexpected error occurred", 500)
     RATE_LIMITED = ("RATE_LIMITED", "Rate limit exceeded", 429)
     VALIDATION_ERROR = ("VALIDATION_ERROR", "Request validation failed", 422)
+    BAD_REQUEST = ("BAD_REQUEST", "Bad request", 400)
     NOT_FOUND = ("NOT_FOUND", "Resource not found", 404)
     DUMMY_NOT_FOUND = ("DUMMY_NOT_FOUND", "Dummy not found", 404)
     UNAUTHORIZED = ("UNAUTHORIZED", "Authentication required", 401)

@@ -29,6 +29,7 @@ def test_create_dummy_persists(session: Session) -> None:
     dummy = Dummy(name="Created", description="desc")
     result = create_dummy(session, dummy)
     assert result.id is not None
+    assert result.uuid is not None
     assert result.name == "Created"
     assert result.description == "desc"
 
@@ -38,3 +39,5 @@ def test_create_dummy_assigns_id(session: Session) -> None:
     result = create_dummy(session, dummy)
     assert isinstance(result.id, int)
     assert result.id > 0
+    assert isinstance(result.uuid, str)
+    assert len(result.uuid) > 0

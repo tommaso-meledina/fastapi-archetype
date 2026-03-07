@@ -15,9 +15,20 @@ def get_all_dummies(session: Session) -> list[Dummy]:
     return list(session.exec(select(Dummy)).all())
 
 
+def get_dummy_by_uuid(session: Session, uuid: str) -> Dummy | None:
+    return session.exec(select(Dummy).where(Dummy.uuid == uuid)).first()
+
+
 def create_dummy(session: Session, dummy: Dummy) -> Dummy:
     session.add(dummy)
     session.commit()
     session.refresh(dummy)
     metrics.counters.dummies_created_total.labels(api_version="v1").inc()
     return dummy
+
+
+def update_dummy(session: Session, entity: Dummy) -> Dummy:
+    merged = session.merge(entity)
+    session.commit()
+    session.refresh(merged)
+    return merged

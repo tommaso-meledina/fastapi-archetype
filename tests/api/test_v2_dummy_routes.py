@@ -25,7 +25,8 @@ def test_v2_create_dummy_returns_201(client: TestClient) -> None:
     data = response.json()
     assert data["name"] == "V2Widget"
     assert data["description"] == "A v2 test widget"
-    assert "id" in data
+    assert "uuid" in data
+    assert "id" not in data
 
 
 def test_v2_list_dummies_populated(client: TestClient) -> None:

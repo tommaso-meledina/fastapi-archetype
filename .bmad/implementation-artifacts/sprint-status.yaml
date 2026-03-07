@@ -121,3 +121,9 @@ development_status:
   15-3-wire-entities-dtos-and-remove-legacy-model: done
   15-4-update-project-context-and-docs: done
   epic-15-retrospective: optional
+
+  epic-16: done
+  16-1-add-uuid-to-entity-and-dtos-never-expose-id-to-clients: done
+  16-2-implement-put-on-dummies-by-uuid-with-path-body-validation: done
+  16-3-update-project-context-and-adding-a-new-resource-for-uuid-and-put: done
+  epic-16-retrospective: optional

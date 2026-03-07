@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid as uuid_module
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
@@ -8,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi.errors import RateLimitExceeded
-from sqlmodel import SQLModel
+from sqlmodel import Session, SQLModel, select
 
 from fastapi_archetype.api.v1 import router as v1_router
 from fastapi_archetype.api.v2 import router as v2_router
@@ -22,12 +23,21 @@ from fastapi_archetype.core.errors import (
     validation_exception_handler,
 )
 from fastapi_archetype.core.rate_limit import limiter
+from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.observability.logging import configure_logging
 from fastapi_archetype.observability.otel import setup_otel
 from fastapi_archetype.observability.prometheus import setup_prometheus
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
+
+
+def _backfill_dummy_uuids(engine: object) -> None:
+    with Session(engine) as session:
+        for d in session.exec(select(Dummy)).all():
+            if not d.uuid:
+                d.uuid = str(uuid_module.uuid4())
+        session.commit()
 
 
 @asynccontextmanager
@@ -37,6 +47,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     tracer_provider = setup_otel(_settings)
     engine = get_engine(_settings)
     SQLModel.metadata.create_all(engine)
+    _backfill_dummy_uuids(engine)
     try:
         yield
     finally:

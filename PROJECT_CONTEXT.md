@@ -151,6 +151,7 @@ Current endpoints:
 | GET | `/redoc` | None | None |
 | GET | `/v1/dummies` | None | `rate_limit_get_dummies` |
 | POST | `/v1/dummies` | `require_auth` | `rate_limit_post_dummies` |
+| PUT | `/v1/dummies/{uuid}` | None | `rate_limit_get_dummies` |
 | GET | `/v2/dummies` | None | `rate_limit_get_dummies` |
 | POST | `/v2/dummies` | `require_role(Role.ADMIN)` | `rate_limit_post_dummies` |
 

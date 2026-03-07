@@ -24,6 +24,7 @@ class GetDummiesResponse(BaseModel):
         populate_by_name=True,
     )
 
+    uuid: str
     name: str
     name_initial: str
     description: str | None = None
@@ -35,6 +36,17 @@ class PostDummiesResponse(BaseModel):
         populate_by_name=True,
     )
 
-    id: int | None = None
+    uuid: str
+    name: str
+    description: str | None = None
+
+
+class PutDummiesRequest(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=_to_camel,
+        populate_by_name=True,
+    )
+
+    uuid: str
     name: str
     description: str | None = None
