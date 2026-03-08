@@ -1,7 +1,7 @@
 # Changelog
 
 
-## Upcoming release
+## 0.0.2
 
 
 ### Fixes
