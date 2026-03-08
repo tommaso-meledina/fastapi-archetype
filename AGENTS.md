@@ -16,6 +16,6 @@ Agents MUST take the project context, as described in [PROJECT_CONTEXT](./PROJEC
 
 ## Git operations
 
-Agents SHALL commit frequently, at every point of stability within the execution of a task. Commit messages SHALL adhere to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) standard.
+Agents SHALL commit frequently, at every point of stability within the execution of a task. Commit messages SHALL adhere to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) standard, without using the (scope) syntax.
 
 IMPORTANT: before each commit, agents MUST make sure that all quality checks execute successfully.
