@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 VALID_LOG_LEVELS = frozenset({"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"})
 VALID_LOG_MODES = frozenset({"plain", "json"})
+VALID_PROFILES = frozenset({"default", "mock"})
 
 
 class AppSettings(BaseSettings):
@@ -20,6 +21,17 @@ class AppSettings(BaseSettings):
     debug: bool = False
     log_level: str = "INFO"
     log_mode: str = "plain"
+    profile: Literal["default", "mock"] = "default"
+
+    @field_validator("profile", mode="before")
+    @classmethod
+    def _normalize_profile(cls, value: object) -> str:
+        s = str(value).lower() if value is not None else "default"
+        if s not in VALID_PROFILES:
+            allowed = ", ".join(sorted(VALID_PROFILES))
+            msg = f"Invalid profile '{value}'. Must be one of: {allowed}"
+            raise ValueError(msg)
+        return s
 
     @field_validator("log_level")
     @classmethod

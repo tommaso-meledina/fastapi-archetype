@@ -10,10 +10,12 @@ def test_default_settings_load(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LOG_LEVEL", "INFO")
     monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.delenv("DEBUG", raising=False)
+    monkeypatch.delenv("PROFILE", raising=False)
     settings = AppSettings()
     assert settings.app_name == "fastapi-archetype"
     assert settings.debug is False
     assert settings.log_level == "INFO"
+    assert settings.profile == "default"
     assert settings.effective_database_url == "sqlite://"
 
 
@@ -157,3 +159,27 @@ def test_cors_wildcard_forbidden_with_credentials() -> None:
             cors_allow_origins="*",
             cors_allow_credentials=True,
         )
+
+
+def test_profile_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("PROFILE", raising=False)
+    settings = AppSettings()
+    assert settings.profile == "default"
+
+
+def test_profile_mock(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PROFILE", "mock")
+    settings = AppSettings()
+    assert settings.profile == "mock"
+
+
+def test_profile_case_insensitive(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PROFILE", "MOCK")
+    settings = AppSettings()
+    assert settings.profile == "mock"
+
+
+def test_profile_invalid_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PROFILE", "staging")
+    with pytest.raises(ValidationError, match="Invalid profile"):
+        AppSettings()

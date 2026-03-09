@@ -134,3 +134,10 @@ development_status:
   17-3-documentation-database-url-default-sqlite-and-url-escaping: done
   17-4-tests-config-and-database-for-database-url: done
   epic-17-retrospective: optional
+
+  epic-18: in-progress
+  18-1-add-profile-to-configuration: done
+  18-2-dummy-service-contract-default-and-mock-implementations-and-wiring-v1: backlog
+  18-3-apply-profile-and-service-contract-pattern-to-v2-dummies: backlog
+  18-4-tests-for-profile-driven-service-selection-and-implementations: backlog
+  epic-18-retrospective: optional
