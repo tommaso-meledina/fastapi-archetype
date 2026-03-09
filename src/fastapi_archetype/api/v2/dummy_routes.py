@@ -20,7 +20,10 @@ from fastapi_archetype.models.dto.v1.dummy import (
     PostDummiesRequest,
     PostDummiesResponse,
 )
-from fastapi_archetype.services.v2 import dummy_service
+from fastapi_archetype.services.contracts.dummy_service import (
+    DummyServiceV2Contract,  # noqa: TC001
+)
+from fastapi_archetype.services.v2.dummy_service import get_dummy_service_v2
 
 if TYPE_CHECKING:
     from sqlmodel import Session
@@ -38,8 +41,9 @@ def list_dummies(
     request: Request,
     response: Response,
     session: Session = Depends(get_session),
+    svc: DummyServiceV2Contract = Depends(get_dummy_service_v2),
 ) -> list[GetDummiesResponse]:
-    entities = dummy_service.get_all_dummies(session)
+    entities = svc.get_all_dummies(session)
     return [entity_to_get_response(e) for e in entities]
 
 
@@ -53,8 +57,9 @@ def create_dummy(
     response: Response,
     principal: Principal = _depends_require_admin,
     session: Session = Depends(get_session),
+    svc: DummyServiceV2Contract = Depends(get_dummy_service_v2),
 ) -> PostDummiesResponse:
     _ = principal
     entity = post_dto_to_entity(dummy)
-    created = dummy_service.create_dummy(session, entity)
+    created = svc.create_dummy(session, entity)
     return entity_to_post_response(created)

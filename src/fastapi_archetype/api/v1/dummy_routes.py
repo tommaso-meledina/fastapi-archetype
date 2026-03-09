@@ -22,7 +22,10 @@ from fastapi_archetype.models.dto.v1.dummy import (
     PostDummiesResponse,
     PutDummiesRequest,
 )
-from fastapi_archetype.services.v1 import dummy_service
+from fastapi_archetype.services.contracts.dummy_service import (
+    DummyServiceContract,  # noqa: TC001
+)
+from fastapi_archetype.services.v1.dummy_service import get_dummy_service
 
 if TYPE_CHECKING:
     from sqlmodel import Session
@@ -39,8 +42,9 @@ def list_dummies(
     request: Request,
     response: Response,
     session: Session = Depends(get_session),
+    svc: DummyServiceContract = Depends(get_dummy_service),
 ) -> list[GetDummiesResponse]:
-    entities = dummy_service.get_all_dummies(session)
+    entities = svc.get_all_dummies(session)
     return [entity_to_get_response(e) for e in entities]
 
 
@@ -54,10 +58,11 @@ def create_dummy(
     response: Response,
     principal: Principal = Depends(require_auth),
     session: Session = Depends(get_session),
+    svc: DummyServiceContract = Depends(get_dummy_service),
 ) -> PostDummiesResponse:
     _ = principal
     entity = post_dto_to_entity(dummy)
-    created = dummy_service.create_dummy(session, entity)
+    created = svc.create_dummy(session, entity)
     return entity_to_post_response(created)
 
 
@@ -66,6 +71,7 @@ def update_dummy(
     uuid: str,
     body: PutDummiesRequest,
     session: Session = Depends(get_session),
+    svc: DummyServiceContract = Depends(get_dummy_service),
 ) -> GetDummiesResponse:
     if body.uuid != uuid:
         raise AppException(
@@ -73,5 +79,5 @@ def update_dummy(
             detail="Path UUID and body UUID must match",
         )
     entity = put_dto_to_entity(body)
-    updated = dummy_service.update_dummy(session, entity)
+    updated = svc.update_dummy(session, entity)
     return entity_to_get_response(updated)

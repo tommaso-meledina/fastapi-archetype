@@ -15,6 +15,11 @@
 * satisfy ruff E501 and I001 in database and main
 
 
+### Features
+
+* add PROFILE config and epic 18 sprint plan (story 18-1 done)
+
+
 
 ## 0.0.2
 

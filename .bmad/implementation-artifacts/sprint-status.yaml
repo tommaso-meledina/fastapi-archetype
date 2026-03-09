@@ -135,9 +135,9 @@ development_status:
   17-4-tests-config-and-database-for-database-url: done
   epic-17-retrospective: optional
 
-  epic-18: in-progress
+  epic-18: done
   18-1-add-profile-to-configuration: done
-  18-2-dummy-service-contract-default-and-mock-implementations-and-wiring-v1: backlog
-  18-3-apply-profile-and-service-contract-pattern-to-v2-dummies: backlog
-  18-4-tests-for-profile-driven-service-selection-and-implementations: backlog
+  18-2-dummy-service-contract-default-and-mock-implementations-and-wiring-v1: done
+  18-3-apply-profile-and-service-contract-pattern-to-v2-dummies: done
+  18-4-tests-for-profile-driven-service-selection-and-implementations: done
   epic-18-retrospective: optional
