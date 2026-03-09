@@ -28,7 +28,7 @@ The project demonstrates the following capabilities working together end-to-end:
 - Per-endpoint rate limiting with environment-configurable thresholds
 - Environment-configurable CORS policy for browser clients
 - External IdP bearer-token authentication and role-based access control
-- Multi-stage Docker image (demonstrated through a Docker Compose stack with MariaDB, Jaeger, OTEL Collector, Prometheus, and Grafana)
+- Multi-stage Docker image (demonstrated locally via an optional Docker Compose stack with MariaDB, Jaeger, OTEL Collector, Prometheus, and Grafana — for local testing only; not part of the product)
 - pytest suite with >90% coverage using SQLite in-memory and synthetic IdP fixtures
 - Ruff linting and formatting targeting Python 3.14
 
@@ -255,7 +255,7 @@ docker run -p 8000:8000 fastapi-archetype
 
 ### Docker Compose Observability Stack
 
-For demonstration purposes, the `compose/` directory provides a full production-like environment with the following services:
+For local testing and demonstration only, the `compose/` directory provides a full production-like environment (the stack is not part of the product; the application is meant to be deployed as a container elsewhere). Services:
 
 | Service | Port | Purpose |
 |---------|------|---------|

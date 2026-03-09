@@ -44,7 +44,7 @@ All dependencies are declared in `pyproject.toml`. Do not add or replace depende
 |---|---|
 | uv | Dependency management, lock file, virtualenv, build backend (`uv_build`) |
 | Docker (python:3.14-slim) | Multi-stage container image |
-| Docker Compose | Full-stack dev environment (compose/ directory) |
+| Docker Compose | Local testing only (compose/ directory); not part of the product. |
 
 ## Project Structure
 
@@ -134,7 +134,7 @@ tests/
 
 compose/
 ├── .env                             # Service-level env vars for Docker Compose
-├── docker-compose.yaml              # mariadb, fastapi-archetype, grafana, jaeger, otel-collector, prometheus
+├── docker-compose.yaml              # Local testing only: mariadb, fastapi-archetype, grafana, jaeger, otel-collector, prometheus
 ├── mariadb/
 │   └── init/                        # MariaDB native init (runs on first start only)
 │       └── schema.sql               # DUMMY and other app tables; DB name must match .env DATABASE_NAME
@@ -281,16 +281,7 @@ Service implementations are decoupled from the rest of the application by a **se
 
 **Dockerfile:** Multi-stage. Builder uses `uv` (copied from `ghcr.io/astral-sh/uv:0.10.7`) to resolve and install locked dependencies. Runtime uses `python:3.14-slim` with a non-root `app` user. No dev dependencies in the final image.
 
-**Docker Compose** (`compose/docker-compose.yaml`):
-
-| Service | Image | Port(s) |
-|---|---|---|
-| mariadb | mariadb:11 | 3306 |
-| fastapi-archetype | Built from project root | 8000 |
-| grafana | grafana/grafana-oss | 3001 |
-| jaeger-all-in-one | jaegertracing/all-in-one | 16686 |
-| otel-collector | otel/opentelemetry-collector-contrib | 4317, 4318 |
-| prometheus | prom/prometheus | 9090 |
+IMPORTANT: the **Docker Compose** project (`compose/docker-compose.yaml`) is merely for local testing purposes, its technologies and components are not to be considered part of the product itself - this application is meant to be installed _anywhere_ as a container.
 
 ### 13. Testing
 

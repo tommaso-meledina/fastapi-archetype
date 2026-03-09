@@ -284,7 +284,7 @@ This document records every architectural decision (AD) made during the design a
 
 ## AD 21 - Docker Compose Observability Stack
 
-**Context:** The Docker Compose environment needs a full observability stack so developers can verify traces and metrics end-to-end without external infrastructure.
+**Context:** The Docker Compose environment needs a full observability stack so developers can verify traces and metrics end-to-end without external infrastructure. This Compose stack is for local development and testing only; it is not part of the product or deployment target.
 
 **Options:**
 

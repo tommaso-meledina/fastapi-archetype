@@ -24,6 +24,7 @@
 ### Refactoring
 
 * make mock dummy services return static values only (no in-memory store)
+* align v1 naming with v2 (DummyServiceV1Contract, get_dummy_service_v1, etc.)
 
 
 
