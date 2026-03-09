@@ -295,13 +295,14 @@ uv run pytest --cov=fastapi_archetype --cov-report=term-missing
 
 ### Code Quality
 
-Ruff enforces linting and formatting rules targeting Python 3.14, including pycodestyle, pyflakes, isort, pep8-naming, pyupgrade, flake8-bugbear, and flake8-simplify checks.
+Ruff enforces linting and formatting rules targeting Python 3.14, including pycodestyle, pyflakes, isort, pep8-naming, pyupgrade, flake8-bugbear, and flake8-simplify checks. Type checking is enforced with Astral's ty.
 
 Check the codebase:
 
 ```bash
 uv run ruff check src/ tests/
 uv run ruff format --check src/ tests/
+uv run ty check
 ```
 
 ### Automatic Changelog

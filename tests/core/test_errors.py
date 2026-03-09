@@ -86,7 +86,9 @@ def test_app_exception_handler_returns_json() -> None:
     request = MagicMock()
     response = asyncio.run(app_exception_handler(request, exc))
     assert response.status_code == 404
-    body = json.loads(response.body)
+    raw = response.body
+    body_str: str = raw.decode() if isinstance(raw, bytes) else str(raw)
+    body = json.loads(body_str)
     assert body["errorCode"] == "NOT_FOUND"
     assert body["message"] == "Resource not found"
     assert body["detail"] == "id=42"

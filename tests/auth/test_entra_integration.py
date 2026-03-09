@@ -45,7 +45,8 @@ def _entra_settings(**overrides: Any) -> AppSettings:
         "auth_external_client_secret": "test-secret",
     }
     defaults.update(overrides)
-    return AppSettings(**defaults)
+    # Test fixture: dict overlay; Pydantic validates at runtime.
+    return AppSettings(**defaults)  # type: ignore[call-arg]
 
 
 def _build_patched_provider(

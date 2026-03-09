@@ -18,4 +18,4 @@ Agents MUST take the project context, as described in [PROJECT_CONTEXT](./PROJEC
 
 Agents SHALL commit frequently, at every point of stability within the execution of a task. Commit messages SHALL adhere to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) standard, without using the (scope) syntax.
 
-IMPORTANT: before each commit, agents MUST make sure that all quality checks execute successfully.
+IMPORTANT: before each commit, agents MUST make sure that all quality checks execute successfully. Quality checks are: `uv run ruff check`, `uv run ruff format --check`, `uv run ty check`, and the full test suite (e.g. `uv run pytest`). Type checking: both errors and warnings from ty must be fixed; do not add blanket suppressions unless justified and documented (e.g. in comments or PROJECT_CONTEXT).

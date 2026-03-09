@@ -28,7 +28,7 @@ All current FRs trace to explicit files in the project tree via the Requirements
 
 | NFR | Architectural Support |
 |---|---|
-| NFR1 (Linter) | Ruff 0.15.4 |
+| NFR1 (Linter) | Ruff, ty (version per lock file) |
 | NFR2 (Logical structure) | Layered src layout |
 | NFR3 (Clean separation) | One package per capability area |
 | NFR4 (No dead code) | Ruff rules + enforcement guidelines |

@@ -35,8 +35,10 @@ from fastapi_archetype.observability.prometheus import setup_prometheus
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
+    from sqlalchemy.engine import Engine
 
-def _backfill_dummy_uuids(engine: object) -> None:
+
+def _backfill_dummy_uuids(engine: Engine) -> None:
     with Session(engine) as session:
         for d in session.exec(select(Dummy)).all():
             if not d.uuid:
@@ -71,8 +73,9 @@ app = FastAPI(
 )
 
 if settings.cors_enabled:
+    # Starlette stub expects _MiddlewareFactory; CORSMiddleware valid at runtime.
     app.add_middleware(
-        CORSMiddleware,
+        CORSMiddleware,  # ty: ignore[invalid-argument-type]
         allow_origins=settings.cors_allow_origins_list,
         allow_credentials=settings.cors_allow_credentials,
         allow_methods=settings.cors_allow_methods_list,

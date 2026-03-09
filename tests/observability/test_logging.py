@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
 from opentelemetry import trace
@@ -18,6 +19,9 @@ from fastapi_archetype.observability.logging import (  # noinspection PyProtecte
     _redact_secrets,
     configure_logging,
 )
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -360,7 +364,7 @@ class TestExistingConventions:
 
 
 class TestTraceCorrelationDuringRequest:
-    def test_request_carries_real_trace_and_span_ids(self, client) -> None:  # type: ignore[no-untyped-def]
+    def test_request_carries_real_trace_and_span_ids(self, client: TestClient) -> None:
         from fastapi_archetype.observability.logging import _current_span_ids
 
         captured: list[tuple[str, str]] = []

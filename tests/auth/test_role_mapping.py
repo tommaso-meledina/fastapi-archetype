@@ -60,7 +60,7 @@ class TestBasicRoleMappingProvider:
 class TestRoleMappingProviderABC:
     def test_abc_cannot_be_instantiated(self) -> None:
         with pytest.raises(TypeError):
-            RoleMappingProvider()  # type: ignore[abstract]
+            RoleMappingProvider()
 
     def test_custom_provider_implements_contract(self) -> None:
         provider = GuidRoleMappingProvider()

@@ -312,7 +312,7 @@ This document records every architectural decision (AD) made during the design a
 
 ## AD 23 - Code Quality Tooling
 
-**Context:** The project needs linting and formatting enforcement targeting Python 3.14.
+**Context:** The project needs linting, formatting, and static type checking enforcement targeting Python 3.14. Type safety must be enforced so that type errors are caught before runtime.
 
 **Options:**
 
@@ -322,7 +322,15 @@ This document records every architectural decision (AD) made during the design a
 | flake8 + black + isort | - Industry standard, mature | - Three separate tools to configure and run - Slower |
 | pylint | - Deep analysis, refactoring suggestions | - Very slow - Opinionated, high noise |
 
-**Decision and justification:** Ruff with `target-version = "py314"` and rules E, W, F, I, N, UP, B, SIM, TCH. A single tool handles linting and formatting with the same configuration file. `extend-immutable-calls` is configured for `Depends` to suppress false positives.
+**Type checking (separate from lint/format):**
+
+| Option | Pros | Cons |
+|--------|------|------|
+| ty (Astral) | - Same ecosystem as uv and Ruff (Astral) - Fast - Configured in `pyproject.toml` under `[tool.ty]` | - Newer tool |
+| mypy | - Mature, widely adopted - Rich plugin ecosystem | - Slower - Separate config (e.g. mypy.ini or section in pyproject) |
+| Pyright | - Fast, strict by default | - Node dependency for CLI - Different config style |
+
+**Decision and justification:** **Lint and format:** Ruff with `target-version = "py314"` and rules E, W, F, I, N, UP, B, SIM, TCH. A single tool handles linting and formatting with the same configuration file. `extend-immutable-calls` is configured for `Depends` to suppress false positives. **Type checking:** ty is used for static type checking, configured under `[tool.ty]` in `pyproject.toml`. Quality checks include `uv run ty check` in addition to Ruff lint and format; all diagnostics (errors and warnings) must be fixed so that `uv run ty check` passes with zero output.
 
 ## AD 24 - Test Infrastructure
 

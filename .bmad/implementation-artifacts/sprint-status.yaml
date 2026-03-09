@@ -142,11 +142,11 @@ development_status:
   18-4-tests-for-profile-driven-service-selection-and-implementations: done
   epic-18-retrospective: optional
 
-  epic-19: backlog
-  19-1-spec-docs-nfr1-and-architecture-references: backlog
-  19-2-architectural-decision-extend-ad-23-for-type-checking: backlog
-  19-3-implementation-add-ty-dependency-and-configuration: backlog
-  19-4-documentation-project-context-and-readme: backlog
-  19-5-agent-rules-agents-md-quality-checks: backlog
-  19-6-codebase-fix-all-ty-diagnostics-errors-and-warnings: backlog
+  epic-19: done
+  19-1-spec-docs-nfr1-and-architecture-references: done
+  19-2-architectural-decision-extend-ad-23-for-type-checking: done
+  19-3-implementation-add-ty-dependency-and-configuration: done
+  19-4-documentation-project-context-and-readme: done
+  19-5-agent-rules-agents-md-quality-checks: done
+  19-6-codebase-fix-all-ty-diagnostics-errors-and-warnings: done
   epic-19-retrospective: optional

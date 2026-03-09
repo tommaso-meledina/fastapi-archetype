@@ -52,7 +52,7 @@ def test_apply_logging_wraps_public_functions() -> None:
         return 42
 
     public_func.__module__ = "test_mod"
-    mod.public_func = public_func
+    mod.public_func = public_func  # ty: ignore[unresolved-attribute]
 
     apply_logging(mod)
     assert hasattr(mod.public_func, "__wrapped__")
@@ -67,7 +67,7 @@ def test_apply_logging_skips_private_functions() -> None:
         return 0
 
     _private.__module__ = "test_mod"
-    mod._private = _private
+    mod._private = _private  # ty: ignore[unresolved-attribute]
 
     apply_logging(mod)
     assert not hasattr(mod._private, "__wrapped__")
@@ -95,7 +95,7 @@ def test_apply_logging_skips_reexported_imports() -> None:
         return 1
 
     foreign_func.__module__ = "other_module"
-    mod.foreign_func = foreign_func
+    mod.foreign_func = foreign_func  # ty: ignore[unresolved-attribute]
 
     apply_logging(mod)
     assert not hasattr(mod.foreign_func, "__wrapped__")

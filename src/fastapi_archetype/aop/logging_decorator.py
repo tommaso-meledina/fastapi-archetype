@@ -56,7 +56,7 @@ def log_io(func: Callable[..., Any]) -> Callable[..., Any]:
 
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        qualname = func.__qualname__
+        qualname = getattr(func, "__qualname__", repr(func))
         formatted = _format_call_args(func, args, kwargs)
         logger.debug("%s invoked with args (%s)", qualname, formatted)
         try:

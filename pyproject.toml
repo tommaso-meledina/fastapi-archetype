@@ -32,6 +32,7 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "ruff>=0.15.4",
+    "ty",
 ]
 
 [tool.ruff]
@@ -57,6 +58,12 @@ extend-immutable-calls = ["fastapi.Depends", "Depends"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["fastapi_archetype"]
+
+[tool.ty.environment]
+python-version = "3.14"
+
+[tool.ty.src]
+include = ["src", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

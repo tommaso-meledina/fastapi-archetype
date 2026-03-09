@@ -36,7 +36,8 @@ def _settings_without_m2m(**overrides: str) -> AppSettings:
         "auth_external_jwks_uri": "https://issuer.example.test/keys",
     }
     defaults.update(overrides)
-    return AppSettings(**defaults)
+    # Test fixture: dict overlay; Pydantic validates at runtime.
+    return AppSettings(**defaults)  # type: ignore[call-arg]
 
 
 @pytest.mark.anyio

@@ -37,6 +37,7 @@ All dependencies are declared in `pyproject.toml`. Do not add or replace depende
 | pytest-cov >=6.0 | Coverage reporting |
 | httpx >=0.28.1 | TestClient transport |
 | ruff >=0.15.4 | Linting and formatting |
+| ty (version per lock file) | Type checking |
 
 ### Build and Tooling
 
@@ -294,13 +295,17 @@ IMPORTANT: the **Docker Compose** project (`compose/docker-compose.yaml`) is mer
 
 ### 14. Code Quality
 
-Ruff is configured in `pyproject.toml`:
+Type checking is enforced with Astral's ty, targeting the project's Python version (3.14). Code quality is enforced by three commands: **ruff check**, **ruff format --check**, and **ty check**. Quality checks are defined as: running these three commands plus the full test suite; all must pass before commit.
+
+**Ruff** is configured in `pyproject.toml`:
 
 - `target-version = "py314"`
 - `line-length = 88`
 - Lint rules: `E`, `W`, `F`, `I`, `N`, `UP`, `B`, `SIM`, `TCH`
 - `extend-immutable-calls = ["fastapi.Depends", "Depends"]`
 - `known-first-party = ["fastapi_archetype"]`
+
+**ty** is configured in `pyproject.toml` under `[tool.ty]` with `python-version = "3.14"` and `include = ["src", "tests"]`.
 
 ### 15. Cookiecutter Scaffolding
 

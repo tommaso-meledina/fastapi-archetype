@@ -44,8 +44,8 @@ def _current_span_ids() -> tuple[str, str]:
 class SpanFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         trace_id, span_id = _current_span_ids()
-        record.traceId = trace_id  # type: ignore[attr-defined]
-        record.spanId = span_id  # type: ignore[attr-defined]
+        record.traceId = trace_id
+        record.spanId = span_id
         return True
 
 

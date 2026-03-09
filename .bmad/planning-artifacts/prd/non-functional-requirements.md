@@ -2,7 +2,7 @@
 
 ## Code Quality & Maintainability
 
-- NFR1: The codebase follows a consistent code style enforced by linting tools (e.g., ruff, flake8, or similar)
+- NFR1: The codebase follows a consistent code style enforced by linting and formatting tools (e.g., ruff) and static type checking (e.g., Astral ty)
 - NFR2: The project structure is logically organized so that a developer unfamiliar with the codebase can locate any capability (model, route, test, AOP, config) within minutes
 - NFR3: Each capability area (ORM, AOP, observability, configuration, etc.) is cleanly separated so it can be understood, modified, or replaced independently
 - NFR4: The codebase contains no dead code, commented-out blocks, or placeholder implementations

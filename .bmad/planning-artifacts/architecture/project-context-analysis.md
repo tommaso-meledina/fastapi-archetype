@@ -26,7 +26,7 @@ The current PRD requirement inventory spans core and expansion capabilities, cen
 
 The NFR inventory now includes baseline quality attributes plus dedicated logging quality attributes:
 
-- **Code Quality (NFR1–NFR5):** Linter-enforced style, logical project structure, clean separation of capability areas, no dead code, comments only for non-obvious intent
+- **Code Quality (NFR1–NFR5):** Linter- and formatter-enforced style plus static type checking enforced via Astral's ty; logical project structure; clean separation of capability areas; no dead code; comments only for non-obvious intent
 - **Portability (NFR6–NFR7):** Docker image runs on Linux and macOS; no host-specific dependencies beyond pyproject.toml and .env
 - **Developer Experience (NFR8–NFR10):** Project structure self-documenting; /dummies resource serves as copy-and-adapt pattern for new resources; sensible defaults minimize setup
 - **Logging Quality (NFR11–NFR15):** low-overhead operation, fault-tolerant logging behavior, consistent formatting semantics, environment-driven mode switching, and baseline secret redaction
