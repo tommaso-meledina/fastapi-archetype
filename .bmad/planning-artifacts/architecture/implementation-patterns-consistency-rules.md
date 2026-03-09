@@ -78,7 +78,7 @@ Consistent structure for all application errors:
 | Request lifecycle | `INFO` level | Normal operational visibility |
 | Recoverable issues | `WARNING` level | Attention-worthy but not failures |
 | Failures | `ERROR` level | Requires investigation |
-| Log format | `plain`: UTC ISO-8601 + `traceId` + level + message; `json`: one JSON object per line with camelCase fields (`timestamp`, `level`, `logger`, `message`, `traceId`), `NO_TRACE_ID` fallback | Supports both human troubleshooting and machine parsing with consistent correlation semantics |
+| Log format | `plain`: UTC ISO-8601 + `traceId` + level + message; `json`: one NDJSON object per line with camelCase fields (`timestamp`, `level`, `logger`, `message`, `traceId`, `spanId`); `NO_TRACE_ID`/`NO_SPAN_ID` when absent | Supports both human troubleshooting and machine parsing with consistent correlation semantics; consistent with PROJECT_CONTEXT (Logging under Conventions and Patterns). |
 
 **Validation:**
 
@@ -99,6 +99,17 @@ Consistent structure for all application errors:
 **Import Ordering:**
 Enforced by Ruff (isort-compatible rules). No manual decision needed.
 
+**Service layer (profile and contracts):**  
+Authoritative pattern: PROJECT_CONTEXT §11 (Profile and Service Contracts). The following table summarizes conventions for implementation consistency.
+
+| Area | Convention | Rationale |
+|---|---|---|
+| Profile | Optional `PROFILE` env; values `"default"` \| `"mock"`; default `"default"`. Stored on `AppSettings` as `profile`. | Single switch to select mock vs real implementations for all services. |
+| Contract | One ABC (or `typing.Protocol`) per logical service in `services/contracts/`. Methods use entity types; `Session` passed where default impl needs it. | Routes and callers depend on the contract type only; implementations are swappable. |
+| Implementations | Per contract: `default_*_service.py` (real backend) and `mock_*_service.py` (in-memory/hard-coded; no DB or external calls) in `services/v{n}/implementations/`. | Default for production/profile default; mock for local runs or `PROFILE=mock`. |
+| Factory | `build_*_service(settings) -> Contract` in `services/factory.py` (or equivalent) returns default or mock based on `settings.profile`. | Single place that maps profile to implementation; DI dependency calls factory. |
+| Wiring | Routes use `Depends(get_*_service)`; dependency returns the result of the factory. No direct import of concrete implementation in route modules. | Enables override in tests and profile-based selection at runtime. |
+
 ## Enforcement Guidelines
 
 **All AI agents implementing this project MUST:**
@@ -109,3 +120,4 @@ Enforced by Ruff (isort-compatible rules). No manual decision needed.
 - Place all constants in `core/constants.py` — never scatter string literals through the codebase
 - Use FastAPI `Depends()` for all database session access — never create sessions manually in routes
 - Write tests in `tests/` mirroring the source structure — never co-locate tests with source
+- For every service: define a contract (ABC/Protocol), provide a default and a mock implementation, and wire via a profile-driven factory — never wire routes directly to a concrete service class

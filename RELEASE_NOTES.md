@@ -9,6 +9,11 @@
 * further specify commit syntax in AGENTS.md
 
 
+### Fixes
+
+* satisfy ruff E501 and I001 in database and main
+
+
 
 ## 0.0.2
 

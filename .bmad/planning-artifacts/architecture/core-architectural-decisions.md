@@ -48,6 +48,8 @@ Authentication and authorization are implemented with an external IdP-first patt
 | Error handling | Enum-based error registry + custom `AppException` + global exception handler | — | Satisfies FR27 (single central location); type-safe; IDE-friendly; consistent response format |
 | Configuration | pydantic-settings `BaseSettings` | 2.13.1 | Native Pydantic integration; auto `.env` loading; typed validation; fail-fast at startup (FR8–FR9) |
 | Logging configuration | Standards-first stdlib logging (`logging` + formatter/filter configuration) with `LOG_LEVEL` and `LOG_MODE` | — | Single configuration point in lifespan; stdout destination; mode defaults to `plain`; JSON mode emits NDJSON with `traceId`; invalid mode falls back to `plain`; preserves existing logger and AOP conventions (FR42–FR49) |
+| Profile | Optional `PROFILE` env (`"default"` \| `"mock"`; default `"default"`) | — | Drives which service implementation is wired; enables mock-backed runs without database or external systems (Epic 18). |
+| Service binding | Contract (ABC/Protocol) per service; default + mock implementations; factory selects by `profile`; routes depend on contract via DI | — | Decouples routes from concrete implementations; every service has one contract, one default impl, one mock impl; testable and profile-switchable without code change. See PROJECT_CONTEXT §11 (Profile and Service Contracts) and implementation-patterns (Service layer). |
 
 ## Infrastructure & Deployment
 

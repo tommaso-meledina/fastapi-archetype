@@ -80,3 +80,7 @@ A developer sees the Dummy entity expose a stable `uuid` (string) to clients whi
 ## Epic 17: Database URL Configuration
 A developer configures the database via an optional `DATABASE_URL` environment variable; when unset, the application uses SQLite in-memory. When set, the URL is validated at startup and used as-is (the appropriate driver library must be in dependencies). Engine creation is split into a SQLite-specific path and a generic URL path, enabling plug-and-play with any SQLAlchemy-supported backend (PostgreSQL, Oracle, etc.) without code changes.
 **Phase:** 3 (Refinement)
+
+## Epic 18: Profile and Service Contracts (PoC via Dummies)
+A developer can set an optional `PROFILE` env (`"default"` or `"mock"`); the dummies service is refactored behind a service contract with a default (database) and a mock (in-memory) implementation, wired by a profile-driven factory. Establishes the pattern for all services: contract, default impl, mock impl, factory, DI.
+**Phase:** 3 (Refinement)
