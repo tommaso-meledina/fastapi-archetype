@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.services.v2.implementations.mock_dummy_service import (
+    MOCK_V2_UUID_1,
+    STATIC_CREATED_V2,
+    STATIC_LIST_V2,
     MockDummyServiceV2,
 )
 
@@ -11,16 +13,19 @@ if TYPE_CHECKING:
     from sqlmodel import Session
 
 
-def test_mock_v2_get_all_empty(session: Session) -> None:
+def test_mock_v2_get_all_returns_static_list(session: Session) -> None:
     svc = MockDummyServiceV2()
-    assert svc.get_all_dummies(session) == []
+    result = svc.get_all_dummies(session)
+    assert result == STATIC_LIST_V2
+    assert len(result) == 1
+    assert result[0].uuid == MOCK_V2_UUID_1
+    assert result[0].name == "Static Mock V2"
 
 
-def test_mock_v2_create_and_get_all(session: Session) -> None:
+def test_mock_v2_create_returns_static(session: Session) -> None:
+    from fastapi_archetype.models.entities.dummy import Dummy
+
     svc = MockDummyServiceV2()
-    dummy = Dummy(name="A", description="a")
-    created = svc.create_dummy(session, dummy)
-    assert created.uuid == dummy.uuid
-    all_ = svc.get_all_dummies(session)
-    assert len(all_) == 1
-    assert all_[0].name == "A"
+    created = svc.create_dummy(session, Dummy(name="Ignored", description="x"))
+    assert created == STATIC_CREATED_V2
+    assert created.name == "Mock Created V2"

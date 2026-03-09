@@ -10,6 +10,7 @@ from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
 from fastapi_archetype.services.v1.dummy_service import get_dummy_service
 from fastapi_archetype.services.v1.implementations.mock_dummy_service import (
+    MOCK_UUID_1,
     MockDummyService,
 )
 from fastapi_archetype.services.v2.dummy_service import get_dummy_service_v2
@@ -47,32 +48,33 @@ def client_with_mock_v1_simple_fixture(session: Session):
 def test_v1_mock_list_create_put_without_db(
     client_with_mock_v1_simple: TestClient,
 ) -> None:
-    """With mock implementation, v1 list/create/put work without a real DB."""
-    r = client_with_mock_v1_simple.get("/v1/dummies")
-    assert r.status_code == 200
-    assert r.json() == []
-
-    r = client_with_mock_v1_simple.post(
-        "/v1/dummies",
-        json={"name": "Mocked", "description": "from mock"},
-    )
-    assert r.status_code == 201
-    data = r.json()
-    uuid = data["uuid"]
-    assert data["name"] == "Mocked"
-
+    """Mock returns static list; create/put return static responses (no DB)."""
     r = client_with_mock_v1_simple.get("/v1/dummies")
     assert r.status_code == 200
     items = r.json()
     assert len(items) == 1
-    assert items[0]["name"] == "Mocked"
+    assert items[0]["name"] == "Static Mock One"
+    assert items[0]["uuid"] == MOCK_UUID_1
+
+    r = client_with_mock_v1_simple.post(
+        "/v1/dummies",
+        json={"name": "Ignored", "description": "ignored"},
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert data["name"] == "Mock Created"
+    assert data["uuid"] == "00000000-0000-0000-0000-000000000002"
 
     r = client_with_mock_v1_simple.put(
-        f"/v1/dummies/{uuid}",
-        json={"uuid": uuid, "name": "Updated", "description": "updated"},
+        f"/v1/dummies/{MOCK_UUID_1}",
+        json={
+            "uuid": MOCK_UUID_1,
+            "name": "Ignored",
+            "description": "ignored",
+        },
     )
     assert r.status_code == 200
-    assert r.json()["name"] == "Updated"
+    assert r.json()["name"] == "Mock Updated"
 
 
 @pytest.fixture(name="client_with_mock_v2")
@@ -98,39 +100,40 @@ def client_with_mock_v2_fixture(session: Session):
 
 
 def test_v2_mock_list_create_without_db(client_with_mock_v2: TestClient) -> None:
-    """With mock implementation, v2 list and create work without a real DB."""
+    """Mock returns static list; create returns static response (no DB)."""
     r = client_with_mock_v2.get("/v2/dummies")
     assert r.status_code == 200
-    assert r.json() == []
+    items = r.json()
+    assert len(items) == 1
+    assert items[0]["name"] == "Static Mock V2"
 
     r = client_with_mock_v2.post(
         "/v2/dummies",
-        json={"name": "V2Mocked", "description": "v2 mock"},
+        json={"name": "Ignored", "description": "ignored"},
     )
     assert r.status_code == 201
-    assert r.json()["name"] == "V2Mocked"
-
-    r = client_with_mock_v2.get("/v2/dummies")
-    assert r.status_code == 200
-    assert len(r.json()) == 1
-    assert r.json()[0]["name"] == "V2Mocked"
+    assert r.json()["name"] == "Mock Created V2"
 
 
-def test_profile_mock_v1_returns_200_empty(
+def test_profile_mock_v1_returns_static_list(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """PROFILE=mock: GET /v1/dummies returns 200 and empty list (no DB)."""
+    """PROFILE=mock: GET /v1/dummies returns 200 and static mock list (no DB)."""
     monkeypatch.setenv("PROFILE", "mock")
     r = client.get("/v1/dummies")
     assert r.status_code == 200
-    assert r.json() == []
+    items = r.json()
+    assert len(items) == 1
+    assert items[0]["name"] == "Static Mock One"
 
 
-def test_profile_mock_v2_returns_200_empty(
+def test_profile_mock_v2_returns_static_list(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """PROFILE=mock: GET /v2/dummies returns 200 and empty list (no DB)."""
+    """PROFILE=mock: GET /v2/dummies returns 200 and static mock list (no DB)."""
     monkeypatch.setenv("PROFILE", "mock")
     r = client.get("/v2/dummies")
     assert r.status_code == 200
-    assert r.json() == []
+    items = r.json()
+    assert len(items) == 1
+    assert items[0]["name"] == "Static Mock V2"

@@ -18,6 +18,7 @@
 ### Features
 
 * add PROFILE config and epic 18 sprint plan (story 18-1 done)
+* implement profile and service contracts for v1&#x2F;v2 dummies (epic 18 complete)
 
 
 
