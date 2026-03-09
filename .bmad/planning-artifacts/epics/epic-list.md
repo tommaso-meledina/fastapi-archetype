@@ -84,3 +84,8 @@ A developer configures the database via an optional `DATABASE_URL` environment v
 ## Epic 18: Profile and Service Contracts (PoC via Dummies)
 A developer can set an optional `PROFILE` env (`"default"` or `"mock"`); the dummies service is refactored behind a service contract with a default (database) and a mock (in-memory) implementation, wired by a profile-driven factory. Establishes the pattern for all services: contract, default impl, mock impl, factory, DI.
 **Phase:** 3 (Refinement)
+
+## Epic 19: Static Type Checking with Astral ty
+A developer runs Astral's ty as part of quality gates; NFR1, architecture docs, and AD 23 are updated to require type checking; pyproject.toml, PROJECT_CONTEXT, README, and AGENTS.md document ty and define quality checks (ruff + ty + tests); the codebase passes `uv run ty check` with zero errors and zero warnings.
+**NFRs addressed:** NFR1 (extension)
+**Phase:** 3 (Refinement)

@@ -8,6 +8,7 @@
 
 * further specify commit syntax in AGENTS.md
 * add profile and service contracts pattern and Epic 18
+* clarify Docker Compose is for local testing only, not part of product
 
 
 ### Fixes
