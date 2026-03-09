@@ -8,10 +8,10 @@ import pytest
 
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
-from fastapi_archetype.services.v1.dummy_service import get_dummy_service
+from fastapi_archetype.services.v1.dummy_service import get_dummy_service_v1
 from fastapi_archetype.services.v1.implementations.mock_dummy_service import (
     MOCK_UUID_1,
-    MockDummyService,
+    MockDummyServiceV1,
 )
 from fastapi_archetype.services.v2.dummy_service import get_dummy_service_v2
 from fastapi_archetype.services.v2.implementations.mock_dummy_service import (
@@ -29,7 +29,7 @@ def client_with_mock_v1_simple_fixture(session: Session):
 
     from fastapi_archetype.core.database import get_session
 
-    mock_svc = MockDummyService()
+    mock_svc = MockDummyServiceV1()
 
     def _override_session():
         yield session
@@ -38,7 +38,7 @@ def client_with_mock_v1_simple_fixture(session: Session):
         return mock_svc
 
     app.dependency_overrides[get_session] = _override_session
-    app.dependency_overrides[get_dummy_service] = _override_svc
+    app.dependency_overrides[get_dummy_service_v1] = _override_svc
     limiter.reset()
     with TestClient(app) as c:
         yield c

@@ -21,6 +21,11 @@
 * implement profile and service contracts for v1&#x2F;v2 dummies (epic 18 complete)
 
 
+### Refactoring
+
+* make mock dummy services return static values only (no in-memory store)
+
+
 
 ## 0.0.2
 

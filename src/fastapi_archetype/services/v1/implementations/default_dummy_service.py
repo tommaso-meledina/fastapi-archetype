@@ -7,13 +7,13 @@ from sqlmodel import select
 from fastapi_archetype.core.errors import AppException, ErrorCode
 from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.observability.prometheus import metrics
-from fastapi_archetype.services.contracts.dummy_service import DummyServiceContract
+from fastapi_archetype.services.contracts.dummy_service import DummyServiceV1Contract
 
 if TYPE_CHECKING:
     from sqlmodel import Session
 
 
-class DefaultDummyService(DummyServiceContract):
+class DefaultDummyServiceV1(DummyServiceV1Contract):
     def get_all_dummies(self, session: Session) -> list[Dummy]:
         return list(session.exec(select(Dummy)).all())
 

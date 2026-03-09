@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from fastapi_archetype.core.errors import AppException, ErrorCode
 from fastapi_archetype.models.entities.dummy import Dummy
-from fastapi_archetype.services.contracts.dummy_service import DummyServiceContract
+from fastapi_archetype.services.contracts.dummy_service import DummyServiceV1Contract
 
 if TYPE_CHECKING:
     from sqlmodel import Session
@@ -30,7 +30,7 @@ STATIC_UPDATED = Dummy(
 )
 
 
-class MockDummyService(DummyServiceContract):
+class MockDummyServiceV1(DummyServiceV1Contract):
     """Returns static mock data only. No persistence or logic."""
 
     def get_all_dummies(self, session: Session) -> list[Dummy]:

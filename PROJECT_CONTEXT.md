@@ -91,7 +91,7 @@ src/fastapi_archetype/
 └── services/
     ├── __init__.py                  # Imports all service modules and calls apply_logging() on each
     ├── contracts/                   # Service contracts (ABCs or Protocol) — one module per logical service
-    │   └── dummy_service.py         # DummyServiceContract (get_all, create, get_by_uuid, update)
+    │   └── dummy_service.py         # DummyServiceV1Contract, DummyServiceV2Contract
     ├── factory.py                   # build_*_service(settings) — select implementation by settings.profile
     ├── v1/
     │   ├── implementations/         # Default and mock implementations for v1
@@ -272,8 +272,8 @@ Service implementations are decoupled from the rest of the application by a **se
 - **Contract:** For each logical service (e.g. dummies CRUD), define an abstract contract: an ABC (or `typing.Protocol`) in a dedicated module (e.g. `services/contracts/dummy_service.py`). The contract declares the methods that routes and other code depend on (e.g. `get_all`, `create`, `update`), with signatures using entity types and `Session` where the default implementation needs it; mock implementations may ignore the session.
 - **Default implementation:** One concrete implementation that satisfies the contract and uses the real backend (e.g. database). Lives in `services/v{n}/implementations/` or equivalent (e.g. `default_dummy_service.py`). This is the implementation used when `profile == "default"`.
 - **Mock implementation:** One concrete implementation that satisfies the same contract but returns data without connecting to the database or external systems (in-memory list, hard-coded entities, or similar). Lives alongside the default implementation (e.g. `mock_dummy_service.py`). Used when `profile == "mock"`.
-- **Factory:** A factory function (e.g. `build_dummy_service(settings) -> DummyServiceContract`) that, based on `settings.profile`, returns the appropriate implementation. Factories live in a central place (e.g. `services/factory.py` or per-resource under `services/`). The app wires the returned instance into the dependency graph (e.g. `Depends(get_dummy_service)` that reads settings and returns the result of the factory).
-- **Wiring:** Routes and other consumers depend on the **contract type** (e.g. `DummyServiceContract`), not on a concrete class. They receive the implementation chosen by the factory so that tests can override the dependency with a mock or a test double.
+- **Factory:** Factory functions (e.g. `build_dummy_service_v1(settings) -> DummyServiceV1Contract`, `build_dummy_service_v2(settings) -> DummyServiceV2Contract`) that, based on `settings.profile`, return the appropriate implementation. Factories live in `services/factory.py`. The app wires the returned instance into the dependency graph (e.g. `Depends(get_dummy_service_v1)` / `Depends(get_dummy_service_v2)`).
+- **Wiring:** Routes and other consumers depend on the **contract type** (e.g. `DummyServiceV1Contract`, `DummyServiceV2Contract`), not on a concrete class. They receive the implementation chosen by the factory so that tests can override the dependency with a mock or a test double.
 
 **Application-wide rule:** Every service that encapsulates business logic or data access has (1) a contract, (2) a default implementation, (3) a mock implementation, and (4) a factory that selects by `profile`. New services must follow this pattern.
 
@@ -340,7 +340,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 ### Module organization
 
 - One entity per file in `models/entities/` (SQLModel, table=True). One resource’s DTOs per file in `models/dto/<version>/` (e.g. `v1/`), using the `<Method><Resource><Request|Response>` naming pattern. One factory module per entity in `factories/` (entity ↔ DTO using Pydantic only).
-- One resource's routes per file in `api/v{n}/`. Routes use DTOs for request/response and call factory functions to convert to/from entities. Routes depend on service **contracts** via DI (e.g. `Depends(get_dummy_service)`), not on concrete service modules.
+- One resource's routes per file in `api/v{n}/`. Routes use DTOs for request/response and call factory functions to convert to/from entities. Routes depend on service **contracts** via DI (e.g. `Depends(get_dummy_service_v1)` / `Depends(get_dummy_service_v2)`), not on concrete service modules.
 - **Service contracts:** One contract (ABC or Protocol) per logical service in `services/contracts/`. The contract defines the methods used by routes (accept/return entities; session passed where the default implementation needs it).
 - **Service implementations:** For each contract, a default implementation (real backend) and a mock implementation (no DB/external calls) in `services/v{n}/implementations/` (e.g. `default_dummy_service.py`, `mock_dummy_service.py`). A factory in `services/factory.py` (or equivalent) selects by `settings.profile` and is used by the DI dependency.
 - One resource's service module in `services/v{n}/` may re-export or wrap the implementation chosen by the factory; consumers depend on the contract type.
@@ -371,7 +371,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 
 - Database sessions: `Depends(get_session)`.
 - Auth: `Depends(require_auth)` or `Depends(require_role(Role.XXX))`.
-- **Services:** Routes depend on the service contract via a dependency that calls the factory (e.g. `Depends(get_dummy_service)`). The factory uses `settings.profile` to return the default or mock implementation. Consumers depend on the contract type, not the concrete class.
+- **Services:** Routes depend on the service contract via a dependency that calls the factory (e.g. `Depends(get_dummy_service_v1)` or `Depends(get_dummy_service_v2)`). The factory uses `settings.profile` to return the default or mock implementation. Consumers depend on the contract type, not the concrete class.
 - Rate limiting: `@limiter.limit(settings.rate_limit_xxx)` decorator.
 - All DI-based dependencies are overridable in tests via `app.dependency_overrides`.
 
@@ -425,10 +425,10 @@ To add a new resource (e.g., `Widget`):
 2. **DTOs:** Create `models/dto/v1/widget.py` with Pydantic models following the **`<Method><Resource><Request|Response>`** naming pattern (e.g. `PostWidgetsRequest`, `GetWidgetsResponse`, `PostWidgetsResponse`). Same camelCase behaviour as existing DTOs. Response DTOs must include `uuid` (when the entity has one) and **must not** include the internal `id`.
 3. **Factory:** Create `factories/widget.py` with `entity_to_dto(entity) -> GetWidgetsResponse` (or the appropriate response type) and `dto_to_entity(dto: PostWidgetsRequest) -> Widget` using only Pydantic (`model_validate`, `model_dump`). For update (PUT): add `put_dto_to_entity(dto: PutWidgetsRequest) -> Widget` that returns a `Widget` with `uuid` and updatable fields from the DTO but **no** `id` (see **Update-by-UUID pattern** in §2 Data Persistence). The service will resolve by UUID when `id` is missing.
 4. **Constant:** Add `WIDGETS = ResourceDefinition(...)` to `core/constants.py`.
-5. **Service contract:** Create `services/contracts/widget_service.py` with an ABC (e.g. `WidgetServiceContract`) declaring the methods used by routes (e.g. `get_all`, `create`, `get_by_uuid`, `update` with entity types and `Session` where needed).
-6. **Default implementation:** Create `services/v1/implementations/default_widget_service.py` implementing the contract with real database access (same logic as current service layer). For update: when `entity.id` is None, fetch by `entity.uuid`; if not found, raise `AppException(ErrorCode.WIDGET_NOT_FOUND)`; otherwise resolve and update (see **Update-by-UUID pattern** in §2 Data Persistence).
-7. **Mock implementation:** Create `services/v1/implementations/mock_widget_service.py` implementing the same contract with in-memory or hard-coded data (no database or external calls).
-8. **Factory and DI:** Add `build_widget_service(settings) -> WidgetServiceContract` (in `services/factory.py` or equivalent) that returns the default or mock implementation based on `settings.profile`. Expose a dependency (e.g. `get_widget_service`) used by routes via `Depends(get_widget_service)`.
+5. **Service contract:** Create `services/contracts/widget_service.py` with an ABC (e.g. `WidgetServiceV1Contract`) declaring the methods used by routes (e.g. `get_all`, `create`, `get_by_uuid`, `update` with entity types and `Session` where needed).
+6. **Default implementation:** Create `services/v1/implementations/default_widget_service.py` with a class (e.g. `DefaultWidgetServiceV1`) implementing the contract with real database access. For update: when `entity.id` is None, fetch by `entity.uuid`; if not found, raise `AppException(ErrorCode.WIDGET_NOT_FOUND)`; otherwise resolve and update (see **Update-by-UUID pattern** in §2 Data Persistence).
+7. **Mock implementation:** Create `services/v1/implementations/mock_widget_service.py` with a class (e.g. `MockWidgetServiceV1`) implementing the same contract with static or hard-coded data (no database or external calls).
+8. **Factory and DI:** Add `build_widget_service_v1(settings) -> WidgetServiceV1Contract` in `services/factory.py` that returns the default or mock implementation based on `settings.profile`. Expose a dependency (e.g. `get_widget_service_v1`) used by routes via `Depends(get_widget_service_v1)`.
 9. **AOP:** Import and `apply_logging()` the implementation modules in `services/__init__.py`.
 10. **Routes:** Create `api/v1/widget_routes.py` with `APIRouter(prefix=WIDGETS.path, tags=[WIDGETS.name])`. Use DTOs for request body and response model; call factory to convert request DTO → entity for service and entity → response DTO for responses. Rate limits and auth as needed. **If the resource supports PUT (update):** use a path like `PUT /v1/widgets/{uuid}` and a request body that includes `uuid` plus updatable fields. In the route: validate that path `uuid` and body `uuid` match (return **400 Bad Request** if not); call the factory to convert the body DTO to an entity (no `id`); call the service update function with that entity; map the returned entity to the response DTO. Do **not** fetch by UUID or handle 404 in the route — the service does that (see **Update-by-UUID pattern** in §2 Data Persistence).
 11. **Router registration:** Include the widget router in `api/v1/__init__.py`.

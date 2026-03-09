@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from fastapi_archetype.models.entities.dummy import Dummy
 
 
-class DummyServiceContract(ABC):
+class DummyServiceV1Contract(ABC):
     @abstractmethod
     def get_all_dummies(self, session: Session) -> list[Dummy]: ...
 
