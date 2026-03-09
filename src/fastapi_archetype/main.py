@@ -15,7 +15,11 @@ from fastapi_archetype.api.v1 import router as v1_router
 from fastapi_archetype.api.v2 import router as v2_router
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.constants import HEALTH_PATH
-from fastapi_archetype.core.database import dispose_engine, get_engine, is_local_dev_mode
+from fastapi_archetype.core.database import (
+    dispose_engine,
+    get_engine,
+    is_local_dev_mode,
+)
 from fastapi_archetype.core.errors import (
     AppException,
     app_exception_handler,

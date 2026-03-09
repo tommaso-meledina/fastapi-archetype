@@ -4,6 +4,11 @@
 ## Upcoming release
 
 
+### Documentation
+
+* further specify commit syntax in AGENTS.md
+
+
 
 ## 0.0.2
 
