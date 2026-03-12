@@ -38,6 +38,7 @@
 * test suite cleanup for epic 23
 * make log_io decorator async-aware and add nest_asyncio dev dep
 * convert entire request→service→DB path to async
+* implement epic 26 — code completeness and consistency
 
 
 ### Refactoring

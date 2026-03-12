@@ -89,7 +89,7 @@ src/fastapi_archetype/
 ├── factories/                       # Entity ↔ DTO mapping (Pydantic-only: model_validate, model_dump)
 │   └── dummy.py                    # entity_to_get_response, entity_to_post_response, post_dto_to_entity, put_dto_to_entity
 ├── observability/
-│   ├── logging.py                   # configure_logging(settings), PlainFormatter, JsonFormatter, SpanFilter, secret redaction
+│   ├── logging.py                   # configure_logging(settings), structlog processor pipeline, secret redaction
 │   ├── otel.py                      # setup_otel(app, settings) -> TracerProvider
 │   └── prometheus.py                # Metrics dataclass, dummies_created_total counter, setup_prometheus(app)
 └── services/
@@ -115,8 +115,8 @@ tests/
 ├── auth/
 │   ├── conftest.py                  # RSA keypair, JWKS, JWT signing fixtures (synthetic IdP)
 │   ├── test_external_provider.py
-│   ├── test_facade.py               # Tests for get_auth factory / AuthFunctions
-│   ├── test_facade_role_mapper.py   # Tests for role_mapper in AuthFunctions
+│   ├── test_auth_functions.py       # Tests for get_auth factory / AuthFunctions
+│   ├── test_role_mapper.py          # Tests for role_mapper in AuthFunctions
 │   ├── test_factory_and_none_provider.py
 │   ├── test_entra_integration.py    # Full Entra flow with intercepted HTTP
 │   └── test_role_mapping_providers.py
@@ -168,7 +168,7 @@ Current endpoints:
 | GET | `/v2/dummies` | None | `rate_limit_get_dummies` |
 | POST | `/v2/dummies` | `require_role(Role.ADMIN)` | `rate_limit_post_dummies` |
 
-All request/response payloads are JSON. Models use `alias_generator=_to_camel` and `populate_by_name=True` for camelCase serialization.
+All request/response payloads are JSON. DTOs inherit from `CamelCaseModel` which uses `pydantic.alias_generators.to_camel` and `populate_by_name=True` for camelCase serialization.
 
 ### 2. Data Persistence
 
@@ -341,7 +341,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 
 - One entity per file in `models/entities/` (SQLModel, table=True). Entity classes must **not** carry `alias_generator`. One resource’s DTOs per file in `models/dto/<version>/` (e.g. `v1/`), using the `<Method><Resource><Request|Response>` naming pattern; all DTO classes inherit from `CamelCaseModel` (in `models/dto/__init__.py`). One factory module per entity in `factories/` (entity ↔ DTO using Pydantic only).
 - One resource's routes per file in `api/v{n}/`. Routes use DTOs for request/response and call factory functions to convert to/from entities. Routes depend on service dataclasses (e.g. `DummyServiceV1`) via DI (`Depends(get_dummy_service_v1)` / `Depends(get_dummy_service_v2)`).
-- **Service modules (flat):** For each version and resource, one default module and one mock module directly in `services/v{n}/` (e.g. `dummy.py`, `mock_dummy.py`). No `contracts/` or `implementations/` subdirectory. Each module exports plain functions.
+- **Service modules (flat):** For each version and resource, one default module and one mock module directly in `services/v{n}/` (e.g. `dummy.py`, `mock_dummy.py`). No subdirectory nesting within `services/v{n}/`. Each module exports plain functions.
 - **Service dataclass:** `services/factory.py` defines `DummyServiceV1` / `DummyServiceV2` as frozen `@dataclass` with typed callable fields. The factory functions assemble these by reading from the appropriate module based on `settings.profile`.
 - DI shims in `services/v{n}/dummy_service.py` call the factory per request.
 - The version router `__init__.py` aggregates resource routers.
@@ -394,11 +394,11 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 
 ### Logging
 
-- `configure_logging(settings)` in `observability/logging.py` is called once in the lifespan via `logging.config.dictConfig`.
-- `LOG_MODE` (`plain`/`json`, default `plain`) selects the active formatter; invalid values fall back to `plain` with a startup warning.
+- `configure_logging(settings)` in `observability/logging.py` is called once in the lifespan. It configures the root logger with a structlog `ProcessorFormatter` and a pre-chain of processors: `add_log_level`, `add_logger_name`, timestamp injection, trace-context injection, and exc_info extraction.
+- `LOG_MODE` (`plain`/`json`, default `plain`) selects the renderer; any value other than `plain` uses the JSON renderer.
 - Plain format: UTC ISO-8601 timestamp, `[traceId]`, `[spanId]`, level, logger name, message. Exception rendering shows type and message only.
 - JSON format: one NDJSON object per line with camelCase fields (`timestamp`, `level`, `logger`, `message`, `traceId`, `spanId`). Exceptions add `exceptionType`, `exceptionMessage`, `stackTrace`.
-- `SpanFilter` injects `traceId` and `spanId` from the current OpenTelemetry span context; `NO_TRACE_ID`/`NO_SPAN_ID` when no trace is active.
+- The `_inject_trace_context` processor injects `traceId` and `spanId` from the current OpenTelemetry span context into every log event; `NO_TRACE_ID`/`NO_SPAN_ID` when no trace is active.
 - Baseline secret redaction masks obvious sensitive values (passwords, tokens, API keys, authorization headers) in both modes.
 - Modules obtain loggers via `logging.getLogger(__name__)`.
 - AOP logging is at DEBUG level for I/O and ERROR level for exceptions (with `exc_info=True`); application-level logging in services uses INFO.
