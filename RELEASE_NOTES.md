@@ -21,6 +21,7 @@
 
 * satisfy ruff E501 and I001 in database and main
 * convert CORS tests to async and remove stale coverage exclusion
+* update remove_demo.py to edit tests&#x2F;conftest.py on demo removal
 
 
 ### Features
