@@ -25,6 +25,7 @@
 * add static type checking with Astral ty (epic 19)
 * add PYTHONDONTWRITEBYTECODE, PYTHONUNBUFFERED and configurable uvicorn workers to Dockerfile
 * add tests&#x2F;auth&#x2F;__init__.py, pytest-asyncio dep, and replace anyio markers
+* introduce LogLevel StrEnum for log_level config field and add ipdb dev dep
 
 
 ### Refactoring
