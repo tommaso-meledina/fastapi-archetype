@@ -11,7 +11,7 @@ class Role(StrEnum):
     READER = "reader"
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Principal:
     subject: str
     user_id: str

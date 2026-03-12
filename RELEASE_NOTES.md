@@ -24,6 +24,7 @@
 * implement profile and service contracts for v1&#x2F;v2 dummies (epic 18 complete)
 * add static type checking with Astral ty (epic 19)
 * add PYTHONDONTWRITEBYTECODE, PYTHONUNBUFFERED and configurable uvicorn workers to Dockerfile
+* add tests&#x2F;auth&#x2F;__init__.py, pytest-asyncio dep, and replace anyio markers
 
 
 ### Refactoring
