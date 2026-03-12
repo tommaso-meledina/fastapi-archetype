@@ -119,3 +119,14 @@ Replace the Spring Boot-like provider/contract/facade/factory class hierarchy wi
 Convert the entire request → service → DB path to async: `async def` on all routes and services, add `aiosqlite`/`aiomysql` drivers, switch to `AsyncSession`/`create_async_engine`, rewrite test fixtures, async-aware `log_io` decorator, update Cookiecutter and demo removal scripts for new structure.
 **Source:** Peer review feedback (NEXT_STEPS.md actions 40–47)
 **Phase:** 4 (Feedback)
+
+## Epic 26: Code Completeness & Consistency
+Small, targeted code fixes that close gaps left by epics 20–25: resolve remaining type suppressions in `main.py`, add coverage exclusion for mock files, remove duplicated `identity_role_mapper` from `entra.py`, refactor auth factory to true dict-dispatch, cache service DI shims with `@lru_cache`, and parenthesize the bare-comma `except` in `logging_decorator.py`.
+**Source:** Post-implementation review of FEEDBACK.md residuals
+**Phase:** 4 (Feedback)
+
+## Epic 27: Documentation, Naming & Script Alignment
+Bring documentation, test file names, and scaffolding scripts into alignment with the post-epic-25 codebase: fix stale references and internal contradictions in `PROJECT_CONTEXT.md`, rename facade-named test files, and update scaffolding scripts to emit current patterns (`CamelCaseModel`, no `from __future__`).
+**Source:** Post-implementation review of FEEDBACK.md residuals
+**Depends on:** Epic 26
+**Phase:** 4 (Feedback)

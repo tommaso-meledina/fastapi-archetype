@@ -190,3 +190,18 @@ development_status:
   25-3-async-test-infrastructure: done
   25-5-script-updates-and-project-context-for-async-rewrite: done
   epic-25-retrospective: optional
+
+  epic-26: backlog
+  26-1-replace-remaining-type-suppressions-in-main-py: backlog
+  26-2-add-coverage-exclusion-for-mock-implementation-files: backlog
+  26-3-remove-duplicated-identity-role-mapper-from-entra-py: backlog
+  26-4-make-auth-factory-a-true-dict-dispatch: backlog
+  26-5-cache-service-di-shims: backlog
+  26-6-parenthesize-multi-type-except-in-logging-decorator-py: backlog
+  epic-26-retrospective: optional
+
+  epic-27: backlog
+  27-1-fix-project-context-md-internal-contradictions: backlog
+  27-2-rename-facade-named-test-files: backlog
+  27-3-update-scaffolding-scripts-for-current-patterns: backlog
+  epic-27-retrospective: optional

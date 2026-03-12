@@ -18,6 +18,7 @@
 ### Fixes
 
 * satisfy ruff E501 and I001 in database and main
+* convert CORS tests to async and remove stale coverage exclusion
 
 
 ### Features
