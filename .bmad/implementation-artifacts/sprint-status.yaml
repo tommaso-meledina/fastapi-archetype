@@ -203,5 +203,5 @@ development_status:
   epic-27: in-progress
   27-1-fix-project-context-md-internal-contradictions: done
   27-2-rename-facade-named-test-files: done
-  27-3-update-scaffolding-scripts-for-current-patterns: backlog
+  27-3-update-scaffolding-scripts-for-current-patterns: in-progress
   epic-27-retrospective: optional

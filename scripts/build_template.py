@@ -11,8 +11,6 @@ Usage:
 Requires cookiecutter to be installed (pip install cookiecutter).
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 import shutil
@@ -352,8 +350,6 @@ _POST_GEN_HOOK_CONTENT = r'''#!/usr/bin/env python3
 
 Removes demo (Dummy CRUD) boilerplate when include_demo_resource is false.
 """
-from __future__ import annotations
-
 import sys
 from pathlib import Path
 
@@ -635,22 +631,31 @@ infrastructure intact and all remaining tests passing.
 
 To add a new resource (e.g. `Widget`):
 
-**1. Model** — `src/{{cookiecutter.package_name}}/models/widget.py`:
+**1. Entity and DTO** — `models/entities/widget.py` (ORM entity)
+and `models/dto/v1/widget.py` (API shapes):
 
 ```python
-from pydantic import ConfigDict
+# models/entities/widget.py
 from sqlmodel import Field, SQLModel
 
-def _to_camel(name: str) -> str:
-    components = name.split("_")
-    return components[0] + "".join(x.title() for x in components[1:])
-
 class Widget(SQLModel, table=True):
-    model_config = ConfigDict(
-        alias_generator=_to_camel, populate_by_name=True,
-    )
     __tablename__ = "WIDGET"
     id: int | None = Field(default=None, primary_key=True)
+    label: str
+    weight: float | None = None
+
+# models/dto/v1/widget.py
+from {{cookiecutter.package_name}}.models.dto import CamelCaseModel
+
+class GetWidgetsResponse(CamelCaseModel):
+    label: str
+    weight: float | None = None
+
+class PostWidgetsRequest(CamelCaseModel):
+    label: str
+    weight: float | None = None
+
+class PostWidgetsResponse(CamelCaseModel):
     label: str
     weight: float | None = None
 ```
