@@ -29,6 +29,7 @@
 * introduce LogLevel StrEnum for log_level config field and add ipdb dev dep
 * remove from __future__ and clean up import hygiene (story 21.1)
 * introduce CamelCaseModel base and remove entity alias leakage (story 21.3)
+* introduce AppSettings module-level singleton (story 22.1)
 
 
 ### Refactoring

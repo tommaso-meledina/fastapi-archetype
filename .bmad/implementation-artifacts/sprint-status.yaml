@@ -167,5 +167,5 @@ development_status:
 
   epic-22: in-progress
   22-1-appsettings-module-singleton: done
-  22-2-module-exports-and-task-runner: backlog
+  22-2-module-exports-and-task-runner: done
   epic-22-retrospective: optional
