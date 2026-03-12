@@ -1,5 +1,5 @@
 from collections.abc import Generator
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -128,8 +128,8 @@ class TestRequireRoleUsesMapper:
         ) -> dict[str, Any]:
             return {"access_token": "fake-token"}
 
-        provider._http_get = _fake_http_get  # type: ignore[method-assign]
-        provider._http_post_form = _fake_http_post_form  # type: ignore[method-assign]
+        cast(Any, provider)._http_get = _fake_http_get
+        cast(Any, provider)._http_post_form = _fake_http_post_form
 
         guid_mapper = GuidRoleMappingProvider()
         facade = AuthFacade(primary_provider=provider, role_mapper=guid_mapper)

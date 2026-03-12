@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 import pytest
 
 from fastapi_archetype.auth.contracts import AuthFeatureNotSupportedError
@@ -22,7 +24,7 @@ async def test_external_provider_client_credentials_uses_token_endpoint() -> Non
         assert data["grant_type"] == "client_credentials"
         return {"access_token": "cc-token"}
 
-    provider._http_post_form = _fake_post  # type: ignore[method-assign]
+    cast(Any, provider)._http_post_form = _fake_post
     token = await provider.get_client_credentials_access_token("scope://api/.default")
     assert token == "cc-token"
 
@@ -34,8 +36,7 @@ def _settings_without_m2m(**overrides: str) -> AppSettings:
         "auth_external_jwks_uri": "https://issuer.example.test/keys",
     }
     defaults.update(overrides)
-    # Test fixture: dict overlay; Pydantic validates at runtime.
-    return AppSettings(**defaults)  # type: ignore[call-arg]
+    return AppSettings.model_validate(defaults)
 
 
 @pytest.mark.asyncio

@@ -160,7 +160,7 @@ development_status:
 
   epic-21: in-progress
   21-1-remove-from-future-and-clean-up-import-hygiene: done
-  21-2-replace-type-ignore-with-cast: backlog
-  21-3-pydantic-model-drying-and-entity-alias-cleanup: backlog
+  21-2-replace-type-ignore-with-cast: done
+  21-3-pydantic-model-drying-and-entity-alias-cleanup: in-progress
   21-4-project-context-update-for-epic-21: backlog
   epic-21-retrospective: optional

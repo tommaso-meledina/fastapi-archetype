@@ -7,7 +7,7 @@ and mock responses so no external infrastructure is needed.
 
 import time
 from collections.abc import Callable, Generator
-from typing import Any
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
@@ -41,8 +41,7 @@ def _entra_settings(**overrides: Any) -> AppSettings:
         "auth_external_client_secret": "test-secret",
     }
     defaults.update(overrides)
-    # Test fixture: dict overlay; Pydantic validates at runtime.
-    return AppSettings(**defaults)  # type: ignore[call-arg]
+    return AppSettings.model_validate(defaults)
 
 
 def _build_patched_provider(
@@ -62,8 +61,8 @@ def _build_patched_provider(
     async def _fake_http_post_form(_url: str, _data: dict[str, str]) -> dict[str, Any]:
         return {"access_token": "fake-obo-token"}
 
-    provider._http_get = _fake_http_get  # type: ignore[method-assign]
-    provider._http_post_form = _fake_http_post_form  # type: ignore[method-assign]
+    cast(Any, provider)._http_get = _fake_http_get
+    cast(Any, provider)._http_post_form = _fake_http_post_form
     return provider
 
 

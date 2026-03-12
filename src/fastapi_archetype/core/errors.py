@@ -1,5 +1,5 @@
 import enum
-from typing import Any
+from typing import Any, cast
 
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
@@ -36,36 +36,39 @@ def _build_error_body(
     return {"errorCode": error_code, "message": message, "detail": detail}
 
 
-async def app_exception_handler(_request: Request, exc: AppException) -> JSONResponse:
+async def app_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
+    app_exc = cast(AppException, exc)
     return JSONResponse(
-        status_code=exc.error_code.http_status,
+        status_code=app_exc.error_code.http_status,
         content=_build_error_body(
-            exc.error_code.code, exc.error_code.message, exc.detail
+            app_exc.error_code.code, app_exc.error_code.message, app_exc.detail
         ),
     )
 
 
 async def rate_limit_exceeded_handler(
-    _request: Request, exc: RateLimitExceeded
+    _request: Request, exc: Exception
 ) -> JSONResponse:
+    rate_exc = cast(RateLimitExceeded, exc)
     return JSONResponse(
         status_code=ErrorCode.RATE_LIMITED.http_status,
         content=_build_error_body(
             ErrorCode.RATE_LIMITED.code,
             ErrorCode.RATE_LIMITED.message,
-            str(exc.detail),
+            str(rate_exc.detail),
         ),
     )
 
 
 async def validation_exception_handler(
-    _request: Request, exc: RequestValidationError
+    _request: Request, exc: Exception
 ) -> JSONResponse:
+    val_exc = cast(RequestValidationError, exc)
     return JSONResponse(
         status_code=ErrorCode.VALIDATION_ERROR.http_status,
         content=_build_error_body(
             ErrorCode.VALIDATION_ERROR.code,
             ErrorCode.VALIDATION_ERROR.message,
-            str(exc.errors()),
+            str(val_exc.errors()),
         ),
     )

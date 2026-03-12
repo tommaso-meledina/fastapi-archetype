@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+from typing import Any, cast
 
 import pytest
 from fastapi.testclient import TestClient
@@ -130,8 +131,8 @@ class TestPlainFormatter:
         with trace.use_span(span):
             record = _make_record(plain_logger, "with span")
             output = PlainFormatter().format(record)
-            tid = record.traceId  # type: ignore[attr-defined]
-            sid = record.spanId  # type: ignore[attr-defined]
+            tid = cast(Any, record).traceId
+            sid = cast(Any, record).spanId
             assert f"[{tid}]" in output
             assert f"[{sid}]" in output
 
@@ -191,17 +192,17 @@ class TestTraceCorrelation:
         self, plain_logger: logging.Logger
     ) -> None:
         record = _make_record(plain_logger, "no span")
-        assert record.traceId == NO_TRACE_ID  # type: ignore[attr-defined]
-        assert record.spanId == NO_SPAN_ID  # type: ignore[attr-defined]
+        assert cast(Any, record).traceId == NO_TRACE_ID
+        assert cast(Any, record).spanId == NO_SPAN_ID
 
     def test_active_span_injects_both_ids(self, plain_logger: logging.Logger) -> None:
         span = NonRecordingSpan(_VALID_CTX)
         with trace.use_span(span):
             record = _make_record(plain_logger, "traced")
-            assert record.traceId != NO_TRACE_ID  # type: ignore[attr-defined]
-            assert len(record.traceId) == 32  # type: ignore[attr-defined]
-            assert record.spanId != NO_SPAN_ID  # type: ignore[attr-defined]
-            assert len(record.spanId) == 16  # type: ignore[attr-defined]
+            assert cast(Any, record).traceId != NO_TRACE_ID
+            assert len(cast(Any, record).traceId) == 32
+            assert cast(Any, record).spanId != NO_SPAN_ID
+            assert len(cast(Any, record).spanId) == 16
 
     def test_invalid_span_context_yields_placeholders(
         self, plain_logger: logging.Logger
@@ -215,8 +216,8 @@ class TestTraceCorrelation:
         span = NonRecordingSpan(invalid_ctx)
         with trace.use_span(span):
             record = _make_record(plain_logger, "invalid ctx")
-            assert record.traceId == NO_TRACE_ID  # type: ignore[attr-defined]
-            assert record.spanId == NO_SPAN_ID  # type: ignore[attr-defined]
+            assert cast(Any, record).traceId == NO_TRACE_ID
+            assert cast(Any, record).spanId == NO_SPAN_ID
 
 
 # ---------------------------------------------------------------------------
