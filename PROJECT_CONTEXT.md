@@ -20,7 +20,10 @@ All dependencies are declared in `pyproject.toml`. Do not add or replace depende
 | fastapi | >=0.135.1 | Web framework |
 | uvicorn | >=0.41.0 | ASGI server |
 | sqlmodel | >=0.0.37 | ORM for entities; Pydantic for DTOs (see Data Persistence) |
-| pymysql | >=1.1.2 | MariaDB driver (pure Python) |
+| aiosqlite | >=0.22 | Async SQLite driver (dev/test) |
+| aiomysql | >=0.3 | Async MariaDB driver (production) |
+| greenlet | >=3.0 | Required by SQLAlchemy async engine |
+| pymysql | >=1.1.2 | MariaDB driver (pure Python, used transitively) |
 | pydantic-settings | >=2.13.1 | Typed configuration from env / .env |
 | opentelemetry-api, opentelemetry-sdk, opentelemetry-exporter-otlp, opentelemetry-instrumentation-fastapi | >=1.39.1 / >=0.60b1 | Distributed tracing |
 | prometheus-fastapi-instrumentator | >=7.1.0 | HTTP metrics auto-instrumentation |
@@ -34,8 +37,10 @@ All dependencies are declared in `pyproject.toml`. Do not add or replace depende
 | Library | Role |
 |---|---|
 | pytest >=8.0 | Test runner |
+| pytest-asyncio >=0.25 | Async test support (`asyncio_mode = "auto"`) |
 | pytest-cov >=6.0 | Coverage reporting |
-| httpx >=0.28.1 | TestClient transport |
+| httpx >=0.28.1 | AsyncClient transport for tests |
+| nest-asyncio | Async REPL support for interactive debugging |
 | ruff >=0.15.4 | Linting and formatting |
 | ty (version per lock file) | Type checking |
 
@@ -175,9 +180,9 @@ All request/response payloads are JSON. Models use `alias_generator=_to_camel` a
   - **Route:** Validate that path `uuid` and body `uuid` match (return **400 Bad Request** if not). Convert the request DTO to an entity via the factory, call the service update function with that entity, then map the returned entity to the response DTO. The route must **not** fetch by UUID or handle 404; the service does that.
   - **Factory:** The PUT request → entity factory function takes only the DTO (e.g. `put_dto_to_entity(dto: PutXxxRequest) -> Entity`). It returns an entity with `uuid`, and updatable fields (e.g. `name`, `description`) but **no** `id` (leave `id` unset / `None`). The factory must not take a session or existing entity; it only maps DTO → entity.
   - **Service:** The update function (e.g. `update_dummy(session, entity)`) accepts an entity. If the entity has **no** `id`, the service fetches the existing row by `entity.uuid`; if not found, it raises `AppException(ErrorCode.<RESOURCE>_NOT_FOUND)` so the app handler returns **404**. If found, the service builds an entity with the resolved `id` and `uuid` plus the incoming updatable fields, then performs the update (e.g. merge and commit). If the entity already has an `id`, the service performs the update as usual. This keeps "resolve by UUID or fail" inside the service; the route stays validation + convert + call + respond.
-- **Database connection:** Configured by an optional `DATABASE_URL` environment variable. When unset or empty/whitespace, the application uses SQLite in-memory (`sqlite://`). When set, the URL is used as-is after validation at startup; the appropriate driver (e.g. PyMySQL for MariaDB) must be in dependencies. Special characters (e.g. `@`, `:`, `/`, `%`) used within any component of `DATABASE_URL` must be percent-encoded where applicable.
-- **Session management:** `get_session()` is a generator yielding `Session` instances, injected into routes via `Depends(get_session)`. Tests override this dependency with a test-scoped SQLite session.
-- **Schema management:** Table creation is a **local/dev-only** feature. The application runs `SQLModel.metadata.create_all(engine)` in the lifespan **only when the effective database is SQLite** (e.g. no `DATABASE_URL` or `sqlite://`). For any other backend (e.g. MariaDB in Compose or production), the app does not create or alter tables; schema is provided by the environment (e.g. MariaDB’s native init via `compose/mariadb/init/schema.sql`). No migration tool (Alembic) is in scope.
+- **Database connection:** Configured by an optional `DATABASE_URL` environment variable. When unset or empty/whitespace, the application uses SQLite in-memory (`sqlite+aiosqlite://`). When set, the URL is automatically rewritten to use the async driver (`mysql+aiomysql://` for MariaDB, `sqlite+aiosqlite://` for SQLite) at engine creation. Special characters (e.g. `@`, `:`, `/`, `%`) used within any component of `DATABASE_URL` must be percent-encoded where applicable.
+- **Async engine and session:** `core/database.py` uses `create_async_engine`, `async_sessionmaker`, and `AsyncSession` from `sqlalchemy.ext.asyncio`. The module-level `get_engine()` returns an `AsyncEngine`; `get_session()` is an async generator yielding `AsyncSession` instances, injected into routes via `Depends(get_session)`. All service functions and route handlers are `async def` and `await` session operations (`await session.execute(...)`, `await session.commit()`, `await session.refresh(...)`).
+- **Schema management:** Table creation is a **local/dev-only** feature. The application runs `SQLModel.metadata.create_all` via `conn.run_sync()` inside the async lifespan **only when the effective database is SQLite**. For any other backend (e.g. MariaDB in Compose or production), the app does not create or alter tables; schema is provided by the environment (e.g. MariaDB’s native init via `compose/mariadb/init/schema.sql`). No migration tool (Alembic) is in scope.
 
 ### 3. Configuration Management
 
@@ -207,8 +212,8 @@ To add a new version: create `api/v3/`, `services/v3/`, register the router in `
 
 `aop/logging_decorator.py` provides:
 
-- `log_io(func)` — decorator that logs inputs at DEBUG, return values at DEBUG, and exceptions at ERROR. Exception-path logging ensures failures surface in production logs without requiring DEBUG verbosity.
-- `apply_logging(module)` — programmatically wraps all public functions defined in a module with `log_io` at import time. Only functions whose `__module__` matches the target are wrapped (re-exported imports are skipped). Individual service functions carry no decorator annotation.
+- `log_io(func)` — decorator that logs inputs at DEBUG, return values at DEBUG, and exceptions at ERROR. Detects coroutine functions via `inspect.iscoroutinefunction` and returns an async wrapper for `async def` functions, a sync wrapper for regular functions. Exception-path logging ensures failures surface in production logs without requiring DEBUG verbosity.
+- `apply_logging(module)` — programmatically wraps all public functions defined in a module with `log_io` at import time. Only functions whose `__module__` matches the target are wrapped (re-exported imports are skipped). Works transparently with both sync and async functions. Individual service functions carry no decorator annotation.
 
 `services/__init__.py` imports every service module and calls `apply_logging()` on each. New service modules must be added there.
 
@@ -284,9 +289,10 @@ IMPORTANT: the **Docker Compose** project (`compose/docker-compose.yaml`) is mer
 
 ### 13. Testing
 
-- **Framework:** pytest with `testpaths=["tests"]` and `pythonpath=["src"]`.
-- **Database:** SQLite in-memory with `StaticPool`. Tests override `get_session` via `app.dependency_overrides`.
-- **Auth in tests:** `AUTH_TYPE=none` is set via `os.environ.setdefault` in `tests/conftest.py`. Auth integration tests in `tests/auth/` use a synthetic IdP: test-generated RSA keypair, JWKS fixture, JWT signing helper, monkeypatched HTTP calls.
+- **Framework:** pytest with `testpaths=["tests"]`, `pythonpath=["src"]`, and `asyncio_mode = "auto"` (via pytest-asyncio). All test functions that use async fixtures are `async def`; the `auto` mode eliminates the need for `@pytest.mark.asyncio` on individual tests.
+- **Database:** Async SQLite in-memory (`sqlite+aiosqlite://`) with `StaticPool`. The `engine` fixture uses `create_async_engine`; the `session` fixture uses `async_sessionmaker` yielding `AsyncSession`. Tests override `get_session` via `app.dependency_overrides` with an async generator.
+- **Client:** Tests use `httpx.AsyncClient` with `ASGITransport(app=app)` instead of `TestClient`. All HTTP assertions use `await client.get(...)`, `await client.post(...)`, etc.
+- **Auth in tests:** `AUTH_TYPE=none` is set via `os.environ.setdefault` in `tests/conftest.py`. Auth integration tests in `tests/auth/` use a synthetic IdP: test-generated RSA keypair, JWKS fixture, JWT signing helper, monkeypatched HTTP calls. Auth test fixtures use `AsyncClient` and async engine/session.
 - **Rate limiting:** `limiter.reset()` is called in the client fixture to prevent cross-test pollution.
 - **Coverage target:** >90%.
 - **Test organization mirrors source:** `tests/api/`, `tests/auth/`, `tests/core/`, `tests/services/`, `tests/aop/`, `tests/observability/`.
@@ -363,7 +369,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 
 ### Dependency injection
 
-- Database sessions: `Depends(get_session)`.
+- Database sessions: `Depends(get_session)` yields `AsyncSession`.
 - Auth: `Depends(require_auth)` or `Depends(require_role(Role.XXX))`. Auth functions injected via `Depends(get_auth_functions)` (returns `AuthFunctions` dataclass).
 - **Services:** Routes depend on a service dataclass (e.g. `DummyServiceV1`) via a dependency that calls the factory (`Depends(get_dummy_service_v1)` or `Depends(get_dummy_service_v2)`). The factory uses `settings.profile` to return the appropriate callable fields. Routes call functions as `svc.get_all_dummies(session)`.
 - Rate limiting: `@limiter.limit(settings.rate_limit_xxx)` decorator.
@@ -380,6 +386,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 ### Code style
 
 - No `from __future__ import annotations` — the project targets Python >=3.14 where this is a no-op.
+- All route handlers and service functions are `async def`. Use `await` for all session operations and service calls.
 - All imports at module level; no `if TYPE_CHECKING:` guards.
 - No code comments except where they explain non-obvious intent.
 - No dead code or placeholder implementations.
@@ -406,6 +413,8 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 - Do not add libraries not listed in the technology stack without human approval.
 - Do not add code comments that merely narrate what the code does.
 - Do not add `from __future__ import annotations` — it is a no-op on Python 3.14 and misleads contributors.
+- Do not use synchronous `def` for route handlers or service functions — all must be `async def`. Use `await` for all session and service operations.
+- Do not use synchronous `Session` or `create_engine` from SQLAlchemy/SQLModel — use `AsyncSession`, `async_sessionmaker`, and `create_async_engine` from `sqlalchemy.ext.asyncio`.
 - Do not modify `tests/conftest.py` fixtures to be resource-specific — they are generic by design.
 - Do not name web DTOs after the entity (e.g. `DummyCreate`, `WidgetResponse`) — use the mandatory pattern `<Method><Resource><Request|Response>` (e.g. `PostDummiesRequest`, `GetDummiesResponse`).
 - Do not use ABCs or class hierarchies for service implementations — use plain function modules and a service dataclass.
@@ -419,14 +428,14 @@ To add a new resource (e.g., `Widget`):
 2. **DTOs:** Create `models/dto/v1/widget.py` with Pydantic models inheriting from `CamelCaseModel` (imported from `fastapi_archetype.models.dto`), following the **`<Method><Resource><Request|Response>`** naming pattern (e.g. `PostWidgetsRequest`, `GetWidgetsResponse`, `PostWidgetsResponse`). `CamelCaseModel` provides camelCase serialization via `pydantic.alias_generators.to_camel` and `populate_by_name=True`. Response DTOs must include `uuid` (when the entity has one) and **must not** include the internal `id`.
 3. **Factory:** Create `factories/widget.py` with `entity_to_dto(entity) -> GetWidgetsResponse` (or the appropriate response type) and `dto_to_entity(dto: PostWidgetsRequest) -> Widget` using only Pydantic (`model_validate`, `model_dump`). For update (PUT): add `put_dto_to_entity(dto: PutWidgetsRequest) -> Widget` that returns a `Widget` with `uuid` and updatable fields from the DTO but **no** `id` (see **Update-by-UUID pattern** in §2 Data Persistence). The service will resolve by UUID when `id` is missing.
 4. **Constant:** Add `WIDGETS = ResourceDefinition(...)` to `core/constants.py`.
-5. **Service dataclass:** Add a `@dataclass(frozen=True, kw_only=True)` class (e.g. `WidgetServiceV1`) to `services/factory.py` with typed `Callable` fields matching the service functions' signatures (e.g. `get_all: Callable[[Session], list[Widget]]`, `create: Callable[[Session, Widget], Widget]`).
-6. **Default module:** Create `services/v1/widget.py` with plain functions implementing real database access. For update: when `entity.id` is None, fetch by `entity.uuid`; if not found, raise `AppException(ErrorCode.WIDGET_NOT_FOUND)`; otherwise resolve and update (see **Update-by-UUID pattern** in §2 Data Persistence).
-7. **Mock module:** Create `services/v1/mock_widget.py` with the same function signatures but static/hard-coded return values (no database or external calls).
+5. **Service dataclass:** Add a `@dataclass(frozen=True, kw_only=True)` class (e.g. `WidgetServiceV1`) to `services/factory.py` with typed `Callable` fields matching the async service functions' signatures (e.g. `get_all: Callable[[AsyncSession], Coroutine[Any, Any, list[Widget]]]`, `create: Callable[[AsyncSession, Widget], Coroutine[Any, Any, Widget]]`).
+6. **Default module:** Create `services/v1/widget.py` with `async def` functions implementing real database access using `AsyncSession` and `await`. For update: when `entity.id` is None, fetch by `entity.uuid`; if not found, raise `AppException(ErrorCode.WIDGET_NOT_FOUND)`; otherwise resolve and update (see **Update-by-UUID pattern** in §2 Data Persistence).
+7. **Mock module:** Create `services/v1/mock_widget.py` with the same `async def` function signatures but static/hard-coded return values (no database or external calls).
 8. **Factory and DI:** Add `build_widget_service_v1(settings) -> WidgetServiceV1` in `services/factory.py` using dict-dispatch on `settings.profile`. Expose a DI shim `get_widget_service_v1()` in `services/v1/widget_service.py`. Use `Depends(get_widget_service_v1)` in routes.
 9. **AOP:** Import and `apply_logging()` the new modules in `services/__init__.py`.
-10. **Routes:** Create `api/v1/widget_routes.py` with `APIRouter(prefix=WIDGETS.path, tags=[WIDGETS.name])`. Use DTOs for request body and response model; call factory to convert request DTO → entity for service and entity → response DTO for responses. Rate limits and auth as needed. **If the resource supports PUT (update):** use a path like `PUT /v1/widgets/{uuid}` and a request body that includes `uuid` plus updatable fields. In the route: validate that path `uuid` and body `uuid` match (return **400 Bad Request** if not); call the factory to convert the body DTO to an entity (no `id`); call the service update function with that entity; map the returned entity to the response DTO. Do **not** fetch by UUID or handle 404 in the route — the service does that (see **Update-by-UUID pattern** in §2 Data Persistence).
+10. **Routes:** Create `api/v1/widget_routes.py` with `APIRouter(prefix=WIDGETS.path, tags=[WIDGETS.name])`. All route handlers are `async def` and use `AsyncSession = Depends(get_session)`. Use DTOs for request body and response model; call factory to convert request DTO → entity for service and `await` service calls, then entity → response DTO for responses. Rate limits and auth as needed. **If the resource supports PUT (update):** use a path like `PUT /v1/widgets/{uuid}` and a request body that includes `uuid` plus updatable fields. In the route: validate that path `uuid` and body `uuid` match (return **400 Bad Request** if not); call the factory to convert the body DTO to an entity (no `id`); `await` the service update function with that entity; map the returned entity to the response DTO. Do **not** fetch by UUID or handle 404 in the route — the service does that (see **Update-by-UUID pattern** in §2 Data Persistence).
 11. **Router registration:** Include the widget router in `api/v1/__init__.py`.
-12. **Tests:** Add `tests/api/test_widget_routes.py` and `tests/services/v1/test_widget_service.py` (and tests for mock vs default behaviour when appropriate) using existing fixtures. Service tests call functions from the service module directly (e.g. `widget.get_all(session)`).
+12. **Tests:** Add `tests/api/test_widget_routes.py` and `tests/services/v1/test_widget_service.py` (and tests for mock vs default behaviour when appropriate) using existing async fixtures. All tests that use `client` or `session` are `async def`. Service tests call functions from the service module directly (e.g. `await widget.get_all(session)`).
 13. **Custom metrics (if needed):** Add counters to the `Counters` dataclass in `observability/prometheus.py`.
 14. **Rate limits (if needed):** Add `rate_limit_get_widgets` / `rate_limit_post_widgets` fields to `AppSettings` and corresponding entries to `.env.example`.
 

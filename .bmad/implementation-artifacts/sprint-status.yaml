@@ -185,8 +185,8 @@ development_status:
 
   epic-25: in-progress
   25-4-async-aware-aop-and-dev-tooling: done
-  25-2-async-database-layer: in-progress
-  25-1-async-routes-and-service-functions: backlog
-  25-3-async-test-infrastructure: backlog
+  25-2-async-database-layer: done
+  25-1-async-routes-and-service-functions: done
+  25-3-async-test-infrastructure: done
   25-5-script-updates-and-project-context-for-async-rewrite: backlog
   epic-25-retrospective: optional

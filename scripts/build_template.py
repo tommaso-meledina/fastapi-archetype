@@ -363,13 +363,21 @@ PACKAGE_NAME = "{{ cookiecutter.package_name }}"
 PROJECT_ROOT = Path.cwd()
 
 FILES_TO_DELETE = [
-    f"src/{PACKAGE_NAME}/models/dummy.py",
+    f"src/{PACKAGE_NAME}/models/entities/dummy.py",
+    f"src/{PACKAGE_NAME}/models/dto/v1/dummy.py",
+    f"src/{PACKAGE_NAME}/factories/dummy.py",
     f"src/{PACKAGE_NAME}/api/v1/dummy_routes.py",
     f"src/{PACKAGE_NAME}/api/v2/dummy_routes.py",
+    f"src/{PACKAGE_NAME}/services/v1/dummy.py",
+    f"src/{PACKAGE_NAME}/services/v1/mock_dummy.py",
     f"src/{PACKAGE_NAME}/services/v1/dummy_service.py",
+    f"src/{PACKAGE_NAME}/services/v2/dummy.py",
+    f"src/{PACKAGE_NAME}/services/v2/mock_dummy.py",
     f"src/{PACKAGE_NAME}/services/v2/dummy_service.py",
+    f"src/{PACKAGE_NAME}/services/factory.py",
     "tests/api/test_dummy_routes.py",
     "tests/api/test_v2_dummy_routes.py",
+    "tests/api/test_profile_service_selection.py",
     "tests/services/v1/test_dummy_service.py",
     "tests/services/v2/test_dummy_service.py",
 ]
@@ -427,8 +435,6 @@ def _edit_services_init(path: Path) -> None:
 
 def _edit_api_v1_init(path: Path) -> None:
     content = (
-        "from __future__ import annotations\n"
-        "\n"
         "from fastapi import APIRouter\n"
         "\n"
         'router = APIRouter(prefix="/v1")\n'
@@ -438,8 +444,6 @@ def _edit_api_v1_init(path: Path) -> None:
 
 def _edit_api_v2_init(path: Path) -> None:
     content = (
-        "from __future__ import annotations\n"
-        "\n"
         "from fastapi import APIRouter\n"
         "\n"
         'router = APIRouter(prefix="/v2")\n'
@@ -661,76 +665,66 @@ WIDGETS = ResourceDefinition(
 )
 ```
 
-**3. Service** — `services/v1/widget_service.py`:
+**3. Service** — `services/v1/widget.py`:
 
 ```python
-from __future__ import annotations
-from typing import TYPE_CHECKING
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
-from {{cookiecutter.package_name}}.models.widget import Widget
+from {{cookiecutter.package_name}}.models.entities.widget import Widget
 
-if TYPE_CHECKING:
-    from sqlmodel import Session
+async def get_all_widgets(session: AsyncSession) -> list[Widget]:
+    result = await session.execute(select(Widget))
+    return list(result.scalars().all())
 
-def get_all_widgets(session: Session) -> list[Widget]:
-    return list(session.exec(select(Widget)).all())
-
-def create_widget(session: Session, widget: Widget) -> Widget:
+async def create_widget(session: AsyncSession, widget: Widget) -> Widget:
     session.add(widget)
-    session.commit()
-    session.refresh(widget)
+    await session.commit()
+    await session.refresh(widget)
     return widget
 ```
 
 **4. AOP logging** — `services/__init__.py`:
 
 ```python
-from {{cookiecutter.package_name}}.services.v1 import (
-    widget_service as v1_widget_service,
-)
-apply_logging(v1_widget_service)
+from {{cookiecutter.package_name}}.services.v1 import widget as v1_widget
+apply_logging(v1_widget)
 ```
 
 **5. Routes** — `api/v1/widget_routes.py`:
 
 ```python
-from __future__ import annotations
-from typing import TYPE_CHECKING
 from fastapi import APIRouter, Depends, Request, Response, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from {{cookiecutter.package_name}}.core.constants import WIDGETS
 from {{cookiecutter.package_name}}.core.database import get_session
 from {{cookiecutter.package_name}}.core.rate_limit import limiter
-from {{cookiecutter.package_name}}.core.config import AppSettings
-from {{cookiecutter.package_name}}.models.widget import Widget
-from {{cookiecutter.package_name}}.services.v1 import widget_service
-
-if TYPE_CHECKING:
-    from sqlmodel import Session
+from {{cookiecutter.package_name}}.core.config import settings
+from {{cookiecutter.package_name}}.models.entities.widget import Widget
+from {{cookiecutter.package_name}}.services.v1 import widget
 
 router = APIRouter(prefix=WIDGETS.path, tags=[WIDGETS.name])
-_settings = AppSettings()
 
 @router.get("", response_model=list[Widget])
-@limiter.limit(_settings.rate_limit_get_widgets)
-def list_widgets(
+@limiter.limit(settings.rate_limit_get_widgets)
+async def list_widgets(
     request: Request,
     response: Response,
-    session: Session = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
 ) -> list[Widget]:
-    return widget_service.get_all_widgets(session)
+    return await widget.get_all_widgets(session)
 
 @router.post(
     "", response_model=Widget,
     status_code=status.HTTP_201_CREATED,
 )
-@limiter.limit(_settings.rate_limit_post_widgets)
-def create_widget(
+@limiter.limit(settings.rate_limit_post_widgets)
+async def create_widget(
     request: Request,
-    widget: Widget,
+    widget_body: Widget,
     response: Response,
-    session: Session = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
 ) -> Widget:
-    return widget_service.create_widget(session, widget)
+    return await widget.create_widget(session, widget_body)
 ```
 
 **6. Register router** — `api/v1/__init__.py`:

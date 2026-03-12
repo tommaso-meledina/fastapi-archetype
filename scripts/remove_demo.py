@@ -20,13 +20,21 @@ if TYPE_CHECKING:
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 FILES_TO_DELETE = [
-    "src/fastapi_archetype/models/dummy.py",
+    "src/fastapi_archetype/models/entities/dummy.py",
+    "src/fastapi_archetype/models/dto/v1/dummy.py",
+    "src/fastapi_archetype/factories/dummy.py",
     "src/fastapi_archetype/api/v1/dummy_routes.py",
     "src/fastapi_archetype/api/v2/dummy_routes.py",
+    "src/fastapi_archetype/services/v1/dummy.py",
+    "src/fastapi_archetype/services/v1/mock_dummy.py",
     "src/fastapi_archetype/services/v1/dummy_service.py",
+    "src/fastapi_archetype/services/v2/dummy.py",
+    "src/fastapi_archetype/services/v2/mock_dummy.py",
     "src/fastapi_archetype/services/v2/dummy_service.py",
+    "src/fastapi_archetype/services/factory.py",
     "tests/api/test_dummy_routes.py",
     "tests/api/test_v2_dummy_routes.py",
+    "tests/api/test_profile_service_selection.py",
     "tests/services/v1/test_dummy_service.py",
     "tests/services/v2/test_dummy_service.py",
 ]
@@ -102,24 +110,12 @@ def _edit_services_init(path: Path) -> None:
 
 
 def _edit_api_v1_init(path: Path) -> None:
-    content = (
-        "from __future__ import annotations\n"
-        "\n"
-        "from fastapi import APIRouter\n"
-        "\n"
-        'router = APIRouter(prefix="/v1")\n'
-    )
+    content = 'from fastapi import APIRouter\n\nrouter = APIRouter(prefix="/v1")\n'
     _write(path, content)
 
 
 def _edit_api_v2_init(path: Path) -> None:
-    content = (
-        "from __future__ import annotations\n"
-        "\n"
-        "from fastapi import APIRouter\n"
-        "\n"
-        'router = APIRouter(prefix="/v2")\n'
-    )
+    content = 'from fastapi import APIRouter\n\nrouter = APIRouter(prefix="/v2")\n'
     _write(path, content)
 
 
@@ -163,7 +159,33 @@ def _edit_env_example(path: Path) -> None:
     _write(path, "".join(lines))
 
 
+def _edit_main(path: Path) -> None:
+    content = _read(path)
+    content = content.replace("import uuid as uuid_module\n", "")
+    content = content.replace(
+        "from fastapi_archetype.models.entities.dummy import Dummy\n", ""
+    )
+    # Remove _backfill_dummy_uuids function and its call in lifespan.
+    lines = content.splitlines(keepends=True)
+    new_lines: list[str] = []
+    in_backfill_fn = False
+    for line in lines:
+        if line.startswith("async def _backfill_dummy_uuids("):
+            in_backfill_fn = True
+            continue
+        if in_backfill_fn:
+            if line and not line[0].isspace() and line.strip():
+                in_backfill_fn = False
+            else:
+                continue
+        if "_backfill_dummy_uuids" in line:
+            continue
+        new_lines.append(line)
+    _write(path, _collapse_blank_lines("".join(new_lines)))
+
+
 _EDIT_DISPATCH: list[tuple[str, Callable[[Path], None]]] = [
+    ("src/fastapi_archetype/main.py", _edit_main),
     ("src/fastapi_archetype/core/constants.py", _edit_constants),
     ("src/fastapi_archetype/core/errors.py", _edit_errors),
     ("src/fastapi_archetype/core/config.py", _edit_config),
