@@ -12,7 +12,7 @@ from sqlmodel import Session, SQLModel, select
 
 from fastapi_archetype.api.v1 import router as v1_router
 from fastapi_archetype.api.v2 import router as v2_router
-from fastapi_archetype.core.config import AppSettings
+from fastapi_archetype.core.config import settings
 from fastapi_archetype.core.constants import HEALTH_PATH
 from fastapi_archetype.core.database import (
     dispose_engine,
@@ -42,13 +42,12 @@ def _backfill_dummy_uuids(engine: Engine) -> None:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
-    _settings = AppSettings()
-    configure_logging(_settings)
-    tracer_provider = setup_otel(_settings)
-    engine = get_engine(_settings)
+    configure_logging(settings)
+    tracer_provider = setup_otel(settings)
+    engine = get_engine(settings)
     # Table creation only in local/dev mode (SQLite). Other backends rely on
     # their own init/migrations (e.g. compose/mariadb/init), not the app.
-    if is_local_dev_mode(_settings):
+    if is_local_dev_mode(settings):
         SQLModel.metadata.create_all(engine)
         _backfill_dummy_uuids(engine)
     try:
@@ -58,7 +57,6 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
         tracer_provider.shutdown()
 
 
-settings = AppSettings()
 app = FastAPI(
     title="fastapi-archetype",
     description="A reference FastAPI application demonstrating enterprise patterns.",

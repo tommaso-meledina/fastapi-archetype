@@ -3,7 +3,7 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session
 
 from fastapi_archetype.core import database
-from fastapi_archetype.core.config import AppSettings
+from fastapi_archetype.core.config import AppSettings, settings
 
 
 def test_get_engine_without_settings_builds_default_settings(
@@ -25,7 +25,7 @@ def test_get_engine_without_settings_builds_default_settings(
 def test_get_session_yields_session(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(database, "_engine", None)
     try:
-        database.get_engine(AppSettings())
+        database.get_engine(settings)
 
         generator = database.get_session()
         session = next(generator)
@@ -40,15 +40,17 @@ def test_get_session_yields_session(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_dispose_engine_resets_global_engine(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(database, "_engine", None)
-    database.get_engine(AppSettings())
+    database.get_engine(settings)
 
     database.dispose_engine()
 
     assert database._engine is None
 
 
-def test_invalid_database_url_raises_at_engine_creation() -> None:
+def test_invalid_database_url_raises_at_engine_creation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     database.dispose_engine()
-    settings = AppSettings(database_url="not-a-valid-url://")
+    invalid_settings = AppSettings(database_url="not-a-valid-url://")
     with pytest.raises(ValueError, match="Invalid DATABASE_URL"):
-        database.get_engine(settings)
+        database.get_engine(invalid_settings)

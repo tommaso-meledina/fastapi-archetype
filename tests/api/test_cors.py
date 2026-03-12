@@ -1,37 +1,32 @@
 import importlib
-import os
 from collections.abc import Generator
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import fastapi_archetype.core.config as core_config_module
 import fastapi_archetype.main as main_module
 
 
 def _reload_main_app() -> FastAPI:
+    # Only reload main_module; core_config_module is NOT reloaded so that the
+    # settings singleton object remains the same instance referenced by all
+    # imported modules. CORS middleware wiring happens at module level based on
+    # settings.cors_enabled, which callers must patch before calling this function.
     module = importlib.reload(main_module)
     return module.app
 
 
 @pytest.fixture(autouse=True)
 def _restore_main_module() -> Generator[None]:
+    # monkeypatch (which restores patched attributes) is finalized before this
+    # autouse fixture's teardown, so settings are already restored when we reload.
     yield
-    os.environ["ENV_FILE"] = ""
-    os.environ.pop("CORS_ENABLED", None)
-    os.environ.pop("CORS_ALLOW_ORIGINS", None)
-    os.environ.pop("CORS_ALLOW_METHODS", None)
-    os.environ.pop("CORS_ALLOW_HEADERS", None)
-    os.environ.pop("CORS_ALLOW_CREDENTIALS", None)
-    os.environ.pop("CORS_EXPOSE_HEADERS", None)
     _reload_main_app()
 
 
-def test_cors_disabled_by_default_omits_cors_headers(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setenv("ENV_FILE", "")
-    monkeypatch.delenv("CORS_ENABLED", raising=False)
+def test_cors_disabled_by_default_omits_cors_headers() -> None:
     app = _reload_main_app()
 
     with TestClient(app) as client:
@@ -44,11 +39,22 @@ def test_cors_disabled_by_default_omits_cors_headers(
 def test_cors_enabled_returns_preflight_headers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("ENV_FILE", "")
-    monkeypatch.setenv("CORS_ENABLED", "true")
-    monkeypatch.setenv("CORS_ALLOW_ORIGINS", "http://frontend.example")
-    monkeypatch.setenv("CORS_ALLOW_METHODS", "GET,POST,OPTIONS")
-    monkeypatch.setenv("CORS_ALLOW_HEADERS", "Authorization,Content-Type")
+    monkeypatch.setattr(core_config_module.settings, "cors_enabled", True)
+    monkeypatch.setattr(
+        core_config_module.settings,
+        "cors_allow_origins",
+        "http://frontend.example",
+    )
+    monkeypatch.setattr(
+        core_config_module.settings,
+        "cors_allow_methods",
+        "GET,POST,OPTIONS",
+    )
+    monkeypatch.setattr(
+        core_config_module.settings,
+        "cors_allow_headers",
+        "Authorization,Content-Type",
+    )
     app = _reload_main_app()
 
     with TestClient(app) as client:

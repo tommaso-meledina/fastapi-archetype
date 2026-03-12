@@ -3,7 +3,7 @@ from sqlmodel import Session
 
 from fastapi_archetype.auth.dependencies import require_role
 from fastapi_archetype.auth.models import Principal, Role
-from fastapi_archetype.core.config import AppSettings
+from fastapi_archetype.core.config import settings
 from fastapi_archetype.core.constants import DUMMIES
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
@@ -23,12 +23,11 @@ from fastapi_archetype.services.contracts.dummy_service import (
 from fastapi_archetype.services.v2.dummy_service import get_dummy_service_v2
 
 router = APIRouter(prefix=DUMMIES.path, tags=[f"{DUMMIES.name} v2"])
-_settings = AppSettings()
 _depends_require_admin = Depends(require_role(Role.ADMIN))
 
 
 @router.get("", response_model=list[GetDummiesResponse])
-@limiter.limit(_settings.rate_limit_get_dummies)
+@limiter.limit(settings.rate_limit_get_dummies)
 def list_dummies(
     request: Request,
     response: Response,
@@ -42,7 +41,7 @@ def list_dummies(
 @router.post(
     "", response_model=PostDummiesResponse, status_code=status.HTTP_201_CREATED
 )
-@limiter.limit(_settings.rate_limit_post_dummies)
+@limiter.limit(settings.rate_limit_post_dummies)
 def create_dummy(
     request: Request,
     dummy: PostDummiesRequest,

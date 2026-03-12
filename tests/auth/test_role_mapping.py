@@ -146,7 +146,7 @@ class TestRequireRoleUsesMapper:
         limiter.reset()
 
         with (
-            patch("fastapi_archetype.auth.dependencies._settings.auth_type", "entra"),
+            patch("fastapi_archetype.auth.dependencies.settings.auth_type", "entra"),
             TestClient(app) as c,
         ):
             yield c

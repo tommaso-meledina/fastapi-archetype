@@ -46,7 +46,7 @@ def entra_client_fixture(_entra_engine) -> Generator[TestClient]:
 
     with (
         patch(
-            "fastapi_archetype.auth.dependencies._settings.auth_type",
+            "fastapi_archetype.auth.dependencies.settings.auth_type",
             "entra",
         ),
         TestClient(app) as c,

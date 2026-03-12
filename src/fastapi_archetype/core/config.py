@@ -141,3 +141,6 @@ class AppSettings(BaseSettings):
         if raw is None or (isinstance(raw, str) and not raw.strip()):
             return "sqlite://"
         return raw.strip()
+
+
+settings = AppSettings()

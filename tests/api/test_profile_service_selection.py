@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
+import fastapi_archetype.core.config as core_config_module
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
 from fastapi_archetype.services.v1.dummy_service import get_dummy_service_v1
@@ -113,7 +114,7 @@ def test_profile_mock_v1_returns_static_list(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """PROFILE=mock: GET /v1/dummies returns 200 and static mock list (no DB)."""
-    monkeypatch.setenv("PROFILE", "mock")
+    monkeypatch.setattr(core_config_module.settings, "profile", "mock")
     r = client.get("/v1/dummies")
     assert r.status_code == 200
     items = r.json()
@@ -125,7 +126,7 @@ def test_profile_mock_v2_returns_static_list(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """PROFILE=mock: GET /v2/dummies returns 200 and static mock list (no DB)."""
-    monkeypatch.setenv("PROFILE", "mock")
+    monkeypatch.setattr(core_config_module.settings, "profile", "mock")
     r = client.get("/v2/dummies")
     assert r.status_code == 200
     items = r.json()

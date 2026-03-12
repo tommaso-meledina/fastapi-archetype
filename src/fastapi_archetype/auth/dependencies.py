@@ -9,18 +9,17 @@ from fastapi_archetype.auth.contracts import UnauthorizedError
 from fastapi_archetype.auth.facade import AuthFacade
 from fastapi_archetype.auth.factory import build_auth_facade
 from fastapi_archetype.auth.models import Principal, Role
-from fastapi_archetype.core.config import AppSettings
+from fastapi_archetype.core.config import settings
 from fastapi_archetype.core.errors import AppException, ErrorCode
 
 logger = logging.getLogger(__name__)
 
-_settings = AppSettings()
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
 @lru_cache
 def get_auth_facade() -> AuthFacade:
-    return build_auth_facade(AppSettings())
+    return build_auth_facade(settings)
 
 
 async def get_bearer_token(
@@ -35,7 +34,7 @@ async def get_current_principal(
     token: Annotated[str | None, Depends(get_bearer_token)],
     facade: Annotated[AuthFacade, Depends(get_auth_facade)],
 ) -> Principal:
-    if _settings.auth_type == "none":
+    if settings.auth_type == "none":
         principal = await facade.authenticate_bearer_token(token or "")
         return principal
     if token is None:
