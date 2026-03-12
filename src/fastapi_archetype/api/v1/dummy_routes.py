@@ -1,10 +1,8 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from fastapi import APIRouter, Depends, Request, Response, status
+from sqlmodel import Session
 
 from fastapi_archetype.auth.dependencies import require_auth
+from fastapi_archetype.auth.models import Principal
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.constants import DUMMIES
 from fastapi_archetype.core.database import get_session
@@ -23,14 +21,9 @@ from fastapi_archetype.models.dto.v1.dummy import (
     PutDummiesRequest,
 )
 from fastapi_archetype.services.contracts.dummy_service import (
-    DummyServiceV1Contract,  # noqa: TC001
+    DummyServiceV1Contract,
 )
 from fastapi_archetype.services.v1.dummy_service import get_dummy_service_v1
-
-if TYPE_CHECKING:
-    from sqlmodel import Session
-
-    from fastapi_archetype.auth.models import Principal
 
 router = APIRouter(prefix=DUMMIES.path, tags=[DUMMIES.name])
 _settings = AppSettings()

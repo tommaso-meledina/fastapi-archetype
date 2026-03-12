@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from fastapi_archetype.auth.contracts import RoleMappingProvider
 
 

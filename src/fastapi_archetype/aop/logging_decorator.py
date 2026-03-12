@@ -1,15 +1,10 @@
-from __future__ import annotations
-
 import functools
 import inspect
 import logging
 import sys
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from types import ModuleType
-    from typing import Any
+from collections.abc import Callable
+from types import ModuleType
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

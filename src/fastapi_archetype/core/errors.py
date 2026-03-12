@@ -1,14 +1,10 @@
-from __future__ import annotations
-
 import enum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
+from fastapi import Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-
-if TYPE_CHECKING:
-    from fastapi import Request
-    from fastapi.exceptions import RequestValidationError
-    from slowapi.errors import RateLimitExceeded
+from slowapi.errors import RateLimitExceeded
 
 
 class ErrorCode(enum.Enum):

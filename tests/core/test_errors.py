@@ -1,16 +1,11 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 # noinspection PyProtectedMember
+from fastapi.testclient import TestClient
+
 from fastapi_archetype.core.errors import (
     AppException,
     ErrorCode,
     _build_error_body,
 )
-
-if TYPE_CHECKING:
-    from fastapi.testclient import TestClient
 
 
 def test_error_code_not_found() -> None:

@@ -1,10 +1,8 @@
 """Tests for profile-driven service selection (PROFILE=default vs PROFILE=mock)."""
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 import pytest
+from fastapi.testclient import TestClient
+from sqlmodel import Session
 
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
@@ -17,10 +15,6 @@ from fastapi_archetype.services.v2.dummy_service import get_dummy_service_v2
 from fastapi_archetype.services.v2.implementations.mock_dummy_service import (
     MockDummyServiceV2,
 )
-
-if TYPE_CHECKING:
-    from fastapi.testclient import TestClient
-    from sqlmodel import Session
 
 
 @pytest.fixture(name="client_with_mock_v1_simple")

@@ -1,11 +1,8 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from fastapi import APIRouter, Depends, Request, Response, status
+from sqlmodel import Session
 
 from fastapi_archetype.auth.dependencies import require_role
-from fastapi_archetype.auth.models import Role
+from fastapi_archetype.auth.models import Principal, Role
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.constants import DUMMIES
 from fastapi_archetype.core.database import get_session
@@ -21,14 +18,9 @@ from fastapi_archetype.models.dto.v1.dummy import (
     PostDummiesResponse,
 )
 from fastapi_archetype.services.contracts.dummy_service import (
-    DummyServiceV2Contract,  # noqa: TC001
+    DummyServiceV2Contract,
 )
 from fastapi_archetype.services.v2.dummy_service import get_dummy_service_v2
-
-if TYPE_CHECKING:
-    from sqlmodel import Session
-
-    from fastapi_archetype.auth.models import Principal
 
 router = APIRouter(prefix=DUMMIES.path, tags=[f"{DUMMIES.name} v2"])
 _settings = AppSettings()

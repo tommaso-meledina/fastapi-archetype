@@ -1,6 +1,5 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any
+from collections.abc import Generator
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -17,9 +16,6 @@ from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
 
 TEST_ISSUER = "https://test-issuer.example.com/"
 TEST_AUDIENCE = "api://test-audience"

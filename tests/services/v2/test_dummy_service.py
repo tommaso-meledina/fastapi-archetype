@@ -1,16 +1,12 @@
-from __future__ import annotations
-
 import logging
-from typing import TYPE_CHECKING
+
+from pytest import LogCaptureFixture
+from sqlmodel import Session
 
 from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.services.v2.implementations.default_dummy_service import (
     DefaultDummyServiceV2,
 )
-
-if TYPE_CHECKING:
-    from pytest import LogCaptureFixture
-    from sqlmodel import Session
 
 V2_LOGGER = "fastapi_archetype.services.v2.implementations.default_dummy_service"
 

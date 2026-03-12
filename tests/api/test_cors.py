@@ -1,18 +1,12 @@
-from __future__ import annotations
-
 import importlib
 import os
-from typing import TYPE_CHECKING
+from collections.abc import Generator
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 import fastapi_archetype.main as main_module
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
-
-    from fastapi import FastAPI
 
 
 def _reload_main_app() -> FastAPI:

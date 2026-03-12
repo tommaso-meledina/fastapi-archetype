@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import pytest
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session

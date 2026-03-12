@@ -1,10 +1,5 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from fastapi_archetype.auth.contracts import AuthProvider, RoleMappingProvider
-    from fastapi_archetype.auth.models import Principal
+from fastapi_archetype.auth.contracts import AuthProvider, RoleMappingProvider
+from fastapi_archetype.auth.models import Principal
 
 
 class AuthFacade:

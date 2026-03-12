@@ -5,10 +5,9 @@ RSA keypair. The provider's HTTP methods are monkeypatched to return matching JW
 and mock responses so no external infrastructure is needed.
 """
 
-from __future__ import annotations
-
 import time
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable, Generator
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -29,9 +28,6 @@ from fastapi_archetype.main import app
 TEST_ISSUER = "https://test-issuer.example.com/"
 TEST_AUDIENCE = "api://test-audience"
 TEST_KID = "test-key-1"
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Generator
 
 
 def _entra_settings(**overrides: Any) -> AppSettings:

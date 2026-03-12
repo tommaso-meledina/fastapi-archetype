@@ -1,11 +1,5 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
+from fastapi.testclient import TestClient
 from prometheus_client import Counter
-
-if TYPE_CHECKING:
-    from fastapi.testclient import TestClient
 
 _test_counter = Counter(
     "test_operations_total",

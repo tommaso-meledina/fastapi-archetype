@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import uuid as uuid_module
 
 from pydantic import ConfigDict

@@ -1,14 +1,9 @@
-from __future__ import annotations
-
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
+from fastapi import FastAPI
 from prometheus_client import Counter
 from prometheus_fastapi_instrumentator import Instrumentator
-
-if TYPE_CHECKING:
-    from fastapi import FastAPI
 
 logger = logging.getLogger(__name__)
 

@@ -1,10 +1,6 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from fastapi_archetype.auth.models import Principal
+from fastapi_archetype.auth.models import Principal
 
 
 class AuthError(Exception):

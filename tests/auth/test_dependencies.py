@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 import logging
-from typing import TYPE_CHECKING
+from collections.abc import Generator
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -16,9 +14,6 @@ from fastapi_archetype.auth.models import Principal
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
 
 AUTH_DEPS_LOGGER = "fastapi_archetype.auth.dependencies"
 

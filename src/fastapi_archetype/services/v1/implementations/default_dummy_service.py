@@ -1,16 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-from sqlmodel import select
+from sqlmodel import Session, select
 
 from fastapi_archetype.core.errors import AppException, ErrorCode
 from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.observability.prometheus import metrics
 from fastapi_archetype.services.contracts.dummy_service import DummyServiceV1Contract
-
-if TYPE_CHECKING:
-    from sqlmodel import Session
 
 
 class DefaultDummyServiceV1(DummyServiceV1Contract):

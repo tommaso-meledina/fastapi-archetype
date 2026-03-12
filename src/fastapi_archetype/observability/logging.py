@@ -1,17 +1,13 @@
-from __future__ import annotations
-
 import json
 import logging
 import logging.config
 import re
 import traceback
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
 from opentelemetry import trace
 
-if TYPE_CHECKING:
-    from fastapi_archetype.core.config import AppSettings
+from fastapi_archetype.core.config import AppSettings
 
 NO_TRACE_ID = "NO_TRACE_ID"
 NO_SPAN_ID = "NO_SPAN_ID"

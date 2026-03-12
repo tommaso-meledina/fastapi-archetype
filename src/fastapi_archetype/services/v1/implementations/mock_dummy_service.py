@@ -1,15 +1,10 @@
 """Mock v1 dummy service returning static values only (no in-memory state)."""
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from sqlmodel import Session
 
 from fastapi_archetype.core.errors import AppException, ErrorCode
 from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.services.contracts.dummy_service import DummyServiceV1Contract
-
-if TYPE_CHECKING:
-    from sqlmodel import Session
 
 # Static mock data — no logic, no state.
 MOCK_UUID_1 = "00000000-0000-0000-0000-000000000001"

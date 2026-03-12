@@ -1,14 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from sqlmodel import Session
 
 from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.services.v1.implementations.default_dummy_service import (
     DefaultDummyServiceV1,
 )
-
-if TYPE_CHECKING:
-    from sqlmodel import Session
 
 
 def test_get_all_dummies_empty(session: Session) -> None:

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from fastapi import APIRouter
 
 from fastapi_archetype.api.v2.dummy_routes import router as dummy_router

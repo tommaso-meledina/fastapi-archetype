@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from sqlmodel import Session
 
 from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.services.v1.implementations.mock_dummy_service import (
@@ -11,9 +9,6 @@ from fastapi_archetype.services.v1.implementations.mock_dummy_service import (
     STATIC_UPDATED,
     MockDummyServiceV1,
 )
-
-if TYPE_CHECKING:
-    from sqlmodel import Session
 
 
 def test_mock_get_all_returns_static_list(session: Session) -> None:

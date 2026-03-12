@@ -1,12 +1,8 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from sqlmodel import Session
+from sqlmodel import Session
 
-    from fastapi_archetype.models.entities.dummy import Dummy
+from fastapi_archetype.models.entities.dummy import Dummy
 
 
 class DummyServiceV1Contract(ABC):

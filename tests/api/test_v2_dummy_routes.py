@@ -1,11 +1,7 @@
-from __future__ import annotations
-
 import logging
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from fastapi.testclient import TestClient
-    from pytest import LogCaptureFixture
+from fastapi.testclient import TestClient
+from pytest import LogCaptureFixture
 
 V2_SERVICE_LOGGER = "fastapi_archetype.services.v2.dummy_service"
 

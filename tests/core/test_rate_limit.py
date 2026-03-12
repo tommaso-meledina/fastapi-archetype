@@ -1,9 +1,4 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient
 
 
 def test_get_includes_rate_limit_headers(client: TestClient) -> None:

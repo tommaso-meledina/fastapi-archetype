@@ -1,14 +1,13 @@
-from __future__ import annotations
-
 import uuid as uuid_module
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy.engine import Engine
 from sqlmodel import Session, SQLModel, select
 
 from fastapi_archetype.api.v1 import router as v1_router
@@ -31,11 +30,6 @@ from fastapi_archetype.models.entities.dummy import Dummy
 from fastapi_archetype.observability.logging import configure_logging
 from fastapi_archetype.observability.otel import setup_otel
 from fastapi_archetype.observability.prometheus import setup_prometheus
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
-
-    from sqlalchemy.engine import Engine
 
 
 def _backfill_dummy_uuids(engine: Engine) -> None:

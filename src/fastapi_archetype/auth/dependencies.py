@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from functools import lru_cache
 from typing import Annotated
@@ -8,9 +6,9 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from fastapi_archetype.auth.contracts import UnauthorizedError
-from fastapi_archetype.auth.facade import AuthFacade  # noqa: TC001
+from fastapi_archetype.auth.facade import AuthFacade
 from fastapi_archetype.auth.factory import build_auth_facade
-from fastapi_archetype.auth.models import Principal, Role  # noqa: TC001
+from fastapi_archetype.auth.models import Principal, Role
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.errors import AppException, ErrorCode
 

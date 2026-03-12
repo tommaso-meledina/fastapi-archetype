@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 
 from fastapi_archetype.core.config import AppSettings

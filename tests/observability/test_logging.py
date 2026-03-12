@@ -1,11 +1,9 @@
-from __future__ import annotations
-
 import json
 import logging
 import sys
-from typing import TYPE_CHECKING
 
 import pytest
+from fastapi.testclient import TestClient
 from opentelemetry import trace
 from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
 
@@ -19,9 +17,6 @@ from fastapi_archetype.observability.logging import (  # noinspection PyProtecte
     _redact_secrets,
     configure_logging,
 )
-
-if TYPE_CHECKING:
-    from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
 # Fixtures

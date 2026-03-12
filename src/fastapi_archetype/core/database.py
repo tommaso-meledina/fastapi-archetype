@@ -1,17 +1,11 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from collections.abc import Generator
 
 from sqlalchemy import make_url
+from sqlalchemy.engine import Engine
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, create_engine
 
 from fastapi_archetype.core.config import AppSettings
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
-
-    from sqlalchemy.engine import Engine
 
 _engine: Engine | None = None
 

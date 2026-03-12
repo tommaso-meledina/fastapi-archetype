@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import httpx
 import jwt
@@ -13,9 +11,7 @@ from fastapi_archetype.auth.contracts import (
     UnauthorizedError,
 )
 from fastapi_archetype.auth.models import Principal
-
-if TYPE_CHECKING:
-    from fastapi_archetype.core.config import AppSettings
+from fastapi_archetype.core.config import AppSettings
 
 
 class EntraExternalAuthProvider(AuthProvider):
