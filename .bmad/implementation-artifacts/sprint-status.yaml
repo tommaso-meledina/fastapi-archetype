@@ -158,9 +158,9 @@ development_status:
   20-4-configuration-and-dev-dependencies: done
   epic-20-retrospective: optional
 
-  epic-21: in-progress
+  epic-21: done
   21-1-remove-from-future-and-clean-up-import-hygiene: done
   21-2-replace-type-ignore-with-cast: done
   21-3-pydantic-model-drying-and-entity-alias-cleanup: done
-  21-4-project-context-update-for-epic-21: in-progress
+  21-4-project-context-update-for-epic-21: done
   epic-21-retrospective: optional

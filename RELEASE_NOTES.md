@@ -27,6 +27,7 @@
 * add tests&#x2F;auth&#x2F;__init__.py, pytest-asyncio dep, and replace anyio markers
 * introduce LogLevel StrEnum for log_level config field and add ipdb dev dep
 * remove from __future__ and clean up import hygiene (story 21.1)
+* introduce CamelCaseModel base and remove entity alias leakage (story 21.3)
 
 
 ### Refactoring

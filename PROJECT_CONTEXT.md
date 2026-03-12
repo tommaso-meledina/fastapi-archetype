@@ -173,7 +173,7 @@ All request/response payloads are JSON. Models use `alias_generator=_to_camel` a
 ### 2. Data Persistence
 
 - **Entities:** SQLModel classes with `table=True` live in `models/entities/` (one file per entity). They are used only for persistence and service-layer logic; they are not used as FastAPI request/response models.
-- **DTOs:** Plain Pydantic models (no `table=True`) live in `models/dto/<version>/` (e.g. `v1/`). They define API request/response shapes with camelCase via `alias_generator` and are used only at the route boundary.
+- **DTOs:** Plain Pydantic models (no `table=True`) live in `models/dto/<version>/` (e.g. `v1/`). They define API request/response shapes with camelCase serialization and are used only at the route boundary. All DTOs inherit from `CamelCaseModel` (defined in `models/dto/__init__.py`), which sets `alias_generator=pydantic.alias_generators.to_camel` and `populate_by_name=True`. Do not add `model_config` directly to individual DTO classes; inherit from `CamelCaseModel` instead. Entity classes must **not** carry `alias_generator` — that is a DTO/serialization concern only.
 - **Factories:** The `factories/` package (one module per entity) provides entity ↔ DTO conversion using only Pydantic: `model_validate()` and `model_dump()`. No separate mapping library. Routes call factory functions at the boundary; services accept and return entities only.
 - **Client identity (UUID vs ID):** Entities that need a stable, client-facing identifier have a `uuid` property (string, UUID format). Response DTOs expose `uuid` and **never** expose the internal persistence `id`. This keeps persistence details hidden and gives clients a stable reference for updates and links.
 - **Update-by-UUID pattern (PUT):** For `PUT /v1/<resource>/{uuid}` with a body that includes `uuid` and updatable fields, follow this split so the route stays thin and the service owns resolution (IMPORTANT: this applies to mutations targeting entities-with-id in general, not just PUTs):
@@ -301,7 +301,7 @@ Type checking is enforced with Astral's ty, targeting the project's Python versi
 
 - `target-version = "py314"`
 - `line-length = 88`
-- Lint rules: `E`, `W`, `F`, `I`, `N`, `UP`, `B`, `SIM`, `TCH`
+- Lint rules: `E`, `W`, `F`, `I`, `N`, `UP`, `B`, `SIM`
 - `extend-immutable-calls = ["fastapi.Depends", "Depends"]`
 - `known-first-party = ["fastapi_archetype"]`
 
@@ -335,7 +335,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 
 ### Module organization
 
-- One entity per file in `models/entities/` (SQLModel, table=True). One resource’s DTOs per file in `models/dto/<version>/` (e.g. `v1/`), using the `<Method><Resource><Request|Response>` naming pattern. One factory module per entity in `factories/` (entity ↔ DTO using Pydantic only).
+- One entity per file in `models/entities/` (SQLModel, table=True). Entity classes must **not** carry `alias_generator`. One resource’s DTOs per file in `models/dto/<version>/` (e.g. `v1/`), using the `<Method><Resource><Request|Response>` naming pattern; all DTO classes inherit from `CamelCaseModel` (in `models/dto/__init__.py`). One factory module per entity in `factories/` (entity ↔ DTO using Pydantic only).
 - One resource's routes per file in `api/v{n}/`. Routes use DTOs for request/response and call factory functions to convert to/from entities. Routes depend on service **contracts** via DI (e.g. `Depends(get_dummy_service_v1)` / `Depends(get_dummy_service_v2)`), not on concrete service modules.
 - **Service contracts:** One contract (ABC or Protocol) per logical service in `services/contracts/`. The contract defines the methods used by routes (accept/return entities; session passed where the default implementation needs it).
 - **Service implementations:** For each contract, a default implementation (real backend) and a mock implementation (no DB/external calls) in `services/v{n}/implementations/` (e.g. `default_dummy_service.py`, `mock_dummy_service.py`). A factory in `services/factory.py` (or equivalent) selects by `settings.profile` and is used by the DI dependency.
@@ -381,11 +381,11 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 
 ### Code style
 
-- `from __future__ import annotations` at the top of every module.
-- Type-checking-only imports guarded by `if TYPE_CHECKING:`.
+- No `from __future__ import annotations` — the project targets Python >=3.14 where this is a no-op.
+- All imports at module level; no `if TYPE_CHECKING:` guards.
 - No code comments except where they explain non-obvious intent.
 - No dead code or placeholder implementations.
-- camelCase API responses via Pydantic `alias_generator`.
+- camelCase API responses via `CamelCaseModel` base class (see § Data Persistence / DTO conventions below).
 
 ### Logging
 
@@ -407,7 +407,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 - Do not add a local token-issuance endpoint — auth is external IdP only.
 - Do not add libraries not listed in the technology stack without human approval.
 - Do not add code comments that merely narrate what the code does.
-- Do not skip `from __future__ import annotations` in new modules.
+- Do not add `from __future__ import annotations` — it is a no-op on Python 3.14 and misleads contributors.
 - Do not modify `tests/conftest.py` fixtures to be resource-specific — they are generic by design.
 - Do not name web DTOs after the entity (e.g. `DummyCreate`, `WidgetResponse`) — use the mandatory pattern `<Method><Resource><Request|Response>` (e.g. `PostDummiesRequest`, `GetDummiesResponse`).
 - Do not wire routes directly to concrete service classes — use the service contract and a profile-driven factory (see §11 Profile and Service Contracts).
@@ -417,8 +417,8 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 
 To add a new resource (e.g., `Widget`):
 
-1. **Entity:** Create `models/entities/widget.py` with `class Widget(SQLModel, table=True)`, camelCase alias config, and `__tablename__`. This is the ORM model only; it is not used as a FastAPI request/response model. For resources that need a stable, client-facing identifier, add a `uuid` field (string, UUID format) on the entity.
-2. **DTOs:** Create `models/dto/v1/widget.py` with Pydantic models following the **`<Method><Resource><Request|Response>`** naming pattern (e.g. `PostWidgetsRequest`, `GetWidgetsResponse`, `PostWidgetsResponse`). Same camelCase behaviour as existing DTOs. Response DTOs must include `uuid` (when the entity has one) and **must not** include the internal `id`.
+1. **Entity:** Create `models/entities/widget.py` with `class Widget(SQLModel, table=True)` and `__tablename__`. This is the ORM model only; it is not used as a FastAPI request/response model. Do **not** add `alias_generator` to entity classes. For resources that need a stable, client-facing identifier, add a `uuid` field (string, UUID format) on the entity.
+2. **DTOs:** Create `models/dto/v1/widget.py` with Pydantic models inheriting from `CamelCaseModel` (imported from `fastapi_archetype.models.dto`), following the **`<Method><Resource><Request|Response>`** naming pattern (e.g. `PostWidgetsRequest`, `GetWidgetsResponse`, `PostWidgetsResponse`). `CamelCaseModel` provides camelCase serialization via `pydantic.alias_generators.to_camel` and `populate_by_name=True`. Response DTOs must include `uuid` (when the entity has one) and **must not** include the internal `id`.
 3. **Factory:** Create `factories/widget.py` with `entity_to_dto(entity) -> GetWidgetsResponse` (or the appropriate response type) and `dto_to_entity(dto: PostWidgetsRequest) -> Widget` using only Pydantic (`model_validate`, `model_dump`). For update (PUT): add `put_dto_to_entity(dto: PutWidgetsRequest) -> Widget` that returns a `Widget` with `uuid` and updatable fields from the DTO but **no** `id` (see **Update-by-UUID pattern** in §2 Data Persistence). The service will resolve by UUID when `id` is missing.
 4. **Constant:** Add `WIDGETS = ResourceDefinition(...)` to `core/constants.py`.
 5. **Service contract:** Create `services/contracts/widget_service.py` with an ABC (e.g. `WidgetServiceV1Contract`) declaring the methods used by routes (e.g. `get_all`, `create`, `get_by_uuid`, `update` with entity types and `Session` where needed).
