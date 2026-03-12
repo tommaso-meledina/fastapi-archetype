@@ -9,7 +9,7 @@ from fastapi_archetype.auth.factory import build_auth_facade
 from fastapi_archetype.core.config import AppSettings
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_none_facade_bypasses_bearer_validation() -> None:
     settings = AppSettings(auth_type="none")
     facade = build_auth_facade(settings)
@@ -18,7 +18,7 @@ async def test_none_facade_bypasses_bearer_validation() -> None:
     assert "admin" in principal.roles
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_none_facade_client_credentials_not_supported() -> None:
     settings = AppSettings(auth_type="none")
     facade = build_auth_facade(settings)

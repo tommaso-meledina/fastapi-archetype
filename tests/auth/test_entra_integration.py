@@ -117,7 +117,7 @@ def entra_integration_client_fixture(
 class TestProviderLevelValidation:
     """Direct provider-level tests for full authenticate_bearer_token path."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_valid_token_returns_correct_principal(
         self,
         sign_jwt: Callable[..., str],
@@ -134,7 +134,7 @@ class TestProviderLevelValidation:
         assert principal.claims["iss"] == TEST_ISSUER
         assert principal.claims["aud"] == TEST_AUDIENCE
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_expired_token_raises(
         self,
         sign_jwt: Callable[..., str],
@@ -145,7 +145,7 @@ class TestProviderLevelValidation:
         with pytest.raises(Exception, match="expired"):
             await provider.authenticate_bearer_token(token)
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_wrong_issuer_raises(
         self,
         sign_jwt: Callable[..., str],
@@ -156,7 +156,7 @@ class TestProviderLevelValidation:
         with pytest.raises(Exception, match="issuer"):
             await provider.authenticate_bearer_token(token)
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_wrong_audience_raises(
         self,
         sign_jwt: Callable[..., str],
@@ -167,7 +167,7 @@ class TestProviderLevelValidation:
         with pytest.raises(Exception, match="audience"):
             await provider.authenticate_bearer_token(token)
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_invalid_signature_raises(
         self,
         sign_jwt: Callable[..., str],
@@ -184,7 +184,7 @@ class TestProviderLevelValidation:
         with pytest.raises(Exception, match="signature"):
             await provider.authenticate_bearer_token(token)
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_malformed_token_raises(
         self,
         jwks_response: dict[str, Any],

@@ -48,7 +48,7 @@ def test_build_auth_facade_errors_when_httpx_is_missing(
         build_auth_facade(_entra_settings())
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_no_auth_provider_obo_not_supported() -> None:
     provider = NoAuthProvider()
     with pytest.raises(AuthFeatureNotSupportedError, match="OBO flow is unavailable"):

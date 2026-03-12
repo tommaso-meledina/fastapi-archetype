@@ -29,7 +29,9 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "ipdb",
     "pytest>=8.0",
+    "pytest-asyncio>=0.25",
     "pytest-cov>=6.0",
     "ruff>=0.15.4",
     "ty",
@@ -69,3 +71,4 @@ include = ["src", "tests"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "--strict-markers -ra"
+asyncio_mode = "auto"

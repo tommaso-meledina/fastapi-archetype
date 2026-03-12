@@ -7,7 +7,7 @@ from fastapi_archetype.auth.providers.entra import EntraExternalAuthProvider
 from fastapi_archetype.core.config import AppSettings
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_external_provider_client_credentials_uses_token_endpoint() -> None:
     settings = AppSettings(
         auth_type="entra",
@@ -40,7 +40,7 @@ def _settings_without_m2m(**overrides: str) -> AppSettings:
     return AppSettings(**defaults)  # type: ignore[call-arg]
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_client_credentials_raises_when_no_client_secret() -> None:
     settings = _settings_without_m2m(
         auth_external_token_uri="https://example.test/token",
@@ -51,7 +51,7 @@ async def test_client_credentials_raises_when_no_client_secret() -> None:
         await provider.get_client_credentials_access_token("scope://api/.default")
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_client_credentials_raises_when_no_client_id() -> None:
     settings = _settings_without_m2m(
         auth_external_token_uri="https://example.test/token",
@@ -62,7 +62,7 @@ async def test_client_credentials_raises_when_no_client_id() -> None:
         await provider.get_client_credentials_access_token("scope://api/.default")
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_obo_raises_when_no_client_secret() -> None:
     settings = _settings_without_m2m(
         auth_external_token_uri="https://example.test/token",
@@ -73,7 +73,7 @@ async def test_obo_raises_when_no_client_secret() -> None:
         await provider.get_on_behalf_of_access_token("scope://api/.default", "token")
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_obo_raises_when_no_client_id() -> None:
     settings = _settings_without_m2m(
         auth_external_token_uri="https://example.test/token",
