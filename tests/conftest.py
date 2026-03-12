@@ -3,10 +3,11 @@ import os
 
 import pytest
 from fastapi import APIRouter, Depends, Request, Response
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import SQLModel
 
 os.environ["ENV_FILE"] = ""
 os.environ.setdefault("AUTH_TYPE", "none")
@@ -30,14 +31,14 @@ _require_admin_role = require_role(Role.ADMIN)
 
 @_test_router.get("/open")
 @limiter.limit("100/minute")
-def _stub_get_open(request: Request, response: Response) -> dict[str, str]:
+async def _stub_get_open(request: Request, response: Response) -> dict[str, str]:
     _stub_logger.debug("stub endpoint called")
     return {"status": "ok"}
 
 
 @_test_router.post("/open", status_code=201)
 @limiter.limit("10/minute")
-def _stub_post_open(
+async def _stub_post_open(
     request: Request, payload: _StubPayload, response: Response
 ) -> dict[str, str]:
     return {"value": payload.value}
@@ -45,7 +46,7 @@ def _stub_post_open(
 
 @_test_router.post("/auth-required", status_code=201)
 @limiter.limit("10/minute")
-def _stub_post_auth_required(
+async def _stub_post_auth_required(
     request: Request,
     payload: _StubPayload,
     response: Response,
@@ -57,7 +58,7 @@ def _stub_post_auth_required(
 
 @_test_router.post("/admin-required", status_code=201)
 @limiter.limit("10/minute")
-def _stub_post_admin_required(
+async def _stub_post_admin_required(
     request: Request,
     payload: _StubPayload,
     response: Response,
@@ -71,34 +72,40 @@ app.include_router(_test_router)
 
 
 @pytest.fixture(name="engine", scope="session")
-def engine_fixture():
-    engine = create_engine(
-        "sqlite://",
+async def engine_fixture():
+    engine = create_async_engine(
+        "sqlite+aiosqlite://",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    SQLModel.metadata.create_all(engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
     try:
         yield engine
     finally:
-        engine.dispose()
+        await engine.dispose()
 
 
 @pytest.fixture(name="session")
-def session_fixture(engine):
-    with Session(engine) as session:
+async def session_fixture(engine):
+    factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with factory() as session:
         yield session
-    SQLModel.metadata.drop_all(engine)
-    SQLModel.metadata.create_all(engine)
+
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.drop_all)
+        await conn.run_sync(SQLModel.metadata.create_all)
 
 
 @pytest.fixture(name="client")
-def client_fixture(session):
-    def _override():
+async def client_fixture(session):
+    async def _override():
         yield session
 
     app.dependency_overrides[get_session] = _override
     limiter.reset()
-    with TestClient(app) as c:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as c:
         yield c
     app.dependency_overrides.clear()

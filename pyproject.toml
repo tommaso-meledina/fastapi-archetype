@@ -22,6 +22,9 @@ dependencies = [
     "pymysql>=1.1.2",
     "sqlmodel>=0.0.37",
     "uvicorn>=0.41.0",
+    "aiosqlite>=0.22.1",
+    "aiomysql>=0.3.2",
+    "greenlet>=3.3.2",
 ]
 
 [build-system]

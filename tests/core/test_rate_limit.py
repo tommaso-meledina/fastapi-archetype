@@ -1,26 +1,26 @@
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 
-def test_get_includes_rate_limit_headers(client: TestClient) -> None:
-    response = client.get("/test/open")
+async def test_get_includes_rate_limit_headers(client: AsyncClient) -> None:
+    response = await client.get("/test/open")
     assert response.status_code == 200
     assert "x-ratelimit-limit" in response.headers
     assert "x-ratelimit-remaining" in response.headers
     assert "x-ratelimit-reset" in response.headers
 
 
-def test_post_includes_rate_limit_headers(client: TestClient) -> None:
-    response = client.post("/test/open", json={"value": "RateTest"})
+async def test_post_includes_rate_limit_headers(client: AsyncClient) -> None:
+    response = await client.post("/test/open", json={"value": "RateTest"})
     assert response.status_code == 201
     assert "x-ratelimit-limit" in response.headers
     assert "x-ratelimit-remaining" in response.headers
     assert "x-ratelimit-reset" in response.headers
 
 
-def test_exceeding_post_rate_limit_returns_429(client: TestClient) -> None:
+async def test_exceeding_post_rate_limit_returns_429(client: AsyncClient) -> None:
     for _ in range(10):
-        client.post("/test/open", json={"value": "Flood"})
-    response = client.post("/test/open", json={"value": "OverLimit"})
+        await client.post("/test/open", json={"value": "Flood"})
+    response = await client.post("/test/open", json={"value": "OverLimit"})
     assert response.status_code == 429
     data = response.json()
     assert data["errorCode"] == "RATE_LIMITED"
@@ -28,28 +28,28 @@ def test_exceeding_post_rate_limit_returns_429(client: TestClient) -> None:
     assert "detail" in data
 
 
-def test_rate_limited_response_body_structure(client: TestClient) -> None:
+async def test_rate_limited_response_body_structure(client: AsyncClient) -> None:
     for _ in range(10):
-        client.post("/test/open", json={"value": "Flood"})
-    response = client.post("/test/open", json={"value": "OverLimit"})
+        await client.post("/test/open", json={"value": "Flood"})
+    response = await client.post("/test/open", json={"value": "OverLimit"})
     assert response.status_code == 429
     data = response.json()
     assert set(data.keys()) == {"errorCode", "message", "detail"}
 
 
-def test_health_endpoint_not_rate_limited(client: TestClient) -> None:
-    response = client.get("/health")
+async def test_health_endpoint_not_rate_limited(client: AsyncClient) -> None:
+    response = await client.get("/health")
     for _ in range(19):
-        response = client.get("/health")
+        response = await client.get("/health")
     assert response.status_code == 200
     assert "x-ratelimit-limit" not in response.headers
 
 
-def test_remaining_decrements_on_successive_requests(
-    client: TestClient,
+async def test_remaining_decrements_on_successive_requests(
+    client: AsyncClient,
 ) -> None:
-    r1 = client.get("/test/open")
-    r2 = client.get("/test/open")
+    r1 = await client.get("/test/open")
+    r2 = await client.get("/test/open")
     remaining1 = int(r1.headers["x-ratelimit-remaining"])
     remaining2 = int(r2.headers["x-ratelimit-remaining"])
     assert remaining2 == remaining1 - 1

@@ -1,5 +1,5 @@
 # noinspection PyProtectedMember
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 from fastapi_archetype.core.errors import (
     AppException,
@@ -61,8 +61,8 @@ def test_build_error_body_null_detail() -> None:
     assert body["detail"] is None
 
 
-def test_validation_error_via_http(client: TestClient) -> None:
-    response = client.post("/test/open")
+async def test_validation_error_via_http(client: AsyncClient) -> None:
+    response = await client.post("/test/open")
     assert response.status_code == 422
     data = response.json()
     assert data["errorCode"] == "VALIDATION_ERROR"

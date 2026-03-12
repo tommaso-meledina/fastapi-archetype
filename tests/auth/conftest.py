@@ -1,16 +1,14 @@
 import base64
 import time
-from collections.abc import Generator
 from typing import Any
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import jwt
 import pytest
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import SQLModel
 
 from fastapi_archetype.auth.contracts import UnauthorizedError
 from fastapi_archetype.auth.models import AuthFunctions, Principal
@@ -31,6 +29,9 @@ TEST_KID = "test-key-1"
 
 @pytest.fixture(name="rsa_keypair", scope="module")
 def rsa_keypair_fixture() -> dict[str, Any]:
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     private_pem = private_key.private_bytes(
         serialization.Encoding.PEM,
@@ -95,40 +96,44 @@ def sign_jwt_fixture(rsa_keypair: dict[str, Any]):
 
 
 @pytest.fixture(name="entra_engine", scope="module")
-def entra_engine_fixture():
-    engine = create_engine(
-        "sqlite://",
+async def entra_engine_fixture():
+    engine = create_async_engine(
+        "sqlite+aiosqlite://",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    SQLModel.metadata.create_all(engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
     try:
         yield engine
     finally:
-        SQLModel.metadata.drop_all(engine)
-        engine.dispose()
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.drop_all)
+        await engine.dispose()
 
 
 @pytest.fixture(name="entra_client")
-def entra_client_fixture(entra_engine) -> Generator[TestClient]:
+async def entra_client_fixture(entra_engine):
     """Client with auth_type patched to 'entra' so auth-error paths execute."""
-    from unittest.mock import patch
+    factory = async_sessionmaker(
+        entra_engine, class_=AsyncSession, expire_on_commit=False
+    )
 
-    def _override_session():
-        with Session(entra_engine) as session:
+    async def _override_session():
+        async with factory() as session:
             yield session
 
     app.dependency_overrides[get_session] = _override_session
     limiter.reset()
 
-    with (
-        patch(
-            "fastapi_archetype.auth.dependencies.settings.auth_type",
-            "entra",
-        ),
-        TestClient(app) as c,
+    with patch(
+        "fastapi_archetype.auth.dependencies.settings.auth_type",
+        "entra",
     ):
-        yield c
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as c:
+            yield c
 
     app.dependency_overrides.clear()
 

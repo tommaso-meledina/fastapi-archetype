@@ -1,7 +1,7 @@
 import logging
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 from fastapi_archetype.auth.dependencies import get_auth_functions
 from fastapi_archetype.main import app
@@ -12,14 +12,14 @@ AUTH_DEPS_LOGGER = "fastapi_archetype.auth.dependencies"
 
 
 class TestForbiddenSanitization:
-    def test_forbidden_does_not_reveal_role_name(
-        self, entra_client: TestClient
+    async def test_forbidden_does_not_reveal_role_name(
+        self, entra_client: AsyncClient
     ) -> None:
         app.dependency_overrides[get_auth_functions] = (
             mock_auth_functions_reader_principal
         )
         try:
-            response = entra_client.post(
+            response = await entra_client.post(
                 "/test/admin-required",
                 json={"value": "X"},
                 headers={"Authorization": "Bearer valid-token"},
@@ -33,15 +33,15 @@ class TestForbiddenSanitization:
         finally:
             app.dependency_overrides.pop(get_auth_functions, None)
 
-    def test_role_failure_logged_at_warning(
-        self, entra_client: TestClient, caplog: pytest.LogCaptureFixture
+    async def test_role_failure_logged_at_warning(
+        self, entra_client: AsyncClient, caplog: pytest.LogCaptureFixture
     ) -> None:
         app.dependency_overrides[get_auth_functions] = (
             mock_auth_functions_reader_principal
         )
         try:
             with caplog.at_level(logging.WARNING, logger=AUTH_DEPS_LOGGER):
-                entra_client.post(
+                await entra_client.post(
                     "/test/admin-required",
                     json={"value": "X"},
                     headers={"Authorization": "Bearer valid-token"},

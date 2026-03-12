@@ -33,6 +33,7 @@
 * add __all__ to key packages and Justfile task runner (story 22.2)
 * migrate logging infrastructure to structlog
 * test suite cleanup for epic 23
+* make log_io decorator async-aware and add nest_asyncio dev dep
 
 
 ### Refactoring

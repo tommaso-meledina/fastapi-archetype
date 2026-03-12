@@ -1,7 +1,8 @@
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
+from typing import Any
 
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.models.entities.dummy import Dummy
@@ -11,18 +12,18 @@ from fastapi_archetype.models.entities.dummy import Dummy
 class DummyServiceV1:
     """Callable fields dispatched to the configured profile's implementation."""
 
-    get_all_dummies: Callable[[Session], list[Dummy]]
-    get_dummy_by_uuid: Callable[[Session, str], Dummy | None]
-    create_dummy: Callable[[Session, Dummy], Dummy]
-    update_dummy: Callable[[Session, Dummy], Dummy]
+    get_all_dummies: Callable[[AsyncSession], Coroutine[Any, Any, list[Dummy]]]
+    get_dummy_by_uuid: Callable[[AsyncSession, str], Coroutine[Any, Any, Dummy | None]]
+    create_dummy: Callable[[AsyncSession, Dummy], Coroutine[Any, Any, Dummy]]
+    update_dummy: Callable[[AsyncSession, Dummy], Coroutine[Any, Any, Dummy]]
 
 
 @dataclass(frozen=True, kw_only=True)
 class DummyServiceV2:
     """Callable fields dispatched to the configured profile's implementation."""
 
-    get_all_dummies: Callable[[Session], list[Dummy]]
-    create_dummy: Callable[[Session, Dummy], Dummy]
+    get_all_dummies: Callable[[AsyncSession], Coroutine[Any, Any, list[Dummy]]]
+    create_dummy: Callable[[AsyncSession, Dummy], Coroutine[Any, Any, Dummy]]
 
 
 def build_dummy_service_v1(settings: AppSettings) -> DummyServiceV1:

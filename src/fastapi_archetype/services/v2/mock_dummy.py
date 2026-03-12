@@ -1,6 +1,6 @@
 """Mock v2 dummy service returning static values only (no in-memory state)."""
 
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi_archetype.models.entities.dummy import Dummy
 
@@ -15,11 +15,11 @@ STATIC_CREATED_V2 = Dummy(
 )
 
 
-def get_all_dummies(session: Session) -> list[Dummy]:
+async def get_all_dummies(session: AsyncSession) -> list[Dummy]:
     _ = session
     return list(STATIC_LIST_V2)
 
 
-def create_dummy(session: Session, dummy: Dummy) -> Dummy:
+async def create_dummy(session: AsyncSession, dummy: Dummy) -> Dummy:
     _ = (session, dummy)
     return STATIC_CREATED_V2

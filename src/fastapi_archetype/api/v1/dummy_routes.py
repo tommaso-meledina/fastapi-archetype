@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, Response, status
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi_archetype.auth.dependencies import require_auth
 from fastapi_archetype.auth.models import Principal
@@ -28,13 +28,13 @@ router = APIRouter(prefix=DUMMIES.path, tags=[DUMMIES.name])
 
 @router.get("", response_model=list[GetDummiesResponse])
 @limiter.limit(settings.rate_limit_get_dummies)
-def list_dummies(
+async def list_dummies(
     request: Request,
     response: Response,
-    session: Session = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
     svc: DummyServiceV1 = Depends(get_dummy_service_v1),
 ) -> list[GetDummiesResponse]:
-    entities = svc.get_all_dummies(session)
+    entities = await svc.get_all_dummies(session)
     return [entity_to_get_response(e) for e in entities]
 
 
@@ -42,25 +42,25 @@ def list_dummies(
     "", response_model=PostDummiesResponse, status_code=status.HTTP_201_CREATED
 )
 @limiter.limit(settings.rate_limit_post_dummies)
-def create_dummy(
+async def create_dummy(
     request: Request,
     dummy: PostDummiesRequest,
     response: Response,
     principal: Principal = Depends(require_auth),
-    session: Session = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
     svc: DummyServiceV1 = Depends(get_dummy_service_v1),
 ) -> PostDummiesResponse:
     _ = principal
     entity = post_dto_to_entity(dummy)
-    created = svc.create_dummy(session, entity)
+    created = await svc.create_dummy(session, entity)
     return entity_to_post_response(created)
 
 
 @router.put("/{uuid}", response_model=GetDummiesResponse)
-def update_dummy(
+async def update_dummy(
     uuid: str,
     body: PutDummiesRequest,
-    session: Session = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
     svc: DummyServiceV1 = Depends(get_dummy_service_v1),
 ) -> GetDummiesResponse:
     if body.uuid != uuid:
@@ -69,5 +69,5 @@ def update_dummy(
             detail="Path UUID and body UUID must match",
         )
     entity = put_dto_to_entity(body)
-    updated = svc.update_dummy(session, entity)
+    updated = await svc.update_dummy(session, entity)
     return entity_to_get_response(updated)

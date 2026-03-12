@@ -1,11 +1,11 @@
-from collections.abc import Generator
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import SQLModel
 
 from fastapi_archetype.auth.dependencies import get_auth_functions
 from fastapi_archetype.auth.entra import (
@@ -83,8 +83,6 @@ def _build_guid_mapped_auth_functions(
 
         return _principal_from_claims(claims)
 
-    from unittest.mock import AsyncMock
-
     return AuthFunctions(
         authenticate_bearer_token=authenticate_bearer_token,
         get_client_credentials_access_token=AsyncMock(return_value="fake-token"),
@@ -97,28 +95,31 @@ class TestRequireRoleUsesMapper:
     """Verify that require_role goes through role_mapper for the comparison."""
 
     @pytest.fixture(name="_guid_engine", scope="module")
-    def guid_engine_fixture(self):
-        engine = create_engine(
-            "sqlite://",
+    async def guid_engine_fixture(self):
+        engine = create_async_engine(
+            "sqlite+aiosqlite://",
             connect_args={"check_same_thread": False},
             poolclass=StaticPool,
         )
-        SQLModel.metadata.create_all(engine)
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
         try:
             yield engine
         finally:
-            SQLModel.metadata.drop_all(engine)
-            engine.dispose()
+            async with engine.begin() as conn:
+                await conn.run_sync(SQLModel.metadata.drop_all)
+            await engine.dispose()
 
     @pytest.fixture(name="guid_client")
-    def guid_client_fixture(
-        self, _guid_engine, sign_jwt, jwks_response
-    ) -> Generator[TestClient]:
+    async def guid_client_fixture(self, _guid_engine, sign_jwt, jwks_response):
         """Client using a GUID role mapper where 'admin' -> 'guid-admin-001'."""
         auth_fns = _build_guid_mapped_auth_functions(jwks_response)
+        factory = async_sessionmaker(
+            _guid_engine, class_=AsyncSession, expire_on_commit=False
+        )
 
-        def _override_session():
-            with Session(_guid_engine) as session:
+        async def _override_session():
+            async with factory() as session:
                 yield session
 
         def _override_auth_fns() -> AuthFunctions:
@@ -128,34 +129,34 @@ class TestRequireRoleUsesMapper:
         app.dependency_overrides[get_auth_functions] = _override_auth_fns
         limiter.reset()
 
-        with (
-            patch("fastapi_archetype.auth.dependencies.settings.auth_type", "entra"),
-            TestClient(app) as c,
-        ):
-            yield c
+        with patch("fastapi_archetype.auth.dependencies.settings.auth_type", "entra"):
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as c:
+                yield c
 
         app.dependency_overrides.clear()
 
-    def test_guid_mapped_role_grants_access(
+    async def test_guid_mapped_role_grants_access(
         self,
-        guid_client: TestClient,
+        guid_client: AsyncClient,
         sign_jwt,
     ) -> None:
         token = sign_jwt({"roles": ["guid-admin-001"]})
-        response = guid_client.post(
+        response = await guid_client.post(
             "/test/admin-required",
             json={"value": "GuidAdmin"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 201
 
-    def test_unmapped_admin_string_denied_with_guid_mapper(
+    async def test_unmapped_admin_string_denied_with_guid_mapper(
         self,
-        guid_client: TestClient,
+        guid_client: AsyncClient,
         sign_jwt,
     ) -> None:
         token = sign_jwt({"roles": ["admin"]})
-        response = guid_client.post(
+        response = await guid_client.post(
             "/test/admin-required",
             json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},

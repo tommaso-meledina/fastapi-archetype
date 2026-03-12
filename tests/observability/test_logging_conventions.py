@@ -1,7 +1,7 @@
 import logging
 
 import structlog
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 from fastapi_archetype.observability.logging import (
     NO_SPAN_ID,
@@ -30,7 +30,9 @@ class TestExistingConventions:
 
 
 class TestTraceCorrelationDuringRequest:
-    def test_request_carries_real_trace_and_span_ids(self, client: TestClient) -> None:
+    async def test_request_carries_real_trace_and_span_ids(
+        self, client: AsyncClient
+    ) -> None:
         captured: list[tuple[str, str]] = []
 
         class _Capture(logging.Filter):
@@ -44,7 +46,7 @@ class TestTraceCorrelationDuringRequest:
         original_level = stub_logger.level
         stub_logger.setLevel(logging.DEBUG)
         try:
-            client.get("/test/open")
+            await client.get("/test/open")
         finally:
             stub_logger.removeFilter(capture)
             stub_logger.setLevel(original_level)

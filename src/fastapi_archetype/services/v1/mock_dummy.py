@@ -1,6 +1,6 @@
 """Mock v1 dummy service returning static values only (no in-memory state)."""
 
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi_archetype.core.errors import AppException, ErrorCode
 from fastapi_archetype.models.entities.dummy import Dummy
@@ -23,24 +23,24 @@ STATIC_UPDATED = Dummy(
 )
 
 
-def get_all_dummies(session: Session) -> list[Dummy]:
+async def get_all_dummies(session: AsyncSession) -> list[Dummy]:
     _ = session
     return list(STATIC_LIST)
 
 
-def get_dummy_by_uuid(session: Session, uuid: str) -> Dummy | None:
+async def get_dummy_by_uuid(session: AsyncSession, uuid: str) -> Dummy | None:
     _ = session
     if uuid == MOCK_UUID_1:
         return STATIC_GET_BY_UUID
     return None
 
 
-def create_dummy(session: Session, dummy: Dummy) -> Dummy:
+async def create_dummy(session: AsyncSession, dummy: Dummy) -> Dummy:
     _ = (session, dummy)
     return STATIC_CREATED
 
 
-def update_dummy(session: Session, entity: Dummy) -> Dummy:
+async def update_dummy(session: AsyncSession, entity: Dummy) -> Dummy:
     _ = session
     if entity.uuid != MOCK_UUID_1 and entity.uuid != MOCK_UUID_CREATED:
         raise AppException(

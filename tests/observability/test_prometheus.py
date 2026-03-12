@@ -1,4 +1,4 @@
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from prometheus_client import Counter
 
 _test_counter = Counter(
@@ -34,16 +34,20 @@ def test_labels_are_independent() -> None:
     assert _op_value("read") == read_before
 
 
-def test_metrics_endpoint_returns_prometheus_format(client: TestClient) -> None:
-    response = client.get("/metrics")
+async def test_metrics_endpoint_returns_prometheus_format(
+    client: AsyncClient,
+) -> None:
+    response = await client.get("/metrics")
     assert response.status_code == 200
     body = response.text
     assert "http" in body.lower()
 
 
-def test_metrics_endpoint_exposes_custom_counter(client: TestClient) -> None:
+async def test_metrics_endpoint_exposes_custom_counter(
+    client: AsyncClient,
+) -> None:
     _test_counter.labels(operation="create").inc()
-    response = client.get("/metrics")
+    response = await client.get("/metrics")
     assert response.status_code == 200
     body = response.text
     assert "test_operations_total" in body
@@ -51,14 +55,16 @@ def test_metrics_endpoint_exposes_custom_counter(client: TestClient) -> None:
     assert "Test counter for prometheus infrastructure validation" in body
 
 
-def test_counter_value_reflected_at_metrics_endpoint(client: TestClient) -> None:
+async def test_counter_value_reflected_at_metrics_endpoint(
+    client: AsyncClient,
+) -> None:
     before = _op_value("create")
     _test_counter.labels(operation="create").inc()
     _test_counter.labels(operation="create").inc()
     after = _op_value("create")
     assert after == before + 2
 
-    response = client.get("/metrics")
+    response = await client.get("/metrics")
     body = response.text
     for line in body.splitlines():
         if line.startswith("test_operations_total{") and 'operation="create"' in line:
@@ -71,8 +77,8 @@ def test_counter_value_reflected_at_metrics_endpoint(client: TestClient) -> None
         )
 
 
-def test_http_auto_instrumentation_present(client: TestClient) -> None:
-    client.get("/health")
-    response = client.get("/metrics")
+async def test_http_auto_instrumentation_present(client: AsyncClient) -> None:
+    await client.get("/health")
+    response = await client.get("/metrics")
     body = response.text
     assert "http_request" in body or "http_requests" in body

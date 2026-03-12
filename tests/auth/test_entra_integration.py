@@ -6,16 +6,17 @@ so no external infrastructure is needed.
 """
 
 import time
-from collections.abc import Callable, Generator
+from collections.abc import Callable
 from typing import Any
 from unittest.mock import patch
 
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import SQLModel
 
 from fastapi_archetype.auth.dependencies import get_auth_functions
 from fastapi_archetype.auth.entra import (
@@ -130,29 +131,34 @@ def _build_patched_auth_functions(
 
 
 @pytest.fixture(name="_entra_engine", scope="module")
-def entra_engine_fixture():
-    engine = create_engine(
-        "sqlite://",
+async def entra_engine_fixture():
+    engine = create_async_engine(
+        "sqlite+aiosqlite://",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    SQLModel.metadata.create_all(engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
     try:
         yield engine
     finally:
-        SQLModel.metadata.drop_all(engine)
-        engine.dispose()
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.drop_all)
+        await engine.dispose()
 
 
 @pytest.fixture(name="entra_integration_client")
-def entra_integration_client_fixture(
+async def entra_integration_client_fixture(
     _entra_engine,
     jwks_response: dict[str, Any],
-) -> Generator[TestClient]:
+):
     auth_fns = _build_patched_auth_functions(jwks_response)
+    factory = async_sessionmaker(
+        _entra_engine, class_=AsyncSession, expire_on_commit=False
+    )
 
-    def _override_session():
-        with Session(_entra_engine) as session:
+    async def _override_session():
+        async with factory() as session:
             yield session
 
     def _override_auth_fns() -> AuthFunctions:
@@ -162,11 +168,11 @@ def entra_integration_client_fixture(
     app.dependency_overrides[get_auth_functions] = _override_auth_fns
     limiter.reset()
 
-    with (
-        patch("fastapi_archetype.auth.dependencies.settings.auth_type", "entra"),
-        TestClient(app) as c,
-    ):
-        yield c
+    with patch("fastapi_archetype.auth.dependencies.settings.auth_type", "entra"):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as c:
+            yield c
 
     app.dependency_overrides.clear()
 
@@ -174,7 +180,6 @@ def entra_integration_client_fixture(
 class TestProviderLevelValidation:
     """Direct provider-level tests for full authenticate_bearer_token path."""
 
-    @pytest.mark.asyncio
     async def test_valid_token_returns_correct_principal(
         self,
         sign_jwt: Callable[..., str],
@@ -191,7 +196,6 @@ class TestProviderLevelValidation:
         assert principal.claims["iss"] == TEST_ISSUER
         assert principal.claims["aud"] == TEST_AUDIENCE
 
-    @pytest.mark.asyncio
     async def test_expired_token_raises(
         self,
         sign_jwt: Callable[..., str],
@@ -202,7 +206,6 @@ class TestProviderLevelValidation:
         with pytest.raises(Exception, match="expired"):
             await auth_fns.authenticate_bearer_token(token)
 
-    @pytest.mark.asyncio
     async def test_wrong_issuer_raises(
         self,
         sign_jwt: Callable[..., str],
@@ -213,7 +216,6 @@ class TestProviderLevelValidation:
         with pytest.raises(Exception, match="issuer"):
             await auth_fns.authenticate_bearer_token(token)
 
-    @pytest.mark.asyncio
     async def test_wrong_audience_raises(
         self,
         sign_jwt: Callable[..., str],
@@ -224,7 +226,6 @@ class TestProviderLevelValidation:
         with pytest.raises(Exception, match="audience"):
             await auth_fns.authenticate_bearer_token(token)
 
-    @pytest.mark.asyncio
     async def test_invalid_signature_raises(
         self,
         sign_jwt: Callable[..., str],
@@ -241,7 +242,6 @@ class TestProviderLevelValidation:
         with pytest.raises(Exception, match="signature"):
             await auth_fns.authenticate_bearer_token(token)
 
-    @pytest.mark.asyncio
     async def test_malformed_token_raises(
         self,
         jwks_response: dict[str, Any],
@@ -252,15 +252,15 @@ class TestProviderLevelValidation:
 
 
 class TestEndpointIntegration:
-    """Full endpoint integration tests using TestClient with synthetic tokens."""
+    """Full endpoint integration tests using AsyncClient with synthetic tokens."""
 
-    def test_valid_token_grants_access_to_auth_protected_endpoint(
+    async def test_valid_token_grants_access_to_auth_protected_endpoint(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
         sign_jwt: Callable[..., str],
     ) -> None:
         token = sign_jwt()
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/auth-required",
             json={"value": "AuthedItem"},
             headers={"Authorization": f"Bearer {token}"},
@@ -268,24 +268,24 @@ class TestEndpointIntegration:
         assert response.status_code == 201
         assert response.json()["value"] == "AuthedItem"
 
-    def test_valid_admin_token_grants_access_to_role_protected_endpoint(
+    async def test_valid_admin_token_grants_access_to_role_protected_endpoint(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
         sign_jwt: Callable[..., str],
     ) -> None:
         token = sign_jwt({"roles": ["admin"]})
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/admin-required",
             json={"value": "AdminItem"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 201
 
-    def test_missing_token_returns_sanitized_401(
+    async def test_missing_token_returns_sanitized_401(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
     ) -> None:
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/auth-required",
             json={"value": "X"},
         )
@@ -294,13 +294,13 @@ class TestEndpointIntegration:
         assert body["errorCode"] == "UNAUTHORIZED"
         assert body["detail"] is None
 
-    def test_expired_token_returns_sanitized_401(
+    async def test_expired_token_returns_sanitized_401(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
         sign_jwt: Callable[..., str],
     ) -> None:
         token = sign_jwt({"exp": int(time.time()) - 600})
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/auth-required",
             json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
@@ -310,13 +310,13 @@ class TestEndpointIntegration:
         assert body["errorCode"] == "UNAUTHORIZED"
         assert body["detail"] is None
 
-    def test_wrong_issuer_returns_sanitized_401(
+    async def test_wrong_issuer_returns_sanitized_401(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
         sign_jwt: Callable[..., str],
     ) -> None:
         token = sign_jwt({"iss": "https://evil.example.com/"})
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/auth-required",
             json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
@@ -325,13 +325,13 @@ class TestEndpointIntegration:
         body = response.json()
         assert body["detail"] is None
 
-    def test_wrong_audience_returns_sanitized_401(
+    async def test_wrong_audience_returns_sanitized_401(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
         sign_jwt: Callable[..., str],
     ) -> None:
         token = sign_jwt({"aud": "api://wrong"})
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/auth-required",
             json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
@@ -340,9 +340,9 @@ class TestEndpointIntegration:
         body = response.json()
         assert body["detail"] is None
 
-    def test_invalid_signature_returns_sanitized_401(
+    async def test_invalid_signature_returns_sanitized_401(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
         sign_jwt: Callable[..., str],
     ) -> None:
         wrong_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -352,7 +352,7 @@ class TestEndpointIntegration:
             serialization.NoEncryption(),
         ).decode()
         token = sign_jwt(private_pem=wrong_pem)
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/auth-required",
             json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
@@ -365,13 +365,13 @@ class TestEndpointIntegration:
 class TestRoleEnforcement:
     """Role enforcement tests using synthetic tokens."""
 
-    def test_reader_only_gets_403_on_admin_endpoint(
+    async def test_reader_only_gets_403_on_admin_endpoint(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
         sign_jwt: Callable[..., str],
     ) -> None:
         token = sign_jwt({"roles": ["reader"]})
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/admin-required",
             json={"value": "X"},
             headers={"Authorization": f"Bearer {token}"},
@@ -381,26 +381,26 @@ class TestRoleEnforcement:
         assert body["errorCode"] == "FORBIDDEN"
         assert body["detail"] is None
 
-    def test_admin_role_grants_access(
+    async def test_admin_role_grants_access(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
         sign_jwt: Callable[..., str],
     ) -> None:
         token = sign_jwt({"roles": ["admin"]})
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/admin-required",
             json={"value": "AdminWidget"},
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == 201
 
-    def test_missing_roles_claim_denied_fail_closed(
+    async def test_missing_roles_claim_denied_fail_closed(
         self,
-        entra_integration_client: TestClient,
+        entra_integration_client: AsyncClient,
         sign_jwt: Callable[..., str],
     ) -> None:
         token = sign_jwt({"roles": None})
-        response = entra_integration_client.post(
+        response = await entra_integration_client.post(
             "/test/admin-required",
             json={"value": "NoRoles"},
             headers={"Authorization": f"Bearer {token}"},
