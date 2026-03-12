@@ -10,6 +10,7 @@
 * add profile and service contracts pattern and Epic 18
 * clarify Docker Compose is for local testing only, not part of product
 * add Epic 19 static type checking with ty and sprint plan
+* prepare epics after SWE review
 
 
 ### Fixes
