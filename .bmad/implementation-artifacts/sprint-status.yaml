@@ -182,3 +182,11 @@ development_status:
   24-4-service-factory-routes-and-di-rewire: done
   24-5-test-updates-and-project-context-for-pythonic-redesign: done
   epic-24-retrospective: optional
+
+  epic-25: in-progress
+  25-4-async-aware-aop-and-dev-tooling: in-progress
+  25-2-async-database-layer: backlog
+  25-1-async-routes-and-service-functions: backlog
+  25-3-async-test-infrastructure: backlog
+  25-5-script-updates-and-project-context-for-async-rewrite: backlog
+  epic-25-retrospective: optional

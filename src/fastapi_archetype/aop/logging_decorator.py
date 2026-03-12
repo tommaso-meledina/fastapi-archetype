@@ -47,7 +47,26 @@ def _format_exc() -> str:
 
 
 def log_io(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Decorator that logs function I/O at DEBUG and exceptions at ERROR."""
+    """Decorator that logs function I/O at DEBUG and exceptions at ERROR.
+
+    Handles both sync and async (coroutine) functions transparently.
+    """
+    if inspect.iscoroutinefunction(func):
+
+        @functools.wraps(func)
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            qualname = getattr(func, "__qualname__", repr(func))
+            formatted = _format_call_args(func, args, kwargs)
+            logger.debug("%s invoked with args (%s)", qualname, formatted)
+            try:
+                result = await func(*args, **kwargs)
+            except Exception:
+                logger.error("%s raised %s", qualname, _format_exc(), exc_info=True)
+                raise
+            logger.debug("%s returned %s", qualname, _format_arg(result))
+            return result
+
+        return async_wrapper
 
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
