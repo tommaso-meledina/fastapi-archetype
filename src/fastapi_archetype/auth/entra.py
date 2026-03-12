@@ -10,6 +10,7 @@ from fastapi_archetype.auth.contracts import (
     UnauthorizedError,
 )
 from fastapi_archetype.auth.models import AuthFunctions, Principal
+from fastapi_archetype.auth.role_mapping import identity_role_mapper
 from fastapi_archetype.core.config import AppSettings
 
 
@@ -171,10 +172,6 @@ def make_entra_auth(settings: AppSettings) -> AuthFunctions:
         get_on_behalf_of_access_token=get_on_behalf_of_access_token,
         role_mapper=identity_role_mapper,
     )
-
-
-def identity_role_mapper(role: str) -> str:
-    return role
 
 
 def _select_signing_key(

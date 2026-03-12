@@ -13,6 +13,7 @@
 * prepare epics after SWE review
 * update PROJECT_CONTEXT for epic 21 conventions (story 21.4)
 * update scripts and PROJECT_CONTEXT for async rewrite
+* add epics 26–27 for post-review polish and update sprint plan
 
 
 ### Fixes

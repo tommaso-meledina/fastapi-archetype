@@ -79,5 +79,6 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["src"]
+omit = ["**/mock_*.py"]
 
 [tool.coverage.report]

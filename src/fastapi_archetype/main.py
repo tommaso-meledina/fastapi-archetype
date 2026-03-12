@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import update as sa_update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlmodel import SQLModel, select
 
@@ -35,12 +36,11 @@ from fastapi_archetype.observability.prometheus import setup_prometheus
 async def _backfill_dummy_uuids(engine: AsyncEngine) -> None:
     async with engine.begin() as conn:
         result = await conn.execute(select(Dummy))
-        rows = result.all()
-        for row in rows:
+        for row in result.all():
             if not row.uuid:
                 await conn.execute(
-                    Dummy.__table__.update()  # type: ignore[union-attr]
-                    .where(Dummy.id == row.id)
+                    sa_update(Dummy)
+                    .where(Dummy.id == row.id)  # ty: ignore[invalid-argument-type] -- SQLAlchemy column __eq__ returns ColumnElement[bool]; ty doesn't resolve the operator overload
                     .values(uuid=str(uuid_module.uuid4()))
                 )
 
@@ -70,7 +70,7 @@ app = FastAPI(
 
 if settings.cors_enabled:
     app.add_middleware(
-        CORSMiddleware,  # ty: ignore[invalid-argument-type]
+        CORSMiddleware,  # ty: ignore[invalid-argument-type] -- starlette's add_middleware signature uses *args/**kwargs, not typed per-middleware
         allow_origins=settings.cors_allow_origins_list,
         allow_credentials=settings.cors_allow_credentials,
         allow_methods=settings.cors_allow_methods_list,

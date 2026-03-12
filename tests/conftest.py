@@ -17,6 +17,8 @@ from fastapi_archetype.auth.models import Role
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
+from fastapi_archetype.services.v1.dummy_service import get_dummy_service_v1
+from fastapi_archetype.services.v2.dummy_service import get_dummy_service_v2
 
 _stub_logger = logging.getLogger("fastapi_archetype.test_stubs")
 
@@ -69,6 +71,17 @@ async def _stub_post_admin_required(
 
 
 app.include_router(_test_router)
+
+
+@pytest.fixture(autouse=True)
+def _clear_service_caches() -> None:
+    """Clear lru_cache on service DI shims before each test to ensure isolation.
+
+    The shims are cached for production efficiency, but tests may monkeypatch
+    settings.profile or override dependencies — the cache must not carry over.
+    """
+    get_dummy_service_v1.cache_clear()
+    get_dummy_service_v2.cache_clear()
 
 
 @pytest.fixture(name="engine", scope="session")

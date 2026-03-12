@@ -191,13 +191,13 @@ development_status:
   25-5-script-updates-and-project-context-for-async-rewrite: done
   epic-25-retrospective: optional
 
-  epic-26: backlog
-  26-1-replace-remaining-type-suppressions-in-main-py: backlog
-  26-2-add-coverage-exclusion-for-mock-implementation-files: backlog
-  26-3-remove-duplicated-identity-role-mapper-from-entra-py: backlog
-  26-4-make-auth-factory-a-true-dict-dispatch: backlog
-  26-5-cache-service-di-shims: backlog
-  26-6-parenthesize-multi-type-except-in-logging-decorator-py: backlog
+  epic-26: done
+  26-1-replace-remaining-type-suppressions-in-main-py: done
+  26-2-add-coverage-exclusion-for-mock-implementation-files: done
+  26-3-remove-duplicated-identity-role-mapper-from-entra-py: done
+  26-4-make-auth-factory-a-true-dict-dispatch: done
+  26-5-cache-service-di-shims: done
+  26-6-parenthesize-multi-type-except-in-logging-decorator-py: done
   epic-26-retrospective: optional
 
   epic-27: backlog
