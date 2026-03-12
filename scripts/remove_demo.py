@@ -154,6 +154,38 @@ def _edit_env_example(path: Path) -> None:
     _write(path, "".join(lines))
 
 
+def _edit_tests_conftest(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    _skip_prefixes = (
+        "from fastapi_archetype.services.v1.dummy_service",
+        "from fastapi_archetype.services.v2.dummy_service",
+    )
+    filtered: list[str] = [ln for ln in lines if not ln.startswith(_skip_prefixes)]
+    content = "".join(filtered)
+    fixture_start = "@pytest.fixture(autouse=True)\ndef _clear_service_caches"
+    if fixture_start in content:
+        result_lines = content.splitlines(keepends=True)
+        out: list[str] = []
+        i = 0
+        while i < len(result_lines):
+            line = result_lines[i]
+            if line.startswith("@pytest.fixture(autouse=True)") and i + 1 < len(
+                result_lines
+            ):
+                next_line = result_lines[i + 1]
+                if next_line.startswith("def _clear_service_caches"):
+                    i += 2
+                    while i < len(result_lines):
+                        if result_lines[i] and not result_lines[i][0].isspace():
+                            break
+                        i += 1
+                    continue
+            out.append(line)
+            i += 1
+        content = "".join(out)
+    _write(path, _collapse_blank_lines(content))
+
+
 def _edit_main(path: Path) -> None:
     content = _read(path)
     content = content.replace("import uuid as uuid_module\n", "")
@@ -189,6 +221,7 @@ _EDIT_DISPATCH: list[tuple[str, Callable[[Path], None]]] = [
     ("src/fastapi_archetype/api/v2/__init__.py", _edit_api_v2_init),
     ("src/fastapi_archetype/observability/prometheus.py", _edit_prometheus),
     (".env.example", _edit_env_example),
+    ("tests/conftest.py", _edit_tests_conftest),
 ]
 
 

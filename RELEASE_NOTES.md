@@ -48,6 +48,7 @@
 * align v1 naming with v2 (DummyServiceV1Contract, get_dummy_service_v1, etc.)
 * simplify _default_uuid, add kw_only&#x3D;True to dataclasses, remove slots&#x3D;True from Principal
 * replace class hierarchies with plain functions and dict-dispatch (epic 24)
+* update scaffolding scripts to emit current project patterns
 
 
 
