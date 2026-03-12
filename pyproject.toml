@@ -81,6 +81,3 @@ asyncio_mode = "auto"
 source = ["src"]
 
 [tool.coverage.report]
-omit = [
-    "*/implementations/mock_dummy_service.py",
-]

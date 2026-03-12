@@ -3,7 +3,7 @@ from collections.abc import Generator
 
 import pytest
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 
 import fastapi_archetype.core.config as core_config_module
 import fastapi_archetype.main as main_module
@@ -26,17 +26,22 @@ def _restore_main_module() -> Generator[None]:
     _reload_main_app()
 
 
-def test_cors_disabled_by_default_omits_cors_headers() -> None:
+async def test_cors_disabled_by_default_omits_cors_headers() -> None:
     app = _reload_main_app()
 
-    with TestClient(app) as client:
-        response = client.get("/health", headers={"Origin": "http://frontend.example"})
+    async with (
+        app.router.lifespan_context(app),
+        AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client,
+    ):
+        response = await client.get(
+            "/health", headers={"Origin": "http://frontend.example"}
+        )
 
     assert response.status_code == 200
     assert "access-control-allow-origin" not in response.headers
 
 
-def test_cors_enabled_returns_preflight_headers(
+async def test_cors_enabled_returns_preflight_headers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(core_config_module.settings, "cors_enabled", True)
@@ -57,8 +62,11 @@ def test_cors_enabled_returns_preflight_headers(
     )
     app = _reload_main_app()
 
-    with TestClient(app) as client:
-        response = client.options(
+    async with (
+        app.router.lifespan_context(app),
+        AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client,
+    ):
+        response = await client.options(
             "/health",
             headers={
                 "Origin": "http://frontend.example",
