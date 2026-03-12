@@ -150,3 +150,10 @@ development_status:
   19-5-agent-rules-agents-md-quality-checks: done
   19-6-codebase-fix-all-ty-diagnostics-errors-and-warnings: done
   epic-19-retrospective: optional
+
+  epic-20: in-progress
+  20-1-docker-hygiene: ready-for-dev
+  20-2-test-infrastructure-fixes: ready-for-dev
+  20-3-model-and-dataclass-improvements: ready-for-dev
+  20-4-configuration-and-dev-dependencies: ready-for-dev
+  epic-20-retrospective: optional

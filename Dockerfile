@@ -25,9 +25,12 @@ RUN groupadd --system app && useradd --system --gid app app
 
 COPY --from=builder --chown=app:app /app/.venv /app/.venv
 
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    WEB_CONCURRENCY=1
 
 USER app
 EXPOSE 8000
 
-CMD ["uvicorn", "fastapi_archetype.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn fastapi_archetype.main:app --host 0.0.0.0 --port 8000 --workers ${WEB_CONCURRENCY}"]
