@@ -31,6 +31,7 @@
 
 * make mock dummy services return static values only (no in-memory store)
 * align v1 naming with v2 (DummyServiceV1Contract, get_dummy_service_v1, etc.)
+* simplify _default_uuid, add kw_only&#x3D;True to dataclasses, remove slots&#x3D;True from Principal
 
 
 

@@ -1,13 +1,21 @@
 import os
 import warnings
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-VALID_LOG_LEVELS = frozenset({"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"})
 VALID_LOG_MODES = frozenset({"plain", "json"})
 VALID_PROFILES = frozenset({"default", "mock"})
+
+
+class LogLevel(StrEnum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
 
 class AppSettings(BaseSettings):
@@ -19,7 +27,7 @@ class AppSettings(BaseSettings):
 
     app_name: str = "fastapi-archetype"
     debug: bool = False
-    log_level: str = "INFO"
+    log_level: LogLevel = LogLevel.INFO
     log_mode: str = "plain"
     profile: Literal["default", "mock"] = "default"
 
@@ -33,15 +41,10 @@ class AppSettings(BaseSettings):
             raise ValueError(msg)
         return s
 
-    @field_validator("log_level")
+    @field_validator("log_level", mode="before")
     @classmethod
-    def _normalize_log_level(cls, value: str) -> str:
-        upper = value.upper()
-        if upper not in VALID_LOG_LEVELS:
-            allowed = ", ".join(sorted(VALID_LOG_LEVELS))
-            msg = f"Invalid log level '{value}'. Must be one of: {allowed}"
-            raise ValueError(msg)
-        return upper
+    def _normalize_log_level(cls, value: object) -> str:
+        return str(value).upper()
 
     @field_validator("log_mode")
     @classmethod

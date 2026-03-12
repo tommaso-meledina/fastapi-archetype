@@ -34,7 +34,7 @@ def test_log_level_case_insensitive(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_invalid_log_level_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LOG_LEVEL", "INVALID")
-    with pytest.raises(ValidationError, match="Invalid log level"):
+    with pytest.raises(ValidationError):
         AppSettings()
 
 
