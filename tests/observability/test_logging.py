@@ -1,26 +1,30 @@
 import json
 import logging
 import sys
+from collections.abc import MutableMapping
 from typing import Any, cast
 
 import pytest
+import structlog
 from fastapi.testclient import TestClient
 from opentelemetry import trace
 from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
 
 from fastapi_archetype.core.config import AppSettings
-from fastapi_archetype.observability.logging import (  # noinspection PyProtectedMember
+from fastapi_archetype.observability.logging import (
     NO_SPAN_ID,
     NO_TRACE_ID,
-    JsonFormatter,
-    PlainFormatter,
-    SpanFilter,
+    _add_timestamp,
+    _extract_exc_info,
+    _inject_trace_context,
+    _json_renderer,
+    _plain_renderer,
     _redact_secrets,
     configure_logging,
 )
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# Helpers
 # ---------------------------------------------------------------------------
 
 _VALID_CTX = SpanContext(
@@ -31,37 +35,27 @@ _VALID_CTX = SpanContext(
 )
 
 
-@pytest.fixture()
-def plain_logger() -> logging.Logger:
-    lgr = logging.getLogger("test.plain")
-    lgr.handlers.clear()
-    lgr.propagate = False
-    handler = logging.StreamHandler()
-    handler.addFilter(SpanFilter())
-    handler.setFormatter(PlainFormatter())
-    lgr.addHandler(handler)
-    lgr.setLevel(logging.DEBUG)
-    return lgr
+def _base_event(
+    message: str = "test message",
+    level: str = "info",
+    logger_name: str = "test.logger",
+    **extra: Any,
+) -> MutableMapping[str, Any]:
+    """Build a minimal event dict as structlog processors would see it."""
+    ed: MutableMapping[str, Any] = {
+        "event": message,
+        "level": level,
+        "logger": logger_name,
+        "timestamp": "2024-01-01T00:00:00+00:00",
+        "traceId": NO_TRACE_ID,
+        "spanId": NO_SPAN_ID,
+    }
+    ed.update(extra)
+    return ed
 
 
-@pytest.fixture()
-def json_logger() -> logging.Logger:
-    lgr = logging.getLogger("test.json")
-    lgr.handlers.clear()
-    lgr.propagate = False
-    handler = logging.StreamHandler()
-    handler.addFilter(SpanFilter())
-    handler.setFormatter(JsonFormatter())
-    lgr.addHandler(handler)
-    lgr.setLevel(logging.DEBUG)
-    return lgr
-
-
-def _make_record(
-    lgr: logging.Logger, msg: str, level: int = logging.INFO
-) -> logging.LogRecord:
-    record = lgr.makeRecord(lgr.name, level, "test.py", 1, msg, (), None)
-    SpanFilter().filter(record)
+def _make_record(name: str, msg: str, level: int = logging.INFO) -> logging.LogRecord:
+    record = logging.LogRecord(name, level, "test.py", 1, msg, (), None)
     return record
 
 
@@ -94,19 +88,45 @@ class TestLogModeConfiguration:
         settings = AppSettings()
         assert settings.log_mode == "json"
 
-    def test_configure_logging_plain(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_configure_logging_plain_uses_processor_formatter(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setenv("LOG_MODE", "plain")
         settings = AppSettings()
         configure_logging(settings)
         root = logging.getLogger()
-        assert any(isinstance(h.formatter, PlainFormatter) for h in root.handlers)
+        assert any(
+            isinstance(h.formatter, structlog.stdlib.ProcessorFormatter)
+            for h in root.handlers
+        )
 
-    def test_configure_logging_json(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_configure_logging_plain_uses_plain_renderer(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("LOG_MODE", "plain")
+        settings = AppSettings()
+        configure_logging(settings)
+        root = logging.getLogger()
+        pf = next(
+            h.formatter
+            for h in root.handlers
+            if isinstance(h.formatter, structlog.stdlib.ProcessorFormatter)
+        )
+        assert pf.processors[-1] is _plain_renderer
+
+    def test_configure_logging_json_uses_json_renderer(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setenv("LOG_MODE", "json")
         settings = AppSettings()
         configure_logging(settings)
         root = logging.getLogger()
-        assert any(isinstance(h.formatter, JsonFormatter) for h in root.handlers)
+        pf = next(
+            h.formatter
+            for h in root.handlers
+            if isinstance(h.formatter, structlog.stdlib.ProcessorFormatter)
+        )
+        assert pf.processors[-1] is _json_renderer
 
 
 # ---------------------------------------------------------------------------
@@ -114,99 +134,89 @@ class TestLogModeConfiguration:
 # ---------------------------------------------------------------------------
 
 
-class TestPlainFormatter:
-    def test_plain_format_fields(self, plain_logger: logging.Logger) -> None:
-        record = _make_record(plain_logger, "hello world")
-        output = PlainFormatter().format(record)
+class TestPlainRenderer:
+    def test_plain_format_fields(self) -> None:
+        ed = _base_event("hello world", logger_name="test.plain")
+        output = _plain_renderer(None, "info", ed)
         assert f"[{NO_TRACE_ID}]" in output
         assert f"[{NO_SPAN_ID}]" in output
         assert "INFO" in output
         assert "test.plain" in output
         assert "hello world" in output
 
-    def test_plain_trace_id_and_span_id_in_brackets(
-        self, plain_logger: logging.Logger
-    ) -> None:
+    def test_plain_trace_id_and_span_id_in_brackets(self) -> None:
         span = NonRecordingSpan(_VALID_CTX)
         with trace.use_span(span):
-            record = _make_record(plain_logger, "with span")
-            output = PlainFormatter().format(record)
-            tid = cast(Any, record).traceId
-            sid = cast(Any, record).spanId
-            assert f"[{tid}]" in output
-            assert f"[{sid}]" in output
+            ed = _base_event("with span")
+            _inject_trace_context(None, "info", ed)
+            output = _plain_renderer(None, "info", ed)
+            assert f"[{ed['traceId']}]" in output
+            assert f"[{ed['spanId']}]" in output
 
-    def test_plain_format_utc_iso8601(self, plain_logger: logging.Logger) -> None:
-        record = _make_record(plain_logger, "ts check")
-        output = PlainFormatter().format(record)
+    def test_plain_format_utc_iso8601(self) -> None:
+        record = _make_record("test.ts", "ts check")
+        ts_dict: MutableMapping[str, Any] = {"event": "ts check", "_record": record}
+        _add_timestamp(None, "info", ts_dict)
+        ed = {**_base_event("ts check"), "timestamp": ts_dict["timestamp"]}
+        output = _plain_renderer(None, "info", ed)
         timestamp = output.split(" ")[0]
         assert "+00:00" in timestamp or timestamp.endswith("Z")
 
 
-class TestJsonFormatter:
-    def test_json_format_is_valid_json(self, json_logger: logging.Logger) -> None:
-        record = _make_record(json_logger, "json test")
-        output = JsonFormatter().format(record)
+class TestJsonRenderer:
+    def test_json_format_is_valid_json(self) -> None:
+        ed = _base_event("json test")
+        output = _json_renderer(None, "info", ed)
         parsed = json.loads(output)
         assert isinstance(parsed, dict)
 
-    def test_json_format_required_fields(self, json_logger: logging.Logger) -> None:
-        record = _make_record(json_logger, "field check")
-        parsed = json.loads(JsonFormatter().format(record))
-        for field in (
-            "timestamp",
-            "level",
-            "logger",
-            "message",
-            "traceId",
-            "spanId",
-        ):
+    def test_json_format_required_fields(self) -> None:
+        ed = _base_event("field check")
+        parsed = json.loads(_json_renderer(None, "info", ed))
+        for field in ("timestamp", "level", "logger", "message", "traceId", "spanId"):
             assert field in parsed
 
-    def test_json_format_camel_case(self, json_logger: logging.Logger) -> None:
-        record = _make_record(json_logger, "case check")
-        parsed = json.loads(JsonFormatter().format(record))
+    def test_json_format_camel_case(self) -> None:
+        ed = _base_event("case check")
+        parsed = json.loads(_json_renderer(None, "info", ed))
         assert "traceId" in parsed
         assert "spanId" in parsed
         assert "trace_id" not in parsed
         assert "span_id" not in parsed
 
-    def test_json_format_utc_iso8601(self, json_logger: logging.Logger) -> None:
-        record = _make_record(json_logger, "ts check")
-        parsed = json.loads(JsonFormatter().format(record))
+    def test_json_format_utc_iso8601(self) -> None:
+        ed = _base_event("ts check", timestamp="2024-06-15T12:00:00+00:00")
+        parsed = json.loads(_json_renderer(None, "info", ed))
         assert "+00:00" in parsed["timestamp"]
 
-    def test_json_span_id_populated_with_active_span(
-        self, json_logger: logging.Logger
-    ) -> None:
+    def test_json_span_id_populated_with_active_span(self) -> None:
         span = NonRecordingSpan(_VALID_CTX)
         with trace.use_span(span):
-            record = _make_record(json_logger, "span check")
-            parsed = json.loads(JsonFormatter().format(record))
+            ed = _base_event("span check")
+            _inject_trace_context(None, "info", ed)
+            parsed = json.loads(_json_renderer(None, "info", ed))
             assert parsed["spanId"] != NO_SPAN_ID
             assert len(parsed["spanId"]) == 16
 
 
 class TestTraceCorrelation:
-    def test_no_trace_context_yields_placeholders(
-        self, plain_logger: logging.Logger
-    ) -> None:
-        record = _make_record(plain_logger, "no span")
-        assert cast(Any, record).traceId == NO_TRACE_ID
-        assert cast(Any, record).spanId == NO_SPAN_ID
+    def test_no_trace_context_yields_placeholders(self) -> None:
+        ed: MutableMapping[str, Any] = {"event": "no span"}
+        _inject_trace_context(None, "info", ed)
+        assert ed["traceId"] == NO_TRACE_ID
+        assert ed["spanId"] == NO_SPAN_ID
 
-    def test_active_span_injects_both_ids(self, plain_logger: logging.Logger) -> None:
+    def test_active_span_injects_both_ids(self) -> None:
         span = NonRecordingSpan(_VALID_CTX)
         with trace.use_span(span):
-            record = _make_record(plain_logger, "traced")
-            assert cast(Any, record).traceId != NO_TRACE_ID
-            assert len(cast(Any, record).traceId) == 32
-            assert cast(Any, record).spanId != NO_SPAN_ID
-            assert len(cast(Any, record).spanId) == 16
+            ed: MutableMapping[str, Any] = {"event": "traced"}
+            _inject_trace_context(None, "info", ed)
+            assert ed["traceId"] != NO_TRACE_ID
+            assert len(ed["traceId"]) == 32
+            assert ed["spanId"] != NO_SPAN_ID
+            assert len(ed["spanId"]) == 16
 
-    def test_invalid_span_context_yields_placeholders(
-        self, plain_logger: logging.Logger
-    ) -> None:
+    def test_invalid_span_context_yields_placeholders(self) -> None:
         invalid_ctx = SpanContext(
             trace_id=0,
             span_id=0,
@@ -215,9 +225,10 @@ class TestTraceCorrelation:
         )
         span = NonRecordingSpan(invalid_ctx)
         with trace.use_span(span):
-            record = _make_record(plain_logger, "invalid ctx")
-            assert cast(Any, record).traceId == NO_TRACE_ID
-            assert cast(Any, record).spanId == NO_SPAN_ID
+            ed: MutableMapping[str, Any] = {"event": "invalid ctx"}
+            _inject_trace_context(None, "info", ed)
+            assert ed["traceId"] == NO_TRACE_ID
+            assert ed["spanId"] == NO_SPAN_ID
 
 
 # ---------------------------------------------------------------------------
@@ -226,79 +237,71 @@ class TestTraceCorrelation:
 
 
 class TestExceptionPlainMode:
-    def test_plain_exception_includes_message(
-        self, plain_logger: logging.Logger
-    ) -> None:
+    def test_plain_exception_includes_message(self) -> None:
         try:
             raise ValueError("something broke")
         except ValueError:
             ei = sys.exc_info()
-            record = plain_logger.makeRecord(
-                plain_logger.name,
-                logging.ERROR,
-                "test.py",
-                1,
-                "op failed",
-                (),
-                ei,
-            )
-        SpanFilter().filter(record)
-        output = PlainFormatter().format(record)
+
+        ed = _base_event("op failed", exc_info=ei)
+        output = _plain_renderer(None, "error", ed)
         assert "ValueError: something broke" in output
 
-    def test_plain_exception_no_full_traceback(
-        self, plain_logger: logging.Logger
-    ) -> None:
+    def test_plain_exception_no_full_traceback(self) -> None:
         try:
             raise RuntimeError("bad state")
         except RuntimeError:
             ei = sys.exc_info()
-            record = plain_logger.makeRecord(
-                plain_logger.name,
-                logging.ERROR,
-                "test.py",
-                1,
-                "op failed",
-                (),
-                ei,
-            )
-        SpanFilter().filter(record)
-        output = PlainFormatter().format(record)
+
+        ed = _base_event("op failed", exc_info=ei)
+        output = _plain_renderer(None, "error", ed)
         assert "Traceback" not in output
         assert "RuntimeError: bad state" in output
 
 
 class TestExceptionJsonMode:
-    def test_json_exception_structured_fields(
-        self, json_logger: logging.Logger
-    ) -> None:
+    def test_json_exception_structured_fields(self) -> None:
         try:
             raise TypeError("wrong type")
         except TypeError:
             ei = sys.exc_info()
-            record = json_logger.makeRecord(
-                json_logger.name,
-                logging.ERROR,
-                "test.py",
-                1,
-                "op failed",
-                (),
-                ei,
-            )
-        SpanFilter().filter(record)
-        parsed = json.loads(JsonFormatter().format(record))
+
+        ed = _base_event("op failed", exc_info=ei)
+        parsed = json.loads(_json_renderer(None, "error", ed))
         assert parsed["exceptionType"] == "TypeError"
         assert parsed["exceptionMessage"] == "wrong type"
         assert isinstance(parsed["stackTrace"], list)
         assert len(parsed["stackTrace"]) > 0
 
-    def test_json_no_exception_no_extra_fields(
-        self, json_logger: logging.Logger
-    ) -> None:
-        record = _make_record(json_logger, "normal msg")
-        parsed = json.loads(JsonFormatter().format(record))
+    def test_json_no_exception_no_extra_fields(self) -> None:
+        ed = _base_event("normal msg")
+        parsed = json.loads(_json_renderer(None, "info", ed))
         assert "exceptionType" not in parsed
         assert "stackTrace" not in parsed
+
+
+class TestExcInfoExtraction:
+    def test_extract_exc_info_from_log_record(self) -> None:
+        try:
+            raise ValueError("test error")
+        except ValueError:
+            ei = sys.exc_info()
+
+        record = _make_record("test", "msg", logging.ERROR)
+        record.exc_info = ei
+        ed: MutableMapping[str, Any] = {"event": "msg", "_record": record}
+        _extract_exc_info(None, "error", ed)
+
+        assert "exc_info" in ed
+        assert ed["exc_info"][1] is ei[1]
+        assert record.exc_info is None
+
+    def test_extract_exc_info_no_exception(self) -> None:
+        record = _make_record("test", "no exc")
+        record.exc_info = None
+        ed: MutableMapping[str, Any] = {"event": "no exc", "_record": record}
+        _extract_exc_info(None, "info", ed)
+        assert "exc_info" not in ed
 
 
 class TestSecretRedaction:
@@ -323,15 +326,15 @@ class TestSecretRedaction:
         text = "user created id=42 name=Alice"
         assert _redact_secrets(text) == text
 
-    def test_plain_mode_redacts_secrets(self, plain_logger: logging.Logger) -> None:
-        record = _make_record(plain_logger, "auth password=hunter2 done")
-        output = PlainFormatter().format(record)
+    def test_plain_mode_redacts_secrets(self) -> None:
+        ed = _base_event("auth password=hunter2 done")
+        output = _plain_renderer(None, "info", ed)
         assert "hunter2" not in output
         assert "password=***" in output
 
-    def test_json_mode_redacts_secrets(self, json_logger: logging.Logger) -> None:
-        record = _make_record(json_logger, "got token=abc123")
-        parsed = json.loads(JsonFormatter().format(record))
+    def test_json_mode_redacts_secrets(self) -> None:
+        ed = _base_event("got token=abc123")
+        parsed = json.loads(_json_renderer(None, "info", ed))
         assert "abc123" not in parsed["message"]
         assert "***" in parsed["message"]
 
@@ -340,6 +343,10 @@ class TestExistingConventions:
     def test_getlogger_pattern_works(self) -> None:
         lgr = logging.getLogger(__name__)
         assert lgr.name == __name__
+
+    def test_structlog_getlogger_works(self) -> None:
+        lgr = structlog.get_logger(__name__)
+        assert lgr is not None
 
     def test_log_level_respected(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("LOG_LEVEL", "WARNING")
@@ -385,3 +392,19 @@ class TestTraceCorrelationDuringRequest:
         assert all(tid != NO_TRACE_ID and sid != NO_SPAN_ID for tid, sid in captured), (
             f"Expected real trace/span IDs, got: {captured}"
         )
+
+
+class TestAddTimestamp:
+    def test_timestamp_from_log_record(self) -> None:
+        record = _make_record("test", "msg")
+        ed: MutableMapping[str, Any] = {"event": "msg", "_record": record}
+        _add_timestamp(None, "info", ed)
+        assert "timestamp" in ed
+        assert "+00:00" in ed["timestamp"] or ed["timestamp"].endswith("Z")
+
+    def test_timestamp_without_record(self) -> None:
+        ed: MutableMapping[str, Any] = {"event": "msg"}
+        _add_timestamp(None, "info", ed)
+        assert "timestamp" in ed
+        ts = cast(str, ed["timestamp"])
+        assert "+00:00" in ts or ts.endswith("Z")
