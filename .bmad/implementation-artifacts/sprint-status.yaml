@@ -170,7 +170,7 @@ development_status:
   22-2-module-exports-and-task-runner: done
   epic-22-retrospective: optional
 
-  epic-23: in-progress
+  epic-23: done
   23-1-structlog-migration: done
   23-2-test-suite-cleanup: done
   epic-23-retrospective: optional
