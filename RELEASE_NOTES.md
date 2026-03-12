@@ -30,6 +30,7 @@
 * remove from __future__ and clean up import hygiene (story 21.1)
 * introduce CamelCaseModel base and remove entity alias leakage (story 21.3)
 * introduce AppSettings module-level singleton (story 22.1)
+* add __all__ to key packages and Justfile task runner (story 22.2)
 
 
 ### Refactoring

@@ -165,7 +165,7 @@ development_status:
   21-4-project-context-update-for-epic-21: done
   epic-21-retrospective: optional
 
-  epic-22: in-progress
+  epic-22: done
   22-1-appsettings-module-singleton: done
   22-2-module-exports-and-task-runner: done
   epic-22-retrospective: optional
