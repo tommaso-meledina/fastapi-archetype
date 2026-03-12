@@ -7,15 +7,12 @@ from sqlmodel import Session
 import fastapi_archetype.core.config as core_config_module
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
+from fastapi_archetype.services.factory import DummyServiceV1, DummyServiceV2
+from fastapi_archetype.services.v1 import mock_dummy as v1_mock_dummy
 from fastapi_archetype.services.v1.dummy_service import get_dummy_service_v1
-from fastapi_archetype.services.v1.implementations.mock_dummy_service import (
-    MOCK_UUID_1,
-    MockDummyServiceV1,
-)
+from fastapi_archetype.services.v1.mock_dummy import MOCK_UUID_1
+from fastapi_archetype.services.v2 import mock_dummy as v2_mock_dummy
 from fastapi_archetype.services.v2.dummy_service import get_dummy_service_v2
-from fastapi_archetype.services.v2.implementations.mock_dummy_service import (
-    MockDummyServiceV2,
-)
 
 
 @pytest.fixture(name="client_with_mock_v1_simple")
@@ -24,7 +21,12 @@ def client_with_mock_v1_simple_fixture(session: Session):
 
     from fastapi_archetype.core.database import get_session
 
-    mock_svc = MockDummyServiceV1()
+    mock_svc = DummyServiceV1(
+        get_all_dummies=v1_mock_dummy.get_all_dummies,
+        get_dummy_by_uuid=v1_mock_dummy.get_dummy_by_uuid,
+        create_dummy=v1_mock_dummy.create_dummy,
+        update_dummy=v1_mock_dummy.update_dummy,
+    )
 
     def _override_session():
         yield session
@@ -78,7 +80,10 @@ def client_with_mock_v2_fixture(session: Session):
 
     from fastapi_archetype.core.database import get_session
 
-    mock_svc = MockDummyServiceV2()
+    mock_svc = DummyServiceV2(
+        get_all_dummies=v2_mock_dummy.get_all_dummies,
+        create_dummy=v2_mock_dummy.create_dummy,
+    )
 
     def _override_session():
         yield session

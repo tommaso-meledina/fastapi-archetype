@@ -17,9 +17,7 @@ from fastapi_archetype.models.dto.v1.dummy import (
     PostDummiesRequest,
     PostDummiesResponse,
 )
-from fastapi_archetype.services.contracts.dummy_service import (
-    DummyServiceV2Contract,
-)
+from fastapi_archetype.services.factory import DummyServiceV2
 from fastapi_archetype.services.v2.dummy_service import get_dummy_service_v2
 
 router = APIRouter(prefix=DUMMIES.path, tags=[f"{DUMMIES.name} v2"])
@@ -32,7 +30,7 @@ def list_dummies(
     request: Request,
     response: Response,
     session: Session = Depends(get_session),
-    svc: DummyServiceV2Contract = Depends(get_dummy_service_v2),
+    svc: DummyServiceV2 = Depends(get_dummy_service_v2),
 ) -> list[GetDummiesResponse]:
     entities = svc.get_all_dummies(session)
     return [entity_to_get_response(e) for e in entities]
@@ -48,7 +46,7 @@ def create_dummy(
     response: Response,
     principal: Principal = _depends_require_admin,
     session: Session = Depends(get_session),
-    svc: DummyServiceV2Contract = Depends(get_dummy_service_v2),
+    svc: DummyServiceV2 = Depends(get_dummy_service_v2),
 ) -> PostDummiesResponse:
     _ = principal
     entity = post_dto_to_entity(dummy)

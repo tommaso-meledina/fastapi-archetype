@@ -1,13 +1,13 @@
 """Synthetic IdP integration tests for the Entra auth provider.
 
 These tests exercise the full bearer-token validation path using a test-generated
-RSA keypair. The provider's HTTP methods are monkeypatched to return matching JWKS
-and mock responses so no external infrastructure is needed.
+RSA keypair. The provider's HTTP calls are intercepted via injected async functions
+so no external infrastructure is needed.
 """
 
 import time
 from collections.abc import Callable, Generator
-from typing import Any, cast
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -17,9 +17,15 @@ from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
-from fastapi_archetype.auth.dependencies import get_auth_facade
-from fastapi_archetype.auth.facade import AuthFacade
-from fastapi_archetype.auth.providers.entra import EntraExternalAuthProvider
+from fastapi_archetype.auth.dependencies import get_auth_functions
+from fastapi_archetype.auth.entra import (
+    _decode_and_verify,
+    _principal_from_claims,
+    _select_signing_key,
+    _validate_signing_key_metadata,
+)
+from fastapi_archetype.auth.models import AuthFunctions
+from fastapi_archetype.auth.role_mapping import identity_role_mapper
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
@@ -44,26 +50,83 @@ def _entra_settings(**overrides: Any) -> AppSettings:
     return AppSettings.model_validate(defaults)
 
 
-def _build_patched_provider(
+def _build_patched_auth_functions(
     jwks_response: dict[str, Any],
-) -> EntraExternalAuthProvider:
+) -> AuthFunctions:
+    """Build AuthFunctions for Entra with HTTP calls intercepted in-process."""
     settings = _entra_settings()
-    provider = EntraExternalAuthProvider(settings)
 
     async def _fake_http_get(
         url: str, headers: dict[str, str] | None = None
     ) -> dict[str, Any]:
-        _ = headers
-        if "keys" in url or "jwks" in url:
-            return jwks_response
-        return {}
+        _ = (url, headers)
+        return jwks_response
 
     async def _fake_http_post_form(_url: str, _data: dict[str, str]) -> dict[str, Any]:
         return {"access_token": "fake-obo-token"}
 
-    cast(Any, provider)._http_get = _fake_http_get
-    cast(Any, provider)._http_post_form = _fake_http_post_form
-    return provider
+    async def authenticate_bearer_token(token: str) -> Any:
+        import jwt as _jwt
+
+        try:
+            header = _jwt.get_unverified_header(token)
+        except _jwt.InvalidTokenError as exc:
+            from fastapi_archetype.auth.contracts import UnauthorizedError
+
+            raise UnauthorizedError("Malformed bearer token") from exc
+
+        alg = header.get("alg")
+        if not isinstance(alg, str):
+            from fastapi_archetype.auth.contracts import UnauthorizedError
+
+            raise UnauthorizedError("Missing token algorithm")
+
+        jwks = await _fake_http_get("fake-jwks-url")
+        signing_key = _select_signing_key(jwks, header.get("kid"))
+        _validate_signing_key_metadata(signing_key, alg)
+        claims = _decode_and_verify(token, signing_key, alg)
+
+        from fastapi_archetype.auth.contracts import UnauthorizedError
+
+        iss = claims.get("iss")
+        if settings.auth_external_issuer and iss != settings.auth_external_issuer:
+            raise UnauthorizedError("Invalid token issuer")
+        required_audience = settings.auth_external_audience
+        if required_audience:
+            aud = claims.get("aud")
+            aud_match = (isinstance(aud, str) and aud == required_audience) or (
+                isinstance(aud, list) and required_audience in aud
+            )
+            if not aud_match:
+                raise UnauthorizedError("Invalid token audience")
+
+        return _principal_from_claims(claims)
+
+    async def get_client_credentials_access_token(scope: str) -> str:
+        form = {
+            "client_id": settings.auth_external_client_id,
+            "client_secret": settings.auth_external_client_secret,
+            "grant_type": "client_credentials",
+            "scope": scope,
+        }
+        body = await _fake_http_post_form(settings.auth_external_token_uri, form)
+        token = body.get("access_token")
+        if not isinstance(token, str):
+            from fastapi_archetype.auth.contracts import UnauthorizedError
+
+            raise UnauthorizedError("Token endpoint response missing access_token")
+        return token
+
+    async def get_on_behalf_of_access_token(scope: str, user_token: str) -> str:
+        _ = (scope, user_token)
+        return "fake-obo-token"
+
+    return AuthFunctions(
+        authenticate_bearer_token=authenticate_bearer_token,
+        get_client_credentials_access_token=get_client_credentials_access_token,
+        get_on_behalf_of_access_token=get_on_behalf_of_access_token,
+        role_mapper=identity_role_mapper,
+    )
 
 
 @pytest.fixture(name="_entra_engine", scope="module")
@@ -86,18 +149,17 @@ def entra_integration_client_fixture(
     _entra_engine,
     jwks_response: dict[str, Any],
 ) -> Generator[TestClient]:
-    provider = _build_patched_provider(jwks_response)
-    facade = AuthFacade(primary_provider=provider)
+    auth_fns = _build_patched_auth_functions(jwks_response)
 
     def _override_session():
         with Session(_entra_engine) as session:
             yield session
 
-    def _override_facade() -> AuthFacade:
-        return facade
+    def _override_auth_fns() -> AuthFunctions:
+        return auth_fns
 
     app.dependency_overrides[get_session] = _override_session
-    app.dependency_overrides[get_auth_facade] = _override_facade
+    app.dependency_overrides[get_auth_functions] = _override_auth_fns
     limiter.reset()
 
     with (
@@ -118,9 +180,9 @@ class TestProviderLevelValidation:
         sign_jwt: Callable[..., str],
         jwks_response: dict[str, Any],
     ) -> None:
-        provider = _build_patched_provider(jwks_response)
+        auth_fns = _build_patched_auth_functions(jwks_response)
         token = sign_jwt()
-        principal = await provider.authenticate_bearer_token(token)
+        principal = await auth_fns.authenticate_bearer_token(token)
         assert principal.subject == "test-subject"
         assert principal.user_id == "test-oid-123"
         assert principal.name == "Test User"
@@ -135,10 +197,10 @@ class TestProviderLevelValidation:
         sign_jwt: Callable[..., str],
         jwks_response: dict[str, Any],
     ) -> None:
-        provider = _build_patched_provider(jwks_response)
+        auth_fns = _build_patched_auth_functions(jwks_response)
         token = sign_jwt({"exp": int(time.time()) - 600})
         with pytest.raises(Exception, match="expired"):
-            await provider.authenticate_bearer_token(token)
+            await auth_fns.authenticate_bearer_token(token)
 
     @pytest.mark.asyncio
     async def test_wrong_issuer_raises(
@@ -146,10 +208,10 @@ class TestProviderLevelValidation:
         sign_jwt: Callable[..., str],
         jwks_response: dict[str, Any],
     ) -> None:
-        provider = _build_patched_provider(jwks_response)
+        auth_fns = _build_patched_auth_functions(jwks_response)
         token = sign_jwt({"iss": "https://wrong-issuer.example.com/"})
         with pytest.raises(Exception, match="issuer"):
-            await provider.authenticate_bearer_token(token)
+            await auth_fns.authenticate_bearer_token(token)
 
     @pytest.mark.asyncio
     async def test_wrong_audience_raises(
@@ -157,10 +219,10 @@ class TestProviderLevelValidation:
         sign_jwt: Callable[..., str],
         jwks_response: dict[str, Any],
     ) -> None:
-        provider = _build_patched_provider(jwks_response)
+        auth_fns = _build_patched_auth_functions(jwks_response)
         token = sign_jwt({"aud": "api://wrong-audience"})
         with pytest.raises(Exception, match="audience"):
-            await provider.authenticate_bearer_token(token)
+            await auth_fns.authenticate_bearer_token(token)
 
     @pytest.mark.asyncio
     async def test_invalid_signature_raises(
@@ -174,19 +236,19 @@ class TestProviderLevelValidation:
             serialization.PrivateFormat.PKCS8,
             serialization.NoEncryption(),
         ).decode()
-        provider = _build_patched_provider(jwks_response)
+        auth_fns = _build_patched_auth_functions(jwks_response)
         token = sign_jwt(private_pem=wrong_pem)
         with pytest.raises(Exception, match="signature"):
-            await provider.authenticate_bearer_token(token)
+            await auth_fns.authenticate_bearer_token(token)
 
     @pytest.mark.asyncio
     async def test_malformed_token_raises(
         self,
         jwks_response: dict[str, Any],
     ) -> None:
-        provider = _build_patched_provider(jwks_response)
+        auth_fns = _build_patched_auth_functions(jwks_response)
         with pytest.raises(Exception, match="[Mm]alformed"):
-            await provider.authenticate_bearer_token("not-a-jwt")
+            await auth_fns.authenticate_bearer_token("not-a-jwt")
 
 
 class TestEndpointIntegration:

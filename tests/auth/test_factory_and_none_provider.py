@@ -4,8 +4,8 @@ import sys
 import pytest
 
 from fastapi_archetype.auth.contracts import AuthFeatureNotSupportedError
-from fastapi_archetype.auth.factory import build_auth_facade
-from fastapi_archetype.auth.providers.none import NoAuthProvider
+from fastapi_archetype.auth.factory import get_auth
+from fastapi_archetype.auth.models import AuthFunctions
 from fastapi_archetype.core.config import AppSettings
 
 
@@ -20,34 +20,34 @@ def _entra_settings() -> AppSettings:
     )
 
 
-def test_build_auth_facade_uses_entra_provider() -> None:
-    facade = build_auth_facade(_entra_settings())
-    assert facade.provider_name == "external-entra"
+def test_get_auth_entra_returns_auth_functions() -> None:
+    auth_fns = get_auth(_entra_settings())
+    assert isinstance(auth_fns, AuthFunctions)
 
 
-def test_build_auth_facade_errors_when_httpx_is_missing(
+def test_get_auth_errors_when_httpx_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delitem(
         sys.modules,
-        "fastapi_archetype.auth.providers.entra",
+        "fastapi_archetype.auth.entra",
         raising=False,
     )
     original_import = builtins.__import__
 
     def guarded_import(name, globals_=None, locals_=None, fromlist=(), level=0):
-        if name == "fastapi_archetype.auth.providers.entra":
+        if name == "fastapi_archetype.auth.entra":
             raise ModuleNotFoundError("No module named 'httpx'", name="httpx")
         return original_import(name, globals_, locals_, fromlist, level)
 
     monkeypatch.setattr(builtins, "__import__", guarded_import)
 
     with pytest.raises(RuntimeError, match="AUTH_TYPE=entra requires httpx"):
-        build_auth_facade(_entra_settings())
+        get_auth(_entra_settings())
 
 
 @pytest.mark.asyncio
-async def test_no_auth_provider_obo_not_supported() -> None:
-    provider = NoAuthProvider()
+async def test_none_auth_obo_not_supported() -> None:
+    auth_fns = get_auth(AppSettings(auth_type="none"))
     with pytest.raises(AuthFeatureNotSupportedError, match="OBO flow is unavailable"):
-        await provider.get_on_behalf_of_access_token("scope", "user-token")
+        await auth_fns.get_on_behalf_of_access_token("scope", "user-token")

@@ -62,15 +62,13 @@ src/fastapi_archetype/
 │       ├── __init__.py              # APIRouter(prefix="/v2"), includes resource routers
 │       └── dummy_routes.py          # GET/POST /v2/dummies (admin role on POST)
 ├── auth/
-│   ├── contracts.py                 # AuthProvider, RoleMappingProvider ABCs; error types
-│   ├── dependencies.py              # require_auth, require_role(Role), get_current_principal
-│   ├── facade.py                    # AuthFacade (boundary around provider)
-│   ├── factory.py                   # build_auth_facade(settings) -> AuthFacade
-│   ├── models.py                    # Principal dataclass, Role StrEnum
-│   └── providers/
-│       ├── entra.py                 # EntraExternalAuthProvider (JWT, OAuth token acquisition)
-│       ├── none.py                  # NoAuthProvider (dev bypass, grants all roles)
-│       └── role_mapping.py          # BasicRoleMappingProvider (identity mapping)
+│   ├── contracts.py                 # Error types only (AuthError, UnauthorizedError, etc.)
+│   ├── dependencies.py              # require_auth, require_role(Role), get_auth_functions DI shim
+│   ├── entra.py                     # make_entra_auth(settings) -> AuthFunctions (closure factory)
+│   ├── factory.py                   # get_auth(settings) -> AuthFunctions (dict-dispatch)
+│   ├── models.py                    # Principal dataclass, Role StrEnum, AuthFunctions dataclass
+│   ├── none.py                      # Plain async functions for AUTH_TYPE=none (dev bypass)
+│   └── role_mapping.py              # identity_role_mapper(role) -> role (plain function)
 ├── core/
 │   ├── config.py                    # AppSettings(BaseSettings) — all env vars
 │   ├── constants.py                 # ResourceDefinition dataclass, DUMMIES, HEALTH_PATH
@@ -91,19 +89,15 @@ src/fastapi_archetype/
 │   └── prometheus.py                # Metrics dataclass, dummies_created_total counter, setup_prometheus(app)
 └── services/
     ├── __init__.py                  # Imports all service modules and calls apply_logging() on each
-    ├── contracts/                   # Service contracts (ABCs or Protocol) — one module per logical service
-    │   └── dummy_service.py         # DummyServiceV1Contract, DummyServiceV2Contract
-    ├── factory.py                   # build_*_service(settings) — select implementation by settings.profile
+    ├── factory.py                   # DummyServiceV1/V2 dataclasses; build_*_service(settings) dict-dispatch
     ├── v1/
-    │   ├── implementations/         # Default and mock implementations for v1
-    │   │   ├── default_dummy_service.py
-    │   │   └── mock_dummy_service.py
-    │   └── dummy_service.py        # Re-export or thin wrapper; routes depend on contract via DI
+    │   ├── dummy.py                 # Plain functions: get_all_dummies, create_dummy, update_dummy, …
+    │   ├── mock_dummy.py            # Plain mock functions returning static data (no DB)
+    │   └── dummy_service.py        # get_dummy_service_v1() DI shim
     └── v2/
-        ├── implementations/
-        │   ├── default_dummy_service.py
-        │   └── mock_dummy_service.py
-        └── dummy_service.py
+        ├── dummy.py                 # Plain functions: get_all_dummies, create_dummy
+        ├── mock_dummy.py            # Plain mock functions returning static data (no DB)
+        └── dummy_service.py         # get_dummy_service_v2() DI shim
 
 tests/
 ├── conftest.py                      # SQLite in-memory engine, session, TestClient with DI override
@@ -115,11 +109,12 @@ tests/
 │   └── test_v2_dummy_routes.py      # v2 endpoints
 ├── auth/
 │   ├── conftest.py                  # RSA keypair, JWKS, JWT signing fixtures (synthetic IdP)
-│   ├── test_dependencies.py
 │   ├── test_external_provider.py
-│   ├── test_facade.py
-│   ├── test_entra_integration.py    # Full Entra flow with monkeypatched HTTP
-│   └── test_role_mapping.py
+│   ├── test_facade.py               # Tests for get_auth factory / AuthFunctions
+│   ├── test_facade_role_mapper.py   # Tests for role_mapper in AuthFunctions
+│   ├── test_factory_and_none_provider.py
+│   ├── test_entra_integration.py    # Full Entra flow with intercepted HTTP
+│   └── test_role_mapping_providers.py
 ├── core/
 │   ├── test_config.py
 │   ├── test_errors.py
@@ -240,43 +235,46 @@ Rate limit values are strings like `"100/minute"` or `"10/minute"`, configurable
 
 ### 10. Authentication and Authorization
 
-Architecture: `AuthProvider` (ABC) → concrete providers (`NoAuthProvider`, `EntraExternalAuthProvider`) → `AuthFacade` (boundary) → FastAPI dependencies (`require_auth`, `require_role`).
+Architecture: plain function modules (`auth/none.py`, `auth/entra.py`) → `AuthFunctions` dataclass (returned by `auth/factory.py`) → FastAPI dependencies (`require_auth`, `require_role`).
+
+**`AuthFunctions` dataclass** (defined in `auth/models.py`): holds four callable fields — `authenticate_bearer_token`, `get_client_credentials_access_token`, `get_on_behalf_of_access_token`, `role_mapper`. Created by `get_auth(settings)` and injected via `get_auth_functions()`.
 
 **Auth modes** (controlled by `AUTH_TYPE`):
 
-- `none`: `NoAuthProvider` returns a synthetic principal with all roles. No token validation.
-- `entra`: `EntraExternalAuthProvider` validates bearer JWT (signature via JWKS, standard claims, issuer, optional audience), maps claims to `Principal`, and supports client_credentials and OBO token acquisition for outbound OAuth use cases.
+- `none`: `auth/none.py` exports plain async functions returning a synthetic principal with all roles. No token validation.
+- `entra`: `auth/entra.py` exports `make_entra_auth(settings) -> AuthFunctions`. Uses a closure factory that captures JWKS cache and settings in closure scope. Validates bearer JWT (signature via JWKS, standard claims, issuer, optional audience) and supports client_credentials and OBO token acquisition.
 
-**Role model:** `Role` is a `StrEnum` with members `ADMIN`, `WRITER`, `READER`. `RoleMappingProvider.to_external(role_name)` maps internal labels to external identifiers. `BasicRoleMappingProvider` is an identity mapping.
+**Role model:** `Role` is a `StrEnum` with members `ADMIN`, `WRITER`, `READER`. `auth/role_mapping.py` exports `identity_role_mapper(role: str) -> str` (identity mapping). The `AuthFunctions.role_mapper` field holds the active mapping function; custom mappers can be injected for testing by overriding `get_auth_functions`.
 
 **Dependencies:**
 
 - `require_auth` — ensures a valid `Principal` exists (any authenticated user).
-- `require_role(Role.XXX)` — returns a dependency that additionally checks the principal has the required role.
+- `require_role(Role.XXX)` — returns a dependency that additionally checks the principal has the required role via `auth_fns.role_mapper`.
 
 **Error sanitization:** Auth failures raise `AppException(ErrorCode.UNAUTHORIZED)` or `AppException(ErrorCode.FORBIDDEN)`. Provider-specific details are logged server-side only, never exposed to clients.
 
-**Factory:** `build_auth_facade(settings)` in `auth/factory.py` selects the provider based on `AUTH_TYPE`.
+**Factory:** `get_auth(settings)` in `auth/factory.py` uses dict-dispatch on `settings.auth_type` to return a configured `AuthFunctions` instance.
 
-### 11. Profile and Service Contracts
+### 11. Profile and Service Dispatch
 
-Service implementations are decoupled from the rest of the application by a **service contract** (interface). Which implementation is used at runtime is driven by an optional **profile** environment variable, enabling mock implementations for local or profile-based testing without touching the database or external systems.
+Service implementations are selected at runtime by a **profile** environment variable, enabling mock implementations for local or profile-based testing without touching the database or external systems.
 
 **Profile:**
 
 - **Environment variable:** `PROFILE` (optional). Values: `"default"` | `"mock"`. Default when unset: `"default"`.
-- **Semantics:** `default` — wire the real (e.g. database-backed) implementation for each service. `mock` — wire the mock implementation for each service (in-memory or hard-coded data; no database or external calls).
+- **Semantics:** `default` — wire the real (database-backed) functions for each service. `mock` — wire the mock functions for each service (static/hard-coded data; no database or external calls).
 - **Configuration:** `profile` is a typed field on `AppSettings` (e.g. `Literal["default", "mock"]`). See `.env.example` for reference.
 
-**Service contract pattern:**
+**Functional dispatch pattern:**
 
-- **Contract:** For each logical service (e.g. dummies CRUD), define an abstract contract: an ABC (or `typing.Protocol`) in a dedicated module (e.g. `services/contracts/dummy_service.py`). The contract declares the methods that routes and other code depend on (e.g. `get_all`, `create`, `update`), with signatures using entity types and `Session` where the default implementation needs it; mock implementations may ignore the session.
-- **Default implementation:** One concrete implementation that satisfies the contract and uses the real backend (e.g. database). Lives in `services/v{n}/implementations/` or equivalent (e.g. `default_dummy_service.py`). This is the implementation used when `profile == "default"`.
-- **Mock implementation:** One concrete implementation that satisfies the same contract but returns data without connecting to the database or external systems (in-memory list, hard-coded entities, or similar). Lives alongside the default implementation (e.g. `mock_dummy_service.py`). Used when `profile == "mock"`.
-- **Factory:** Factory functions (e.g. `build_dummy_service_v1(settings) -> DummyServiceV1Contract`, `build_dummy_service_v2(settings) -> DummyServiceV2Contract`) that, based on `settings.profile`, return the appropriate implementation. Factories live in `services/factory.py`. The app wires the returned instance into the dependency graph (e.g. `Depends(get_dummy_service_v1)` / `Depends(get_dummy_service_v2)`).
-- **Wiring:** Routes and other consumers depend on the **contract type** (e.g. `DummyServiceV1Contract`, `DummyServiceV2Contract`), not on a concrete class. They receive the implementation chosen by the factory so that tests can override the dependency with a mock or a test double.
+- **Service module:** For each logical service and version, one module exports plain functions (e.g. `services/v1/dummy.py` → `get_all_dummies(session)`, `create_dummy(session, dummy)`, `update_dummy(session, entity)`). This is the default (database-backed) implementation.
+- **Mock module:** A sibling module exports the same function signatures with static/hard-coded data and no database calls (e.g. `services/v1/mock_dummy.py`). Used when `profile == "mock"`.
+- **Service dataclass:** `services/factory.py` defines a `@dataclass` (e.g. `DummyServiceV1`) with typed callable fields matching each service function's signature. Routes type-annotate their `svc` parameter against this dataclass.
+- **Factory:** `build_dummy_service_v1(settings) -> DummyServiceV1` uses dict-dispatch on `settings.profile` to read function references from the appropriate module and assemble a `DummyServiceV1` instance. Function references are read at call time, so AOP wrapping applied at import time is preserved.
+- **DI shim:** `services/v1/dummy_service.py` exports `get_dummy_service_v1() -> DummyServiceV1`, called per request via `Depends`.
+- **AOP:** `services/__init__.py` imports all service modules and calls `apply_logging()` on each, wrapping their public functions with `log_io`.
 
-**Application-wide rule:** Every service that encapsulates business logic or data access has (1) a contract, (2) a default implementation, (3) a mock implementation, and (4) a factory that selects by `profile`. New services must follow this pattern.
+**Application-wide rule:** Every service that encapsulates business logic or data access has (1) a plain-function default module, (2) a plain-function mock module, (3) a factory that assembles and selects by `profile`, and (4) a DI shim. New services must follow this pattern.
 
 ### 12. Containerization
 
@@ -336,12 +334,12 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 ### Module organization
 
 - One entity per file in `models/entities/` (SQLModel, table=True). Entity classes must **not** carry `alias_generator`. One resource’s DTOs per file in `models/dto/<version>/` (e.g. `v1/`), using the `<Method><Resource><Request|Response>` naming pattern; all DTO classes inherit from `CamelCaseModel` (in `models/dto/__init__.py`). One factory module per entity in `factories/` (entity ↔ DTO using Pydantic only).
-- One resource's routes per file in `api/v{n}/`. Routes use DTOs for request/response and call factory functions to convert to/from entities. Routes depend on service **contracts** via DI (e.g. `Depends(get_dummy_service_v1)` / `Depends(get_dummy_service_v2)`), not on concrete service modules.
-- **Service contracts:** One contract (ABC or Protocol) per logical service in `services/contracts/`. The contract defines the methods used by routes (accept/return entities; session passed where the default implementation needs it).
-- **Service implementations:** For each contract, a default implementation (real backend) and a mock implementation (no DB/external calls) in `services/v{n}/implementations/` (e.g. `default_dummy_service.py`, `mock_dummy_service.py`). A factory in `services/factory.py` (or equivalent) selects by `settings.profile` and is used by the DI dependency.
-- One resource's service module in `services/v{n}/` may re-export or wrap the implementation chosen by the factory; consumers depend on the contract type.
+- One resource's routes per file in `api/v{n}/`. Routes use DTOs for request/response and call factory functions to convert to/from entities. Routes depend on service dataclasses (e.g. `DummyServiceV1`) via DI (`Depends(get_dummy_service_v1)` / `Depends(get_dummy_service_v2)`).
+- **Service modules (flat):** For each version and resource, one default module and one mock module directly in `services/v{n}/` (e.g. `dummy.py`, `mock_dummy.py`). No `contracts/` or `implementations/` subdirectory. Each module exports plain functions.
+- **Service dataclass:** `services/factory.py` defines `DummyServiceV1` / `DummyServiceV2` as frozen `@dataclass` with typed callable fields. The factory functions assemble these by reading from the appropriate module based on `settings.profile`.
+- DI shims in `services/v{n}/dummy_service.py` call the factory per request.
 - The version router `__init__.py` aggregates resource routers.
-- `services/__init__.py` aggregates AOP logging application (applied to implementation modules).
+- `services/__init__.py` imports all service modules and applies `apply_logging()` to each.
 
 ### Constants
 
@@ -354,7 +352,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 - Every configurable value is a typed field on `AppSettings`.
 - Environment variable names match field names in UPPER_CASE.
 - Defaults are provided for all fields except auth-specific fields required when `AUTH_TYPE=entra`.
-- **Profile:** Optional `PROFILE` with values `"default"` | `"mock"` (default `"default"`) drives which service implementation is wired (see §11 Profile and Service Contracts).
+- **Profile:** Optional `PROFILE` with values `"default"` | `"mock"` (default `"default"`) drives which service functions are wired (see §11 Profile and Service Dispatch).
 
 ### Error handling
 
@@ -366,8 +364,8 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 ### Dependency injection
 
 - Database sessions: `Depends(get_session)`.
-- Auth: `Depends(require_auth)` or `Depends(require_role(Role.XXX))`.
-- **Services:** Routes depend on the service contract via a dependency that calls the factory (e.g. `Depends(get_dummy_service_v1)` or `Depends(get_dummy_service_v2)`). The factory uses `settings.profile` to return the default or mock implementation. Consumers depend on the contract type, not the concrete class.
+- Auth: `Depends(require_auth)` or `Depends(require_role(Role.XXX))`. Auth functions injected via `Depends(get_auth_functions)` (returns `AuthFunctions` dataclass).
+- **Services:** Routes depend on a service dataclass (e.g. `DummyServiceV1`) via a dependency that calls the factory (`Depends(get_dummy_service_v1)` or `Depends(get_dummy_service_v2)`). The factory uses `settings.profile` to return the appropriate callable fields. Routes call functions as `svc.get_all_dummies(session)`.
 - Rate limiting: `@limiter.limit(settings.rate_limit_xxx)` decorator.
 - All DI-based dependencies are overridable in tests via `app.dependency_overrides`.
 
@@ -377,7 +375,7 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 - Every new service needs unit tests in `tests/services/`.
 - Use the existing `client` and `session` fixtures from `tests/conftest.py`.
 - Auth-related tests go in `tests/auth/` and use the synthetic IdP fixtures from `tests/auth/conftest.py`.
-- Service and route tests may override the service dependency (e.g. with the default implementation and a session) or set `PROFILE`; see §11 Profile and Service Contracts.
+- Service and route tests may override the service dependency (e.g. with the default function module and a session) or set `PROFILE`; see §11 Profile and Service Dispatch.
 
 ### Code style
 
@@ -410,8 +408,8 @@ Web DTOs **must** follow this pattern: **`<Method><Resource><Request | Response>
 - Do not add `from __future__ import annotations` — it is a no-op on Python 3.14 and misleads contributors.
 - Do not modify `tests/conftest.py` fixtures to be resource-specific — they are generic by design.
 - Do not name web DTOs after the entity (e.g. `DummyCreate`, `WidgetResponse`) — use the mandatory pattern `<Method><Resource><Request|Response>` (e.g. `PostDummiesRequest`, `GetDummiesResponse`).
-- Do not wire routes directly to concrete service classes — use the service contract and a profile-driven factory (see §11 Profile and Service Contracts).
-- Do not add a new service without a contract, a default implementation, and a mock implementation — the pattern is mandatory for all services.
+- Do not use ABCs or class hierarchies for service implementations — use plain function modules and a service dataclass.
+- Do not add a new service without a default function module, a mock function module, and a factory that assembles and dispatches by profile — the pattern is mandatory for all services.
 
 ## Adding a New Resource
 
@@ -421,14 +419,14 @@ To add a new resource (e.g., `Widget`):
 2. **DTOs:** Create `models/dto/v1/widget.py` with Pydantic models inheriting from `CamelCaseModel` (imported from `fastapi_archetype.models.dto`), following the **`<Method><Resource><Request|Response>`** naming pattern (e.g. `PostWidgetsRequest`, `GetWidgetsResponse`, `PostWidgetsResponse`). `CamelCaseModel` provides camelCase serialization via `pydantic.alias_generators.to_camel` and `populate_by_name=True`. Response DTOs must include `uuid` (when the entity has one) and **must not** include the internal `id`.
 3. **Factory:** Create `factories/widget.py` with `entity_to_dto(entity) -> GetWidgetsResponse` (or the appropriate response type) and `dto_to_entity(dto: PostWidgetsRequest) -> Widget` using only Pydantic (`model_validate`, `model_dump`). For update (PUT): add `put_dto_to_entity(dto: PutWidgetsRequest) -> Widget` that returns a `Widget` with `uuid` and updatable fields from the DTO but **no** `id` (see **Update-by-UUID pattern** in §2 Data Persistence). The service will resolve by UUID when `id` is missing.
 4. **Constant:** Add `WIDGETS = ResourceDefinition(...)` to `core/constants.py`.
-5. **Service contract:** Create `services/contracts/widget_service.py` with an ABC (e.g. `WidgetServiceV1Contract`) declaring the methods used by routes (e.g. `get_all`, `create`, `get_by_uuid`, `update` with entity types and `Session` where needed).
-6. **Default implementation:** Create `services/v1/implementations/default_widget_service.py` with a class (e.g. `DefaultWidgetServiceV1`) implementing the contract with real database access. For update: when `entity.id` is None, fetch by `entity.uuid`; if not found, raise `AppException(ErrorCode.WIDGET_NOT_FOUND)`; otherwise resolve and update (see **Update-by-UUID pattern** in §2 Data Persistence).
-7. **Mock implementation:** Create `services/v1/implementations/mock_widget_service.py` with a class (e.g. `MockWidgetServiceV1`) implementing the same contract with static or hard-coded data (no database or external calls).
-8. **Factory and DI:** Add `build_widget_service_v1(settings) -> WidgetServiceV1Contract` in `services/factory.py` that returns the default or mock implementation based on `settings.profile`. Expose a dependency (e.g. `get_widget_service_v1`) used by routes via `Depends(get_widget_service_v1)`.
-9. **AOP:** Import and `apply_logging()` the implementation modules in `services/__init__.py`.
+5. **Service dataclass:** Add a `@dataclass(frozen=True, kw_only=True)` class (e.g. `WidgetServiceV1`) to `services/factory.py` with typed `Callable` fields matching the service functions' signatures (e.g. `get_all: Callable[[Session], list[Widget]]`, `create: Callable[[Session, Widget], Widget]`).
+6. **Default module:** Create `services/v1/widget.py` with plain functions implementing real database access. For update: when `entity.id` is None, fetch by `entity.uuid`; if not found, raise `AppException(ErrorCode.WIDGET_NOT_FOUND)`; otherwise resolve and update (see **Update-by-UUID pattern** in §2 Data Persistence).
+7. **Mock module:** Create `services/v1/mock_widget.py` with the same function signatures but static/hard-coded return values (no database or external calls).
+8. **Factory and DI:** Add `build_widget_service_v1(settings) -> WidgetServiceV1` in `services/factory.py` using dict-dispatch on `settings.profile`. Expose a DI shim `get_widget_service_v1()` in `services/v1/widget_service.py`. Use `Depends(get_widget_service_v1)` in routes.
+9. **AOP:** Import and `apply_logging()` the new modules in `services/__init__.py`.
 10. **Routes:** Create `api/v1/widget_routes.py` with `APIRouter(prefix=WIDGETS.path, tags=[WIDGETS.name])`. Use DTOs for request body and response model; call factory to convert request DTO → entity for service and entity → response DTO for responses. Rate limits and auth as needed. **If the resource supports PUT (update):** use a path like `PUT /v1/widgets/{uuid}` and a request body that includes `uuid` plus updatable fields. In the route: validate that path `uuid` and body `uuid` match (return **400 Bad Request** if not); call the factory to convert the body DTO to an entity (no `id`); call the service update function with that entity; map the returned entity to the response DTO. Do **not** fetch by UUID or handle 404 in the route — the service does that (see **Update-by-UUID pattern** in §2 Data Persistence).
 11. **Router registration:** Include the widget router in `api/v1/__init__.py`.
-12. **Tests:** Add `tests/api/test_widget_routes.py` and `tests/services/v1/test_widget_service.py` (and tests for mock vs default behaviour when appropriate) using existing fixtures. Service tests may target the default implementation or the contract with a mock implementation override.
+12. **Tests:** Add `tests/api/test_widget_routes.py` and `tests/services/v1/test_widget_service.py` (and tests for mock vs default behaviour when appropriate) using existing fixtures. Service tests call functions from the service module directly (e.g. `widget.get_all(session)`).
 13. **Custom metrics (if needed):** Add counters to the `Counters` dataclass in `observability/prometheus.py`.
 14. **Rate limits (if needed):** Add `rate_limit_get_widgets` / `rate_limit_post_widgets` fields to `AppSettings` and corresponding entries to `.env.example`.
 

@@ -3,9 +3,7 @@
 from sqlmodel import Session
 
 from fastapi_archetype.models.entities.dummy import Dummy
-from fastapi_archetype.services.contracts.dummy_service import DummyServiceV2Contract
 
-# Static mock data — no logic, no state.
 MOCK_V2_UUID_1 = "00000000-0000-0000-0000-000000000010"
 MOCK_V2_CREATED_UUID = "00000000-0000-0000-0000-000000000011"
 
@@ -17,14 +15,11 @@ STATIC_CREATED_V2 = Dummy(
 )
 
 
-class MockDummyServiceV2(DummyServiceV2Contract):
-    """Returns static mock data only. No persistence or logic."""
+def get_all_dummies(session: Session) -> list[Dummy]:
+    _ = session
+    return list(STATIC_LIST_V2)
 
-    def get_all_dummies(self, session: Session) -> list[Dummy]:
-        _ = session
-        return list(STATIC_LIST_V2)
 
-    def create_dummy(self, session: Session, dummy: Dummy) -> Dummy:
-        _ = session
-        _ = dummy
-        return STATIC_CREATED_V2
+def create_dummy(session: Session, dummy: Dummy) -> Dummy:
+    _ = (session, dummy)
+    return STATIC_CREATED_V2

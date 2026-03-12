@@ -1,4 +1,4 @@
-from fastapi_archetype.auth.dependencies import get_auth_facade
-from fastapi_archetype.auth.facade import AuthFacade
+from fastapi_archetype.auth.dependencies import get_auth_functions
+from fastapi_archetype.auth.models import AuthFunctions
 
-__all__ = ["AuthFacade", "get_auth_facade"]
+__all__ = ["AuthFunctions", "get_auth_functions"]

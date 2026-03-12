@@ -13,8 +13,7 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 from fastapi_archetype.auth.contracts import UnauthorizedError
-from fastapi_archetype.auth.facade import AuthFacade
-from fastapi_archetype.auth.models import Principal
+from fastapi_archetype.auth.models import AuthFunctions, Principal
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
 from fastapi_archetype.main import app
@@ -134,28 +133,45 @@ def entra_client_fixture(entra_engine) -> Generator[TestClient]:
     app.dependency_overrides.clear()
 
 
-def mock_facade_unauthorized() -> AuthFacade:
-    facade = AsyncMock(spec=AuthFacade)
-    facade.authenticate_bearer_token.side_effect = UnauthorizedError(
-        "JWKS endpoint did not return a valid keys list"
+def _noop_role_mapper(role: str) -> str:
+    return role
+
+
+def mock_auth_functions_unauthorized() -> AuthFunctions:
+    err = UnauthorizedError("JWKS endpoint did not return a valid keys list")
+    mock = AsyncMock(side_effect=err)
+    return AuthFunctions(
+        authenticate_bearer_token=mock,
+        get_client_credentials_access_token=AsyncMock(),
+        get_on_behalf_of_access_token=AsyncMock(),
+        role_mapper=_noop_role_mapper,
     )
-    return facade
 
 
-def mock_facade_unexpected_error() -> AuthFacade:
-    facade = AsyncMock(spec=AuthFacade)
-    facade.authenticate_bearer_token.side_effect = RuntimeError(
-        "https://login.microsoftonline.com/.well-known/openid-configuration"
+def mock_auth_functions_unexpected_error() -> AuthFunctions:
+    mock = AsyncMock(
+        side_effect=RuntimeError(
+            "https://login.microsoftonline.com/.well-known/openid-configuration"
+        )
     )
-    return facade
+    return AuthFunctions(
+        authenticate_bearer_token=mock,
+        get_client_credentials_access_token=AsyncMock(),
+        get_on_behalf_of_access_token=AsyncMock(),
+        role_mapper=_noop_role_mapper,
+    )
 
 
-def mock_facade_reader_principal() -> AuthFacade:
-    facade = AsyncMock(spec=AuthFacade)
-    facade.authenticate_bearer_token.return_value = Principal(
+def mock_auth_functions_reader_principal() -> AuthFunctions:
+    principal = Principal(
         subject="user-1",
         user_id="user-1",
         name="Test User",
         roles=["reader"],
     )
-    return facade
+    return AuthFunctions(
+        authenticate_bearer_token=AsyncMock(return_value=principal),
+        get_client_credentials_access_token=AsyncMock(),
+        get_on_behalf_of_access_token=AsyncMock(),
+        role_mapper=_noop_role_mapper,
+    )

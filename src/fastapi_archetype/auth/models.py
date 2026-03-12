@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
@@ -19,3 +20,13 @@ class Principal:
     roles: list[str] = field(default_factory=list)
     groups: list[str] = field(default_factory=list)
     claims: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, kw_only=True)
+class AuthFunctions:
+    """Configured auth callables returned by the auth factory."""
+
+    authenticate_bearer_token: Callable[[str], Awaitable[Principal]]
+    get_client_credentials_access_token: Callable[[str], Awaitable[str]]
+    get_on_behalf_of_access_token: Callable[[str, str], Awaitable[str]]
+    role_mapper: Callable[[str], str]

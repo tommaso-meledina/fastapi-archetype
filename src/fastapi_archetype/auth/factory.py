@@ -1,15 +1,20 @@
-from fastapi_archetype.auth.facade import AuthFacade
-from fastapi_archetype.auth.providers.none import NoAuthProvider
-from fastapi_archetype.auth.providers.role_mapping import BasicRoleMappingProvider
+from fastapi_archetype.auth import none as none_auth
+from fastapi_archetype.auth.models import AuthFunctions
+from fastapi_archetype.auth.role_mapping import identity_role_mapper
 from fastapi_archetype.core.config import AppSettings
 
 
-def build_auth_facade(settings: AppSettings) -> AuthFacade:
-    role_mapper = BasicRoleMappingProvider()
+def get_auth(settings: AppSettings) -> AuthFunctions:
+    """Return configured auth functions for the given auth_type via dict-dispatch."""
     if settings.auth_type == "none":
-        return AuthFacade(primary_provider=NoAuthProvider(), role_mapper=role_mapper)
+        return AuthFunctions(
+            authenticate_bearer_token=none_auth.authenticate_bearer_token,
+            get_client_credentials_access_token=none_auth.get_client_credentials_access_token,
+            get_on_behalf_of_access_token=none_auth.get_on_behalf_of_access_token,
+            role_mapper=identity_role_mapper,
+        )
     try:
-        from fastapi_archetype.auth.providers.entra import EntraExternalAuthProvider
+        from fastapi_archetype.auth.entra import make_entra_auth
     except ModuleNotFoundError as exc:
         if exc.name == "httpx":
             msg = (
@@ -18,7 +23,4 @@ def build_auth_facade(settings: AppSettings) -> AuthFacade:
             )
             raise RuntimeError(msg) from exc
         raise
-    return AuthFacade(
-        primary_provider=EntraExternalAuthProvider(settings),
-        role_mapper=role_mapper,
-    )
+    return make_entra_auth(settings)

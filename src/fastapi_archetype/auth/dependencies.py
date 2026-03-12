@@ -6,9 +6,8 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from fastapi_archetype.auth.contracts import UnauthorizedError
-from fastapi_archetype.auth.facade import AuthFacade
-from fastapi_archetype.auth.factory import build_auth_facade
-from fastapi_archetype.auth.models import Principal, Role
+from fastapi_archetype.auth.factory import get_auth
+from fastapi_archetype.auth.models import AuthFunctions, Principal, Role
 from fastapi_archetype.core.config import settings
 from fastapi_archetype.core.errors import AppException, ErrorCode
 
@@ -18,8 +17,8 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 @lru_cache
-def get_auth_facade() -> AuthFacade:
-    return build_auth_facade(settings)
+def get_auth_functions() -> AuthFunctions:
+    return get_auth(settings)
 
 
 async def get_bearer_token(
@@ -32,15 +31,14 @@ async def get_bearer_token(
 
 async def get_current_principal(
     token: Annotated[str | None, Depends(get_bearer_token)],
-    facade: Annotated[AuthFacade, Depends(get_auth_facade)],
+    auth_fns: Annotated[AuthFunctions, Depends(get_auth_functions)],
 ) -> Principal:
     if settings.auth_type == "none":
-        principal = await facade.authenticate_bearer_token(token or "")
-        return principal
+        return await auth_fns.authenticate_bearer_token(token or "")
     if token is None:
         raise AppException(ErrorCode.UNAUTHORIZED)
     try:
-        principal = await facade.authenticate_bearer_token(token)
+        principal = await auth_fns.authenticate_bearer_token(token)
     except UnauthorizedError as exc:
         logger.warning("Bearer token authentication failed: %s", exc)
         raise AppException(ErrorCode.UNAUTHORIZED) from exc
@@ -61,10 +59,10 @@ async def require_auth(
 def require_role(required_role: Role):
     async def _dependency(
         principal: Annotated[Principal, Depends(get_current_principal)],
-        auth_facade: Annotated[AuthFacade, Depends(get_auth_facade)],
+        auth_fns: Annotated[AuthFunctions, Depends(get_auth_functions)],
     ) -> Principal:
         roles = {role.lower() for role in principal.roles}
-        external_role = auth_facade.role_mapper.to_external(required_role.value).lower()
+        external_role = auth_fns.role_mapper(required_role.value).lower()
         if external_role not in roles:
             logger.warning(
                 "Role check failed: principal %s lacks role %s (they have %d roles)",

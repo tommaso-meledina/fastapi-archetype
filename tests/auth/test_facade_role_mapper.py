@@ -1,38 +1,30 @@
-from unittest.mock import AsyncMock
-
-from fastapi_archetype.auth.contracts import RoleMappingProvider
-from fastapi_archetype.auth.facade import AuthFacade
-from fastapi_archetype.auth.factory import build_auth_facade
-from fastapi_archetype.auth.providers.role_mapping import BasicRoleMappingProvider
+from fastapi_archetype.auth.factory import get_auth
+from fastapi_archetype.auth.models import AuthFunctions
+from fastapi_archetype.auth.role_mapping import identity_role_mapper
 from fastapi_archetype.core.config import AppSettings
 
 
-class GuidRoleMappingProvider(RoleMappingProvider):
-    """Test provider that maps role names to GUIDs."""
+class TestAuthFunctionsRoleMapper:
+    def test_default_role_mapper_is_identity(self) -> None:
+        auth_fns = get_auth(AppSettings(auth_type="none"))
+        assert auth_fns.role_mapper("admin") == "admin"
+        assert auth_fns.role_mapper("reader") == "reader"
 
-    _mapping = {
-        "admin": "guid-admin-001",
-        "writer": "guid-writer-002",
-        "reader": "guid-reader-003",
-    }
+    def test_custom_role_mapper_can_be_injected(self) -> None:
+        def guid_mapper(role: str) -> str:
+            return {"admin": "guid-admin-001"}.get(role, role)
 
-    def to_external(self, role_name: str) -> str:
-        return self._mapping.get(role_name, role_name)
+        from unittest.mock import AsyncMock
 
-
-class TestFacadeRoleMapperProperty:
-    def test_facade_exposes_role_mapper(self) -> None:
-        facade = build_auth_facade(AppSettings(auth_type="none"))
-        assert isinstance(facade.role_mapper, BasicRoleMappingProvider)
-
-    def test_facade_accepts_custom_role_mapper(self) -> None:
-        custom_mapper = GuidRoleMappingProvider()
-        facade = AuthFacade(
-            primary_provider=AsyncMock(),
-            role_mapper=custom_mapper,
+        auth_fns = AuthFunctions(
+            authenticate_bearer_token=AsyncMock(),
+            get_client_credentials_access_token=AsyncMock(),
+            get_on_behalf_of_access_token=AsyncMock(),
+            role_mapper=guid_mapper,
         )
-        assert facade.role_mapper is custom_mapper
+        assert auth_fns.role_mapper("admin") == "guid-admin-001"
+        assert auth_fns.role_mapper("reader") == "reader"
 
-    def test_facade_defaults_to_basic_when_none(self) -> None:
-        facade = AuthFacade(primary_provider=AsyncMock())
-        assert isinstance(facade.role_mapper, BasicRoleMappingProvider)
+    def test_identity_role_mapper_returns_role_unchanged(self) -> None:
+        assert identity_role_mapper("admin") == "admin"
+        assert identity_role_mapper("custom-role") == "custom-role"

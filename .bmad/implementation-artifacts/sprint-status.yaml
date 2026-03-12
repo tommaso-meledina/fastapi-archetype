@@ -174,3 +174,11 @@ development_status:
   23-1-structlog-migration: done
   23-2-test-suite-cleanup: done
   epic-23-retrospective: optional
+
+  epic-24: in-progress
+  24-1-auth-subsystem-remove-abcs-and-facade-convert-to-functions: in-progress
+  24-2-auth-factory-and-di-rewire: backlog
+  24-3-service-subsystem-remove-contracts-flatten-to-functions: backlog
+  24-4-service-factory-routes-and-di-rewire: backlog
+  24-5-test-updates-and-project-context-for-pythonic-redesign: backlog
+  epic-24-retrospective: optional
