@@ -1,50 +1,25 @@
-from pydantic import BaseModel, ConfigDict
+from fastapi_archetype.models.dto import CamelCaseModel
 
 
-def _to_camel(name: str) -> str:
-    components = name.split("_")
-    return components[0] + "".join(x.title() for x in components[1:])
-
-
-class PostDummiesRequest(BaseModel):
-    model_config = ConfigDict(
-        alias_generator=_to_camel,
-        populate_by_name=True,
-    )
-
+class PostDummiesRequest(CamelCaseModel):
     name: str
     description: str | None = None
 
 
-class GetDummiesResponse(BaseModel):
-    model_config = ConfigDict(
-        alias_generator=_to_camel,
-        populate_by_name=True,
-    )
-
+class GetDummiesResponse(CamelCaseModel):
     uuid: str
     name: str
     name_initial: str
     description: str | None = None
 
 
-class PostDummiesResponse(BaseModel):
-    model_config = ConfigDict(
-        alias_generator=_to_camel,
-        populate_by_name=True,
-    )
-
+class PostDummiesResponse(CamelCaseModel):
     uuid: str
     name: str
     description: str | None = None
 
 
-class PutDummiesRequest(BaseModel):
-    model_config = ConfigDict(
-        alias_generator=_to_camel,
-        populate_by_name=True,
-    )
-
+class PutDummiesRequest(CamelCaseModel):
     uuid: str
     name: str
     description: str | None = None
