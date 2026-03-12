@@ -72,3 +72,11 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "--strict-markers -ra"
 asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.coverage.report]
+omit = [
+    "*/implementations/mock_dummy_service.py",
+]

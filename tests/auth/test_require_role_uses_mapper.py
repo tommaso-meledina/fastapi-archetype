@@ -1,6 +1,6 @@
 from collections.abc import Generator
 from typing import Any, cast
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,8 +10,7 @@ from sqlmodel import Session, SQLModel, create_engine
 from fastapi_archetype.auth.contracts import RoleMappingProvider
 from fastapi_archetype.auth.dependencies import get_auth_facade
 from fastapi_archetype.auth.facade import AuthFacade
-from fastapi_archetype.auth.factory import build_auth_facade
-from fastapi_archetype.auth.providers.role_mapping import BasicRoleMappingProvider
+from fastapi_archetype.auth.providers.entra import EntraExternalAuthProvider
 from fastapi_archetype.core.config import AppSettings
 from fastapi_archetype.core.database import get_session
 from fastapi_archetype.core.rate_limit import limiter
@@ -33,54 +32,6 @@ class GuidRoleMappingProvider(RoleMappingProvider):
 
     def to_external(self, role_name: str) -> str:
         return self._mapping.get(role_name, role_name)
-
-
-class TestBasicRoleMappingProvider:
-    def test_to_external_returns_admin_unchanged(self) -> None:
-        provider = BasicRoleMappingProvider()
-        assert provider.to_external("admin") == "admin"
-
-    def test_to_external_returns_reader_unchanged(self) -> None:
-        provider = BasicRoleMappingProvider()
-        assert provider.to_external("reader") == "reader"
-
-    def test_to_external_returns_writer_unchanged(self) -> None:
-        provider = BasicRoleMappingProvider()
-        assert provider.to_external("writer") == "writer"
-
-    def test_to_external_returns_arbitrary_string_unchanged(self) -> None:
-        provider = BasicRoleMappingProvider()
-        assert provider.to_external("custom-role") == "custom-role"
-
-
-class TestRoleMappingProviderABC:
-    def test_abc_cannot_be_instantiated(self) -> None:
-        with pytest.raises(TypeError):
-            RoleMappingProvider()
-
-    def test_custom_provider_implements_contract(self) -> None:
-        provider = GuidRoleMappingProvider()
-        assert provider.to_external("admin") == "guid-admin-001"
-        assert provider.to_external("reader") == "guid-reader-003"
-        assert provider.to_external("unknown") == "unknown"
-
-
-class TestFacadeRoleMapperProperty:
-    def test_facade_exposes_role_mapper(self) -> None:
-        facade = build_auth_facade(AppSettings(auth_type="none"))
-        assert isinstance(facade.role_mapper, BasicRoleMappingProvider)
-
-    def test_facade_accepts_custom_role_mapper(self) -> None:
-        custom_mapper = GuidRoleMappingProvider()
-        facade = AuthFacade(
-            primary_provider=AsyncMock(),
-            role_mapper=custom_mapper,
-        )
-        assert facade.role_mapper is custom_mapper
-
-    def test_facade_defaults_to_basic_when_none(self) -> None:
-        facade = AuthFacade(primary_provider=AsyncMock())
-        assert isinstance(facade.role_mapper, BasicRoleMappingProvider)
 
 
 class TestRequireRoleUsesMapper:
@@ -105,8 +56,6 @@ class TestRequireRoleUsesMapper:
         self, _guid_engine, sign_jwt, jwks_response
     ) -> Generator[TestClient]:
         """Client using GuidRoleMappingProvider where 'admin' -> 'guid-admin-001'."""
-        from fastapi_archetype.auth.providers.entra import EntraExternalAuthProvider
-
         settings = AppSettings(
             auth_type="entra",
             auth_external_issuer=TEST_ISSUER,

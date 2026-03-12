@@ -1,11 +1,23 @@
 import base64
 import time
+from collections.abc import Generator
 from typing import Any
+from unittest.mock import AsyncMock
 
 import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from fastapi.testclient import TestClient
+from sqlalchemy.pool import StaticPool
+from sqlmodel import Session, SQLModel, create_engine
+
+from fastapi_archetype.auth.contracts import UnauthorizedError
+from fastapi_archetype.auth.facade import AuthFacade
+from fastapi_archetype.auth.models import Principal
+from fastapi_archetype.core.database import get_session
+from fastapi_archetype.core.rate_limit import limiter
+from fastapi_archetype.main import app
 
 
 def _int_to_base64url(n: int) -> str:
@@ -81,3 +93,69 @@ def sign_jwt_fixture(rsa_keypair: dict[str, Any]):
         )
 
     return _sign
+
+
+@pytest.fixture(name="entra_engine", scope="module")
+def entra_engine_fixture():
+    engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SQLModel.metadata.create_all(engine)
+    try:
+        yield engine
+    finally:
+        SQLModel.metadata.drop_all(engine)
+        engine.dispose()
+
+
+@pytest.fixture(name="entra_client")
+def entra_client_fixture(entra_engine) -> Generator[TestClient]:
+    """Client with auth_type patched to 'entra' so auth-error paths execute."""
+    from unittest.mock import patch
+
+    def _override_session():
+        with Session(entra_engine) as session:
+            yield session
+
+    app.dependency_overrides[get_session] = _override_session
+    limiter.reset()
+
+    with (
+        patch(
+            "fastapi_archetype.auth.dependencies.settings.auth_type",
+            "entra",
+        ),
+        TestClient(app) as c,
+    ):
+        yield c
+
+    app.dependency_overrides.clear()
+
+
+def mock_facade_unauthorized() -> AuthFacade:
+    facade = AsyncMock(spec=AuthFacade)
+    facade.authenticate_bearer_token.side_effect = UnauthorizedError(
+        "JWKS endpoint did not return a valid keys list"
+    )
+    return facade
+
+
+def mock_facade_unexpected_error() -> AuthFacade:
+    facade = AsyncMock(spec=AuthFacade)
+    facade.authenticate_bearer_token.side_effect = RuntimeError(
+        "https://login.microsoftonline.com/.well-known/openid-configuration"
+    )
+    return facade
+
+
+def mock_facade_reader_principal() -> AuthFacade:
+    facade = AsyncMock(spec=AuthFacade)
+    facade.authenticate_bearer_token.return_value = Principal(
+        subject="user-1",
+        user_id="user-1",
+        name="Test User",
+        roles=["reader"],
+    )
+    return facade

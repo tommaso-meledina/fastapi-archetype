@@ -31,6 +31,7 @@
 * introduce CamelCaseModel base and remove entity alias leakage (story 21.3)
 * introduce AppSettings module-level singleton (story 22.1)
 * add __all__ to key packages and Justfile task runner (story 22.2)
+* migrate logging infrastructure to structlog
 
 
 ### Refactoring
