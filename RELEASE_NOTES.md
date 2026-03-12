@@ -12,6 +12,7 @@
 * add Epic 19 static type checking with ty and sprint plan
 * prepare epics after SWE review
 * update PROJECT_CONTEXT for epic 21 conventions (story 21.4)
+* update scripts and PROJECT_CONTEXT for async rewrite
 
 
 ### Fixes

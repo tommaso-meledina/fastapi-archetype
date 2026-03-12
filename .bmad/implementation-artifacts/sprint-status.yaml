@@ -183,10 +183,10 @@ development_status:
   24-5-test-updates-and-project-context-for-pythonic-redesign: done
   epic-24-retrospective: optional
 
-  epic-25: in-progress
+  epic-25: done
   25-4-async-aware-aop-and-dev-tooling: done
   25-2-async-database-layer: done
   25-1-async-routes-and-service-functions: done
   25-3-async-test-infrastructure: done
-  25-5-script-updates-and-project-context-for-async-rewrite: backlog
+  25-5-script-updates-and-project-context-for-async-rewrite: done
   epic-25-retrospective: optional
