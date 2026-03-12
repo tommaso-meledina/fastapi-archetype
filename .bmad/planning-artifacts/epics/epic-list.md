@@ -89,3 +89,33 @@ A developer can set an optional `PROFILE` env (`"default"` or `"mock"`); the dum
 A developer runs Astral's ty as part of quality gates; NFR1, architecture docs, and AD 23 are updated to require type checking; pyproject.toml, PROJECT_CONTEXT, README, and AGENTS.md document ty and define quality checks (ruff + ty + tests); the codebase passes `uv run ty check` with zero errors and zero warnings.
 **NFRs addressed:** NFR1 (extension)
 **Phase:** 3 (Refinement)
+
+## Epic 20: Hygiene & Quick Wins
+Small, mechanical fixes with no architecture changes: Docker env vars (`PYTHONDONTWRITEBYTECODE`, `PYTHONUNBUFFERED`), missing `tests/auth/__init__.py`, `_default_uuid` simplification, `kw_only=True` on dataclasses, `slots=True` removal, `Enum` for `log_level`, `ipdb` dev dep, `anyio` → `asyncio` test markers, uvicorn worker config.
+**Source:** Peer review feedback (NEXT_STEPS.md actions 1–9)
+**Phase:** 4 (Feedback)
+
+## Epic 21: Python 3.14 Modernization & Model Cleanup
+Align the codebase with Python 3.14 idioms and DRY up the model layer: remove `from __future__ import annotations`, remove `# noqa: TC001` suppressions, remove `TCH` ruff rule, replace `type: ignore` with `cast()`, introduce `CamelCaseModel` base using `pydantic.alias_generators.to_camel`, remove `alias_generator` from entities.
+**Source:** Peer review feedback (NEXT_STEPS.md actions 10–16, 48)
+**Phase:** 4 (Feedback)
+
+## Epic 22: Configuration & Module Organization
+Singleton config, cleaner module exports, task runner: implement `AppSettings` module singleton, replace all `AppSettings()` call sites, add `__all__` to key `__init__.py` files, add Justfile or Makefile.
+**Source:** Peer review feedback (NEXT_STEPS.md actions 17–20)
+**Phase:** 4 (Feedback)
+
+## Epic 23: Logging Overhaul & Test Cleanup
+Migrate to structlog and streamline the test suite: add `structlog` runtime dep, rewrite `observability/logging.py` with structlog processors, simplify `logging_decorator.py`, remove mock-implementation unit tests, exclude mock files from coverage, reorganize large test classes.
+**Source:** Peer review feedback (NEXT_STEPS.md actions 21–26)
+**Phase:** 4 (Feedback)
+
+## Epic 24: Pythonic Redesign — Functions over Classes
+Replace the Spring Boot-like provider/contract/facade/factory class hierarchy with idiomatic Python: plain functions, module namespaces, and dict-dispatch. Applies to both the auth subsystem and the service layer. This deliberately reverts Epic 18's structural choices while preserving profile-switching capability.
+**Source:** Peer review feedback (NEXT_STEPS.md actions 27–39)
+**Phase:** 4 (Feedback)
+
+## Epic 25: Async Rewrite
+Convert the entire request → service → DB path to async: `async def` on all routes and services, add `aiosqlite`/`aiomysql` drivers, switch to `AsyncSession`/`create_async_engine`, rewrite test fixtures, async-aware `log_io` decorator, update Cookiecutter and demo removal scripts for new structure.
+**Source:** Peer review feedback (NEXT_STEPS.md actions 40–47)
+**Phase:** 4 (Feedback)
