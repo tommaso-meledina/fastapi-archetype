@@ -16,5 +16,8 @@ typecheck:
 test:
     uv run pytest
 
-run:
+dev:
     uv run uvicorn fastapi_archetype.main:app --reload
+
+run:
+    uv run uvicorn fastapi_archetype.main:app
